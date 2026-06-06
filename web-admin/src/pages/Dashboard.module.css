@@ -1,0 +1,13 @@
+.welcome {
+  font-size: 24px;
+  margin-bottom: 16px;
+}
+
+.logoutBtn {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+}

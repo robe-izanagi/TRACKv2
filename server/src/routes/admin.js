@@ -1,20 +1,33 @@
 const express = require('express');
 const router = express.Router();
 const { requireAdmin } = require('../middleware/auth');
-const { listRequests, getRequest, reviewRequest } = require('../controllers/accountCodeRequestsController');
-const { generateAccountCode, listCodes } = require('../controllers/generateCode');
+const { generateAccountCode } = require('../controllers/generateCodeController');
+const {
+  listDepartments,
+  createDepartment,
+  toggleDepartment,
+  listOffices,
+  createOffice,
+  toggleOffice
+} = require('../controllers/setupController');
 
+// ── Test ──
 router.get('/me', requireAdmin, (req, res) => {
   res.json({ ok: true, message: 'You are an admin', adminId: req.adminId, userId: req.userId });
 });
 
-// Account codes
+// ── Account Codes ──
 router.post('/account-codes', requireAdmin, generateAccountCode);
-router.get('/account-codes', requireAdmin, listCodes);
+router.get('/account-codes', requireAdmin, require('../controllers/generateCodeController').listCodes); // ensure listCodes is imported or defined
 
-// Code requests (admin side)
-router.get('/code-requests', requireAdmin, listRequests);
-router.get('/code-requests/:id', requireAdmin, getRequest);
-router.post('/code-requests/:id/review', requireAdmin, reviewRequest);
+// ── Departments ──
+router.get('/departments', requireAdmin, listDepartments);
+router.post('/departments', requireAdmin, createDepartment);
+router.put('/departments/:id/toggle', requireAdmin, toggleDepartment);
+
+// ── Offices ──
+router.get('/offices', requireAdmin, listOffices);
+router.post('/offices', requireAdmin, createOffice);
+router.put('/offices/:id/toggle', requireAdmin, toggleOffice);
 
 module.exports = router;
