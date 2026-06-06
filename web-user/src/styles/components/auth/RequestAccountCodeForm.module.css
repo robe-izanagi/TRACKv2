@@ -1,0 +1,101 @@
+.form {
+  display: grid;
+  gap: 1.1rem;
+  width: 100%;
+}
+
+.title {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--primary-color);
+  text-align: center;
+}
+
+.field {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.input,
+.textarea {
+  width: 100%;
+  padding: 1rem 1rem;
+  border-radius: 18px;
+  border: 1px solid #d1d5db;
+  background: #e8e8e8;
+  color: #111827;
+  font: inherit;
+}
+
+.input:focus,
+.textarea:focus {
+  outline: none;
+  border-color: var(--input-focus-color);
+  box-shadow: 0 0 0 3px rgba(128, 0, 0, 0.12);
+}
+
+.textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.primaryButton,
+.secondaryButton {
+  width: 100%;
+  padding: 1rem;
+  border-radius: 18px;
+  border: none;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.primaryButton {
+  background: var(--primary-color);
+  color: var(--tertiary-color);
+  box-shadow: 0 10px 20px rgba(128, 0, 0, 0.18);
+}
+
+.primaryButton:hover {
+  background: var(--secondary-color);
+}
+
+.helpText {
+  font-size: 0.85rem;
+  color: #555555;
+  text-align: center;
+  margin: 0;
+}
+
+.helpText a {
+  color: var(--hyperlink-color);
+  text-decoration: underline;
+  font-weight: 700;
+}
+
+.loginAction {
+  display: grid;
+  gap: 0.75rem;
+  text-align: center;
+}
+
+.loginText {
+  font-size: 0.85rem;
+  color: #555555;
+}
+
+.secondaryButton {
+  background: var(--primary-color);
+  color: var(--tertiary-color);
+}
+
+.secondaryButton:hover {
+  background: var(--secondary-color);
+}

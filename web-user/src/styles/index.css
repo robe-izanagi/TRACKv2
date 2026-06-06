@@ -1,0 +1,2 @@
+:root{ --primary-color:#B10000; --secondary-color:#500000; --page-background-color:#F8F9FA; --card-background:#fff; }
+body{ background:var(--page-background-color); font-family: 'Segoe UI', sans-serif; }

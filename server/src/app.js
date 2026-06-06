@@ -10,6 +10,8 @@ const app = express();
 // ============
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
+const accountCodeRequestsRoutes = require('./routes/accountCodeRequests');
+const lookupsRoutes = require('./routes/lookups');
 
 app.use(cors());
 app.use(morgan('dev'));
@@ -22,6 +24,8 @@ app.get('/', (req, res) => {
 // ============
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/account-code-requests', accountCodeRequestsRoutes);
+app.use('/api/lookups', lookupsRoutes);
 
 // Only sync & seed when RUN_SYNC=true
 if (process.env.RUN_SYNC === 'true') {
