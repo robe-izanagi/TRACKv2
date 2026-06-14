@@ -23,18 +23,40 @@ router.post('/complete-google-registration', completeGoogleRegistration);
 router.get('/me', authenticate, async (req, res) => {
   try {
     const user = await User.findByPk(req.userId, {
-      include: [{ model: UserProfile, include: [Department, Office, Role] }]
+      attributes: ['id', 'email', 'status']
     });
     if (!user) return res.status(404).json({ ok: false, message: 'User not found.' });
+
+    // Manually fetch the profile and lookups
+    const profile = await UserProfile.findByPk(req.userId);
+    let role = null,
+        department = null,
+        office = null;
+
+    if (profile) {
+      if (profile.role_id) {
+        const roleObj = await Role.findByPk(profile.role_id);
+        if (roleObj) role = roleObj.name;
+      }
+      if (profile.department_id) {
+        const deptObj = await Department.findByPk(profile.department_id);
+        if (deptObj) department = deptObj.name;
+      }
+      if (profile.office_id) {
+        const officeObj = await Office.findByPk(profile.office_id);
+        if (officeObj) office = officeObj.name;
+      }
+    }
+
     res.json({
       ok: true,
       user: {
         id: user.id,
         email: user.email,
         status: user.status,
-        role: user.UserProfile?.Role?.name,
-        department: user.UserProfile?.Department?.name,
-        office: user.UserProfile?.Office?.name
+        role,
+        department,
+        office
       }
     });
   } catch (error) {
