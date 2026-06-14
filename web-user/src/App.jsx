@@ -1,17 +1,45 @@
-import React from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import LoginPage from "./pages/LoginPage";
-import RegisterPage from "./pages/RegisterPage";
-import RequestAccountCodePage from "./pages/RequestAccountCodePage";
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import RequireAuth from './components/RequireAuth';
+
+// Public pages
+import Login from './pages/auth/Login';
+import Register from './pages/auth/Register';
+import AuthCallback from './pages/auth/AuthCallback';
+import RequestAccountCode from './pages/request-account-code/RequestAccountCode';
+
+// Authenticated pages & layout
+import AppLayout from './pages/app/AppLayout';
+import Home from './pages/app/dashboard/Home';
 
 export default function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/request-account-code" element={<RequestAccountCodePage />} />
-      </Routes>
+      <AuthProvider>
+        <Routes>
+          {/* Public routes */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route path="/request-account-code" element={<RequestAccountCode />} />
+
+          {/* Protected routes – all nested inside AppLayout */}
+          <Route
+            path="/"
+            element={
+              <RequireAuth>
+                <AppLayout />
+              </RequireAuth>
+            }
+          >
+            <Route index element={<Home />} />
+            {/* Add more protected routes here as you build them */}
+          </Route>
+
+          {/* Fallback */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </AuthProvider>
     </BrowserRouter>
   );
 }

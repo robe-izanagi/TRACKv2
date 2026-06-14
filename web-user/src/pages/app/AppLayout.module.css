@@ -1,0 +1,17 @@
+.container {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 220px;
+  background: #1e293b;
+  color: #e2e8f0;
+  padding: 20px;
+}
+
+.main {
+  flex: 1;
+  padding: 24px;
+  background: #f1f5f9;
+}
