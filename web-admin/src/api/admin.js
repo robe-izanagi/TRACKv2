@@ -71,3 +71,35 @@ export const deleteDomain = async (id) => {
   const { data } = await apiClient.delete(`/admin/domains/${id}`);
   return data;
 };
+
+// ── Positions ──
+export const getPositions = async () => {
+  const { data } = await apiClient.get('/admin/positions');
+  return data;
+};
+
+export const createPosition = async (payload) => {
+  const { data } = await apiClient.post('/admin/positions', payload);
+  return data;
+};
+
+export const togglePosition = async (id) => {
+  const { data } = await apiClient.put(`/admin/positions/${id}/toggle`);
+  return data;
+};
+
+export const deletePosition = async (id) => {
+  const { data } = await apiClient.delete(`/admin/positions/${id}`);
+  return data;
+};
+
+// ── Position Assignments ──
+export const getPositionAssignments = async () => {
+  const { data } = await apiClient.get('/admin/position-assignments');
+  return data;
+};
+
+export const removeAssignment = async (id) => {
+  const { data } = await apiClient.put(`/admin/position-assignments/${id}/remove`);
+  return data;
+};
