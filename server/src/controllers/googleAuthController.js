@@ -1,7 +1,7 @@
 const { OAuth2Client } = require('google-auth-library');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
-const { User, Admin, UserSession, AccountCode, UserProfile, AllowedDomain, sequelize } = require('../models');
+const { User, Admin, UserSession, AccountCode, UserProfile, AllowedDomain, PositionAssignment, sequelize } = require('../models');
 
 const client = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
@@ -9,7 +9,6 @@ const client = new OAuth2Client(
   process.env.GOOGLE_REDIRECT_URI
 );
 
-// Step 1 – Frontend can redirect to this URL
 exports.googleLoginUrl = (req, res) => {
   const url = client.generateAuthUrl({
     access_type: 'offline',
@@ -18,7 +17,6 @@ exports.googleLoginUrl = (req, res) => {
   res.json({ url });
 };
 
-// Step 2 – Google calls this after user consents
 exports.googleCallback = async (req, res) => {
   const { code } = req.query;
   if (!code) {
@@ -67,7 +65,6 @@ exports.googleCallback = async (req, res) => {
       return res.redirect(`${process.env.FRONTEND_URL}/auth/callback?token=${token}`);
     }
 
-    // New user – issue registration token and redirect to registration page
     const regToken = jwt.sign(
       { email, name, purpose: 'google-registration' },
       process.env.JWT_SECRET,
@@ -82,7 +79,6 @@ exports.googleCallback = async (req, res) => {
   }
 };
 
-// Step 3 – Finalize registration with account code
 exports.completeGoogleRegistration = async (req, res) => {
   try {
     const { registration_token, account_code } = req.body;
@@ -90,7 +86,6 @@ exports.completeGoogleRegistration = async (req, res) => {
       return res.status(400).json({ ok: false, message: 'Registration token and account code are required.' });
     }
 
-    // Verify the temporary token
     let decoded;
     try {
       decoded = jwt.verify(registration_token, process.env.JWT_SECRET);
@@ -103,7 +98,6 @@ exports.completeGoogleRegistration = async (req, res) => {
 
     const { email, name } = decoded;
 
-    // Validate account code
     const code = await AccountCode.findOne({ where: { code: account_code } });
     if (!code) {
       return res.status(400).json({ ok: false, message: 'Invalid account code.' });
@@ -115,7 +109,6 @@ exports.completeGoogleRegistration = async (req, res) => {
       return res.status(400).json({ ok: false, message: 'Account code has expired.' });
     }
     if (code.is_admin) {
-      // You may disallow admin codes for SSO registration (optional)
       return res.status(400).json({ ok: false, message: 'This code is for admin accounts only.' });
     }
 
@@ -134,8 +127,18 @@ exports.completeGoogleRegistration = async (req, res) => {
         user_id: user.id,
         department_id: code.department_id,
         office_id: code.office_id,
-        role_id: code.role_id
+        role_id: code.role_id,
+        position_id: code.position_id
       }, { transaction: t });
+
+      // create position assignment if position is present
+      if (code.position_id) {
+        await PositionAssignment.create({
+          position_id: code.position_id,
+          user_id: user.id,
+          status: 'active'
+        }, { transaction: t });
+      }
 
       await code.update({
         used_by_user_id: user.id,

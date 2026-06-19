@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
 const sequelize = require('./config/database');
-const models = require('./models');   // still need to load models
+const models = require('./models');
 const seed = require('./seeders/seed');
 
 const app = express();
@@ -31,15 +31,15 @@ app.use('/api/lookups', lookupsRoutes);
 if (process.env.RUN_SYNC === 'true') {
   sequelize.authenticate()
     .then(() => {
-      console.log('✅ Connected to TiDB Cloud');
+      console.log('Connected to TiDB Cloud');
       return sequelize.sync({ force: true });
     })
     .then(() => {
-      console.log('✅ Tables synced');
+      console.log('Tables synced');
       return seed();
     })
-    .then(() => console.log('✅ Seed complete'))
-    .catch(err => console.error('❌ Error:', err));
+    .then(() => console.log('Seed complete'))
+    .catch(err => console.error('Error:', err));
 }
 
 module.exports = app;

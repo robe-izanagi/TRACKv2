@@ -1,6 +1,6 @@
 const { v4: uuidv4 } = require('uuid');
 const { Sequelize } = require('sequelize');
-const { AccountCode, Department, Office, Role } = require('../models');
+const { AccountCode, Department, Office, Role, Position, PositionAssignment } = require('../models');
 
 function makePrefix(name) {
   if (!name) return 'ADM';
@@ -13,7 +13,7 @@ function makePrefix(name) {
 
 exports.generateAccountCode = async (req, res) => {
   try {
-    const { department_id, office_id, role_id, is_admin = false, expires_at } = req.body;
+    const { department_id, office_id, role_id, position_id, is_admin = false, expires_at } = req.body;
 
     // Para sa admin code, hindi kailangan ng office/role/department
     if (!is_admin) {
@@ -25,7 +25,7 @@ exports.generateAccountCode = async (req, res) => {
       }
     }
 
-    let dept = null, office = null, role = null;
+    let dept = null, office = null, role = null, pos = null;
 
     if (department_id) {
       dept = await Department.findByPk(department_id);
@@ -38,6 +38,19 @@ exports.generateAccountCode = async (req, res) => {
     if (role_id) {
       role = await Role.findByPk(role_id);
       if (!role) return res.status(404).json({ ok: false, message: 'Role not found.' });
+    }
+    if (position_id) {
+      pos = await Position.findByPk(position_id);
+      if (!pos) return res.status(404).json({ ok: false, message: 'Position not found.' });
+      if (!pos.is_active) return res.status(400).json({ ok: false, message: 'Position is inactive.' });
+      if (!pos.allow_multiple) {
+        const existingAssign = await PositionAssignment.findOne({
+          where: { position_id, status: 'active' }
+        });
+        if (existingAssign) {
+          return res.status(409).json({ ok: false, message: 'Position already assigned to another user.' });
+        }
+      }
     }
 
     const deptPrefix = makePrefix(dept?.name);
@@ -55,6 +68,7 @@ exports.generateAccountCode = async (req, res) => {
           department_id: dept?.id || null,
           office_id: office?.id || null,
           role_id: role?.id || null,
+          position_id: pos?.id || null,   // NEW
           is_admin: !!is_admin,
           generated_by_admin_id: req.adminId || null,
           status: 'unused',
@@ -84,7 +98,8 @@ exports.listCodes = async (req, res) => {
       include: [
         { model: Department, attributes: ['id', 'name'] },
         { model: Office, attributes: ['id', 'name'] },
-        { model: Role, attributes: ['id', 'name'] }
+        { model: Role, attributes: ['id', 'name'] },
+        { model: Position, attributes: ['id', 'name'] }   
       ],
       order: [['created_at', 'DESC']],
       limit: 100

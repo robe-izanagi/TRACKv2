@@ -23,6 +23,10 @@ const AccountCode = sequelize.define('account_codes', {
     type: DataTypes.UUID,
     allowNull: false
   },
+  position_id: {
+    type: DataTypes.UUID,
+    allowNull: true
+  },
   is_admin: {
     type: DataTypes.BOOLEAN,
     defaultValue: false

@@ -21,6 +21,10 @@ const UserProfile = sequelize.define('user_profile', {
   role_id: {
     type: DataTypes.UUID,
     allowNull: true
+  },
+  position_id: {        
+    type: DataTypes.UUID,
+    allowNull: true
   }
 }, {
   timestamps: false,

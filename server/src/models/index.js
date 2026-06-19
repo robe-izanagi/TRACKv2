@@ -4,6 +4,8 @@ const sequelize = require('../config/database');
 const Department = require('./departments');
 const Office = require('./offices');
 const Role = require('./roles');
+const Position = require('./positions');     
+const PositionAssignment = require('./position_assignments'); 
 
 // Core
 const User = require('./users');
@@ -49,10 +51,11 @@ AccountCode.belongsTo(Office, { foreignKey: 'office_id' });
 AccountCode.belongsTo(Role, { foreignKey: 'role_id' });
 AccountCode.belongsTo(Admin, { foreignKey: 'generated_by_admin_id', onDelete: 'SET NULL' });
 AccountCode.belongsTo(User, { foreignKey: 'used_by_user_id', onDelete: 'SET NULL' });
+AccountCode.belongsTo(Position, { foreignKey: 'position_id', onDelete: 'SET NULL' });   // NEW
 
 // --- users ---
 User.belongsTo(AccountCode, { foreignKey: 'account_code_id', onDelete: 'SET NULL' });
-User.hasOne(UserProfile, { foreignKey: 'user_id' });      // ← this was missing!
+User.hasOne(UserProfile, { foreignKey: 'user_id' });
 
 // --- admins ---
 Admin.belongsTo(User, { foreignKey: 'user_id', onDelete: 'CASCADE' });
@@ -62,6 +65,7 @@ UserProfile.belongsTo(User, { foreignKey: 'user_id', onDelete: 'CASCADE' });
 UserProfile.belongsTo(Department, { foreignKey: 'department_id', onDelete: 'SET NULL' });
 UserProfile.belongsTo(Office, { foreignKey: 'office_id', onDelete: 'SET NULL' });
 UserProfile.belongsTo(Role, { foreignKey: 'role_id', onDelete: 'SET NULL' });
+UserProfile.belongsTo(Position, { foreignKey: 'position_id', onDelete: 'SET NULL' });   // NEW
 
 // --- user_blocks ---
 UserBlock.belongsTo(User, { foreignKey: 'target_user_id', onDelete: 'CASCADE' });
@@ -122,6 +126,11 @@ FeedbackRating.belongsTo(User, { foreignKey: 'user_id' });
 // --- notifications ---
 Notification.belongsTo(User, { foreignKey: 'user_id', onDelete: 'CASCADE' });
 
+// --- positions (NEW) ---
+Position.hasMany(PositionAssignment, { foreignKey: 'position_id' });
+PositionAssignment.belongsTo(Position, { foreignKey: 'position_id' });
+PositionAssignment.belongsTo(User, { foreignKey: 'user_id' });
+
 // =====================
 // EXPORTS
 // =====================
@@ -130,6 +139,8 @@ module.exports = {
   Department,
   Office,
   Role,
+  Position,      
+  PositionAssignment,    
   User,
   Admin,
   AccountCode,

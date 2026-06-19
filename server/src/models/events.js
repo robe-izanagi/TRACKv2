@@ -1,4 +1,3 @@
-// src/models/events.js
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
@@ -17,7 +16,7 @@ const Event = sequelize.define('events', {
     allowNull: true
   },
   method: {
-    type: DataTypes.ENUM('online','face-to-face'),
+    type: DataTypes.ENUM('online', 'face-to-face'),
     allowNull: true
   },
   link: {
@@ -32,12 +31,17 @@ const Event = sequelize.define('events', {
     type: DataTypes.DATE,
     allowNull: false
   },
+  duration_minutes: { 
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    comment: 'Duration in minutes per occurrence. NULL = use start/end difference.'
+  },
   hierarchy: {
-    type: DataTypes.ENUM('local','regional','national','international'),
+    type: DataTypes.ENUM('local', 'regional', 'national', 'international'),
     allowNull: true
   },
   visibility: {
-    type: DataTypes.ENUM('campus','department','private'),
+    type: DataTypes.ENUM('campus', 'department', 'private'),
     allowNull: false
   },
   venue_id: {
