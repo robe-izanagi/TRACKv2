@@ -1,6 +1,9 @@
 const { v4: uuidv4 } = require('uuid');
 const { Sequelize } = require('sequelize');
-const { AccountCode, Department, Office, Role, Position, PositionAssignment, Admin, User } = require('../models');
+const {
+  AccountCode, Department, Office, Role, Position, PositionAssignment,
+  Admin, User
+} = require('../models');
 
 function makePrefix(name) {
   if (!name) return 'ADM';
@@ -15,14 +18,8 @@ exports.generateAccountCode = async (req, res) => {
   try {
     const { department_id, office_id, role_id, position_id, is_admin = false, expires_at } = req.body;
 
-    // Para sa admin code, hindi kailangan ng office/role/department
-    if (!is_admin) {
-      if (!office_id || !role_id) {
-        return res.status(400).json({
-          ok: false,
-          message: 'office_id and role_id are required for user codes.'
-        });
-      }
+    if (!is_admin && (!office_id || !role_id)) {
+      return res.status(400).json({ ok: false, message: 'office_id and role_id are required for user codes.' });
     }
 
     let dept = null, office = null, role = null, pos = null;
@@ -68,7 +65,7 @@ exports.generateAccountCode = async (req, res) => {
           department_id: dept?.id || null,
           office_id: office?.id || null,
           role_id: role?.id || null,
-          position_id: pos?.id || null,   // NEW
+          position_id: pos?.id || null,
           is_admin: !!is_admin,
           generated_by_admin_id: req.adminId || null,
           status: 'unused',
@@ -91,7 +88,6 @@ exports.generateAccountCode = async (req, res) => {
     res.status(500).json({ ok: false, message: 'Server error.' });
   }
 };
-
 
 exports.listCodes = async (req, res) => {
   try {
@@ -119,13 +115,17 @@ exports.listCodes = async (req, res) => {
         const pos = await Position.findByPk(code.position_id);
         if (pos) position = pos.name;
       }
-      // Resolve generated_by admin username
+
+      // Resolve generated_by admin username – manual fetch to avoid association issues
       if (code.generated_by_admin_id) {
         const admin = await Admin.findByPk(code.generated_by_admin_id, {
-          include: [{ model: User, attributes: ['username'] }]
+          attributes: ['user_id']
         });
-        if (admin && admin.User) {
-          generatedBy = admin.User.username;
+        if (admin) {
+          const user = await User.findByPk(admin.user_id, {
+            attributes: ['username']
+          });
+          if (user) generatedBy = user.username;
         }
       }
 
@@ -139,7 +139,7 @@ exports.listCodes = async (req, res) => {
         office,
         role,
         position,
-        generated_by: generatedBy      // new field
+        generated_by: generatedBy
       };
     }));
 
