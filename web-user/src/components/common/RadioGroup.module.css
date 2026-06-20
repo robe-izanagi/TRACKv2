@@ -1,0 +1,51 @@
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background: var(--radio-button-background);
+  width: stretch;
+  padding: 0.25rem;
+  border-radius: 10px;
+  overflow: auto;
+}
+
+.label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #6c757d;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.25rem;
+}
+
+.options {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.radioLabel {
+  display: inline-flex;
+  align-items: center;
+  width: stretch;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  border-radius: 10px;
+  color: var(--text-color);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.radioLabel input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.radioLabel:has(input:checked) {
+  background: var(--primary-color);
+  color: var(--tertiary-color);
+  width: stretch;
+}
