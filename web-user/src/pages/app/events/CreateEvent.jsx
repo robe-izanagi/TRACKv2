@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import InputField from "../../../components/common/InputField";
 import Button from "../../../components/common/Button";
@@ -7,6 +7,7 @@ import RadioGroup from "../../../components/common/RadioGroup";
 import EventColor from "../../../components/events/EventColor";
 import InviteAttendeesModal from "../../../components/events/InviteAttendeesModal";
 import MapPicker from "../../../components/common/MapPicker";
+import FileAttachment from "../../../components/common/FileAttachment"; // ← NEW
 import apiClient from "../../../api/client";
 import { useAuth } from "../../../context/AuthContext";
 import styles from "./CreateEvent.module.css";
@@ -48,12 +49,18 @@ export default function CreateEvent() {
   const [showAttendeeModal, setShowAttendeeModal] = useState(false);
   const [showCollabModal, setShowCollabModal] = useState(false);
 
+  // File attachments state – store objects with name/size for display and raw File for upload
+  const [attachments, setAttachments] = useState([]); // { file, name, size }
+
   const [departments, setDepartments] = useState([]);
   const [venues, setVenues] = useState([]);
   const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
+  const fileInputRef = useRef(null);
+
+  // ... (existing useEffect for fetching data stays the same)
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -75,6 +82,7 @@ export default function CreateEvent() {
   const updateField = (field, value) =>
     setForm((prev) => ({ ...prev, [field]: value }));
 
+  // Auto‑invite department members
   useEffect(() => {
     if (form.visibility === "department" && form.department_id) {
       apiClient
@@ -87,6 +95,7 @@ export default function CreateEvent() {
     }
   }, [form.department_id, form.visibility]);
 
+  // Clear map fields when saved location is chosen
   useEffect(() => {
     if (form.location_id) {
       updateField("map_location", "");
@@ -94,6 +103,26 @@ export default function CreateEvent() {
       updateField("street", "");
     }
   }, [form.location_id]);
+
+  // ── Attachment handlers ──────────────────────────
+  const handleFileAdd = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e) => {
+    const files = Array.from(e.target.files);
+    const newAttachments = files.map((file) => ({
+      file,
+      name: file.name,
+      size: `${(file.size / 1024).toFixed(1)} KB`,
+    }));
+    setAttachments((prev) => [...prev, ...newAttachments]);
+    e.target.value = ""; // allow re-selecting the same file
+  };
+
+  const handleRemoveFile = (fileToRemove) => {
+    setAttachments((prev) => prev.filter((f) => f !== fileToRemove));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -147,6 +176,8 @@ export default function CreateEvent() {
     try {
       const res = await apiClient.post("/events", payload);
       if (res.data.ok) {
+        // Optionally upload attachments here after event creation,
+        // using the returned event.id. We'll add that later.
         navigate("/calendar");
       } else {
         setMessage(res.data.message || "Failed to create event");
@@ -251,7 +282,7 @@ export default function CreateEvent() {
             )}
           </div>
 
-          {/* Venue / Location – hidden when method is online */}
+          {/* Venue / Location */}
           {form.method !== "online" && (
             <div className={styles.section}>
               {form.hierarchy === "local" ? (
@@ -375,6 +406,18 @@ export default function CreateEvent() {
             />
           </div>
 
+          {/* ── File Attachments ── */}
+          <div className={styles.section}>
+            <FileAttachment
+              files={attachments.map(({ name, size }) => ({ name, size }))}
+              onRemove={(file) => {
+                const toRemove = attachments.find((f) => f.name === file.name);
+                if (toRemove) handleRemoveFile(toRemove);
+              }}
+              onAdd={handleFileAdd}
+            />
+          </div>
+
           {/* Attendees & Collaborators */}
           <div className={styles.section}>
             <button
@@ -418,6 +461,15 @@ export default function CreateEvent() {
           selectedIds={collaboratorIds}
           onSave={setCollaboratorIds}
           departmentId={null}
+        />
+
+        {/* Hidden file input for attachments */}
+        <input
+          type="file"
+          multiple
+          ref={fileInputRef}
+          style={{ display: "none" }}
+          onChange={handleFileChange}
         />
       </form>
     </div>

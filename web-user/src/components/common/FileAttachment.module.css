@@ -1,0 +1,59 @@
+.container {
+  border: 1px dashed var(--input-background-color);
+  border-radius: 16px;
+  padding: 1rem;
+  background: var(--background-color);
+}
+
+.header {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--fifth-color);
+  margin-bottom: 0.75rem;
+}
+
+.fileList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0;
+  /* removed bottom margin because it’s inside a flex row */
+}
+
+.fileItem {
+  background: #f3f4f6;
+  border-radius: 12px;
+  padding: 0.5rem 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.fileSize {
+  color: #6c757d;
+  font-size: 0.7rem;
+  margin-left: 0.5rem;
+}
+
+.fileItem button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.addButton {
+  background: transparent;
+  border: 1px dashed var(--primary-color);
+  color: var(--primary-color);
+  padding: 0.6rem;
+  width: 100%;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.addButton:hover {
+  background: var(--primary-color);
+  color: var(--tertiary-color);
+}
