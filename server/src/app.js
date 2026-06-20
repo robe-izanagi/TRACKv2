@@ -13,6 +13,7 @@ const adminRoutes = require('./routes/admin');
 const accountCodeRequestsRoutes = require('./routes/accountCodeRequests');
 const lookupsRoutes = require('./routes/lookups');
 const venueRoutes = require('./routes/venues');
+const eventRoutes = require('./routes/events');
 
 app.use(cors());
 app.use(morgan('dev'));
@@ -28,6 +29,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/account-code-requests', accountCodeRequestsRoutes);
 app.use('/api/lookups', lookupsRoutes);
 app.use('/api/venues', venueRoutes);
+app.use('/api/events', eventRoutes);
 
 // Only sync & seed when RUN_SYNC=true
 if (process.env.RUN_SYNC === 'true') {
