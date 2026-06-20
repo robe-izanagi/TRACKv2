@@ -382,14 +382,14 @@ export default function CreateEvent() {
               className={styles.inviteBtn}
               onClick={() => setShowAttendeeModal(true)}
             >
-              👥 Invite Attendees ({attendeeIds.length})
+              Invite Attendees ({attendeeIds.length})
             </button>
             <button
               type="button"
               className={styles.inviteBtn}
               onClick={() => setShowCollabModal(true)}
             >
-              ✏️ Add Collaborators ({collaboratorIds.length})
+              Add Collaborators ({collaboratorIds.length})
             </button>
           </div>
 
