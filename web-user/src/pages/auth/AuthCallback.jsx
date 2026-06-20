@@ -12,21 +12,34 @@ export default function AuthCallback() {
     const token = searchParams.get('token');
     const error = searchParams.get('error');
 
-    if (token) {
-      localStorage.setItem('token', token);
-      // Fetch user profile and then role-redirect
-      getMe()
-        .then(res => {
-          login(res.user, token);
-        })
-        .catch(() => {
-          navigate('/login?error=failed_profile', { replace: true });
-        });
-    } else if (error) {
+    if (error) {
       navigate(`/login?error=${error}`, { replace: true });
-    } else {
-      navigate('/login', { replace: true });
+      return;
     }
+
+    if (!token) {
+      navigate('/login', { replace: true });
+      return;
+    }
+
+    // Store token (this also triggers a profile fetch in AuthContext,
+    // but we need the role immediately to redirect)
+    login(null, token);
+
+    // Fetch the full profile ourselves to know the role right now
+    getMe()
+      .then(res => {
+        if (res.ok) {
+          const role = res.user.role || 'faculty';
+          const rolePath = `/${role}/home`;
+          navigate(rolePath, { replace: true });
+        } else {
+          navigate('/login', { replace: true });
+        }
+      })
+      .catch(() => {
+        navigate('/login', { replace: true });
+      });
   }, [searchParams, navigate, login]);
 
   return null;

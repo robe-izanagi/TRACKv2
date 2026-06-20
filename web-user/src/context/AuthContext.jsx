@@ -39,24 +39,40 @@ export const AuthProvider = ({ children }) => {
       .finally(() => setLoading(false));
   }, [token]);
 
-  // Redirect to role‑based home after user is loaded (except on public pages)
+  // Smart redirect: only redirect when at root OR on a different role's path
   useEffect(() => {
-    if (!user || loading) return;          // wait until profile is ready
+    if (!user || loading) return;
+
+    const currentPath = location.pathname;
     const publicPaths = ['/login', '/register', '/auth/callback', '/request-account-code'];
-    if (publicPaths.some(p => location.pathname.startsWith(p))) return; // stay on public pages
+    if (publicPaths.some(p => currentPath.startsWith(p))) return;
 
     const role = user.role || 'faculty';
     const expectedHome = `/${role}/home`;
-    if (location.pathname !== expectedHome) {
+
+    // If user is at root "/", send them to their role-home
+    if (currentPath === '/') {
       navigate(expectedHome, { replace: true });
+      return;
     }
+
+    // If user is on a path that starts with a different role (e.g., /staff/home when role is officials),
+    // redirect to their own role-home
+    const otherRoles = ['officials', 'staff', 'faculty'].filter(r => r !== role);
+    if (otherRoles.some(r => currentPath.startsWith(`/${r}/`))) {
+      navigate(expectedHome, { replace: true });
+      return;
+    }
+
+    // Otherwise, allow navigation (e.g., /profile, /calendar, /venues, etc.)
   }, [user, loading, location.pathname, navigate]);
 
   const login = useCallback((_userData, newToken) => {
     localStorage.setItem('token', newToken);
     setToken(newToken);
-    // Do NOT set user or navigate here – the effects above will handle everything
-  }, []);
+    // Redirect to root; the effect above will send them to the correct role-home
+    navigate('/', { replace: true });
+  }, [navigate]);
 
   const logout = useCallback(() => {
     localStorage.removeItem('token');

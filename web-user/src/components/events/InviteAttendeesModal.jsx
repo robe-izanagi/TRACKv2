@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import Modal from '../../components/common/Modal';
+import Modal from '../common/Modal';
 import apiClient from '../../api/client';
 import { FiSearch, FiX } from 'react-icons/fi';
 import styles from './InviteAttendeesModal.module.css';
