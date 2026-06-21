@@ -4,6 +4,7 @@ const morgan = require('morgan');
 const sequelize = require('./config/database');
 const models = require('./models');
 const seed = require('./seeders/seed');
+const path = require('path');
 
 const app = express();
 
@@ -14,6 +15,7 @@ const accountCodeRequestsRoutes = require('./routes/accountCodeRequests');
 const lookupsRoutes = require('./routes/lookups');
 const venueRoutes = require('./routes/venues');
 const eventRoutes = require('./routes/events');
+const attachmentRoutes = require('./routes/attachments');
 
 app.use(cors());
 app.use(morgan('dev'));
@@ -30,6 +32,8 @@ app.use('/api/account-code-requests', accountCodeRequestsRoutes);
 app.use('/api/lookups', lookupsRoutes);
 app.use('/api/venues', venueRoutes);
 app.use('/api/events', eventRoutes);
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
+app.use('/api/attachments', attachmentRoutes);
 
 // Only sync & seed when RUN_SYNC=true
 if (process.env.RUN_SYNC === 'true') {
