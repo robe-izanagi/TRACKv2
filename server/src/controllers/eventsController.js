@@ -11,15 +11,15 @@ exports.createEvent = async (req, res) => {
       start_datetime,
       end_datetime,
       method,
-      venue_id,            // "undecided" → null
-      location_id,         // existing user location (optional)
+      venue_id,
+      location_id,
       exact_location,
       street,
       map_location,
-      department_id,       // required for department events
+      department_id,
       description,
       color,
-      attendee_ids,        // array of user UUIDs (can be empty)
+      attendee_ids,
       collaborator_ids,
       remind_before_minutes,
       is_email_reminder
@@ -43,7 +43,6 @@ exports.createEvent = async (req, res) => {
         await t.rollback();
         return res.status(400).json({ ok: false, message: 'department_id is required for department events.' });
       }
-      // Verify that the creator belongs to this department
       const profile = await UserProfile.findOne({ where: { user_id: req.userId } });
       if (!profile || profile.department_id !== department_id) {
         await t.rollback();
@@ -52,40 +51,49 @@ exports.createEvent = async (req, res) => {
       finalDeptId = department_id;
     }
 
-    // ── Venue / Location logic ─────────────────────────
+    // ── Venue / Location logic (only if NOT online) ─────
     let finalVenueId = null;
     let finalLocationId = null;
 
-    if (hierarchy === 'local') {
-      if (venue_id && venue_id !== 'undecided') {
-        const venue = await Venue.findByPk(venue_id);
-        if (!venue) {
-          await t.rollback();
-          return res.status(404).json({ ok: false, message: 'Venue not found.' });
+    if (method !== 'online') {
+      if (hierarchy === 'local') {
+        // Local → venue
+        if (venue_id && venue_id !== 'undecided') {
+          const venue = await Venue.findByPk(venue_id);
+          if (!venue) {
+            await t.rollback();
+            return res.status(404).json({ ok: false, message: 'Venue not found.' });
+          }
+          finalVenueId = venue.id;
         }
-        finalVenueId = venue.id;
-      }
-    } else {
-      if (location_id) {
-        const loc = await Location.findByPk(location_id);
-        if (!loc) {
-          await t.rollback();
-          return res.status(404).json({ ok: false, message: 'Location not found.' });
-        }
-        finalLocationId = loc.id;
-      } else if (exact_location && map_location) {
-        const newLoc = await Location.create({
-          id: uuidv4(),
-          exact_location: exact_location.trim(),
-          street: street?.trim() || null,
-          map_location: map_location.trim(),
-          created_by: req.userId,
-          is_active: true
-        }, { transaction: t });
-        finalLocationId = newLoc.id;
       } else {
-        await t.rollback();
-        return res.status(400).json({ ok: false, message: 'Either location_id or exact_location+map_location is required for external events.' });
+        // External → location
+        if (location_id) {
+          // Use an existing saved location
+          const loc = await Location.findByPk(location_id);
+          if (!loc) {
+            await t.rollback();
+            return res.status(404).json({ ok: false, message: 'Location not found.' });
+          }
+          finalLocationId = loc.id;
+        } else if (map_location) {
+          // Create a new location from map‑provided address (exact_location & street are optional)
+          const newLoc = await Location.create({
+            id: uuidv4(),
+            exact_location: exact_location?.trim() || '',
+            street: street?.trim() || null,
+            map_location: map_location.trim(),
+            created_by: req.userId,
+            is_active: true
+          }, { transaction: t });
+          finalLocationId = newLoc.id;
+        } else {
+          await t.rollback();
+          return res.status(400).json({
+            ok: false,
+            message: 'Either location_id or map_location is required for external events.'
+          });
+        }
       }
     }
 
