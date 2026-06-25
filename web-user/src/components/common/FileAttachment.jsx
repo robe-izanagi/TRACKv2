@@ -9,7 +9,7 @@ export default function FileAttachment({ files = [], onRemove, onAdd }) {
 
       {!hasFiles ? (
         /* No files yet: show full‑width button */
-        <button className={styles.addButton} onClick={onAdd}>
+        <button type="button" className={styles.addButton} onClick={onAdd}>
           + Add File
         </button>
       ) : (
@@ -32,11 +32,14 @@ export default function FileAttachment({ files = [], onRemove, onAdd }) {
                     <span className={styles.fileSize}> {file.size}</span>
                   )}
                 </div>
-                <button onClick={() => onRemove(file)}>🗑️</button>
+                <button type="button" onClick={() => onRemove(file)}>
+                  🗑️
+                </button>
               </div>
             ))}
           </div>
           <button
+            type="button"
             className={styles.addButton}
             style={{ width: "auto", padding: "0.6rem 1.2rem", flexShrink: 0 }}
             onClick={onAdd}
