@@ -1,11 +1,17 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../../../context/AuthContext";
 import apiClient from "../../../api/client";
-import { FiUser, FiMail, FiShield, FiActivity, FiMapPin, FiBriefcase } from "react-icons/fi";
+import {
+  FiUser,
+  FiMail,
+  FiShield,
+  FiMapPin,
+  FiBriefcase,
+} from "react-icons/fi";
 import styles from "./Profile.module.css";
 
 export default function Profile() {
-  const { user } = useAuth();  // current authenticated user (from context)
+  const { user } = useAuth();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -44,13 +50,11 @@ export default function Profile() {
     );
   }
 
-  // Use the fetched profile, or fallback to the context user (if available)
   const displayUser = profile || user || {};
 
   return (
     <div className={styles.container}>
       <div className={styles.card}>
-        {/* Avatar placeholder */}
         <div className={styles.avatarWrapper}>
           <div className={styles.avatar}>
             <FiUser size={40} />
@@ -62,6 +66,11 @@ export default function Profile() {
 
         <div className={styles.details}>
           <div className={styles.row}>
+            <FiUser className={styles.icon} />
+            <span className={styles.label}>Name</span>
+            <span className={styles.value}>{displayUser.full_name || "—"}</span>
+          </div>
+          <div className={styles.row}>
             <FiBriefcase className={styles.icon} />
             <span className={styles.label}>Role</span>
             <span className={styles.value}>{displayUser.role || "—"}</span>
@@ -69,7 +78,9 @@ export default function Profile() {
           <div className={styles.row}>
             <FiMapPin className={styles.icon} />
             <span className={styles.label}>Department</span>
-            <span className={styles.value}>{displayUser.department || "—"}</span>
+            <span className={styles.value}>
+              {displayUser.department || "—"}
+            </span>
           </div>
           <div className={styles.row}>
             <FiMapPin className={styles.icon} />
