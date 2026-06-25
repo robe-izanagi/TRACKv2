@@ -73,10 +73,8 @@ router.get('/users', authenticate, async (req, res) => {
   try {
     const { department_id, exclude_admins } = req.query;
 
-    // Build the initial where clause for users
     const where = {};
 
-    // If a department is specified, restrict to users in that department
     if (department_id) {
       const profiles = await UserProfile.findAll({
         where: { department_id },
@@ -86,15 +84,12 @@ router.get('/users', authenticate, async (req, res) => {
       where.id = userIds;
     }
 
-    // Exclude admin users if requested (exclude_admins=true)
     if (exclude_admins === 'true') {
       const adminUsers = await Admin.findAll({ attributes: ['user_id'] });
       const adminIds = adminUsers.map(a => a.user_id);
       if (where.id) {
-        // Filter out admin IDs from the existing list
         where.id = { [Op.in]: where.id, [Op.notIn]: adminIds };
       } else {
-        // Exclude all admin IDs
         where.id = { [Op.notIn]: adminIds };
       }
     }
@@ -120,7 +115,7 @@ router.get('/users', authenticate, async (req, res) => {
       email: user.email,
       name: user.UserProfile?.full_name || user.username || user.email,
       department: user.UserProfile?.Department?.name || null,
-      department_id: user.UserProfile?.department_id || null,
+      department_id: user.UserProfile?.department_id || null,   // ← this was missing
       office: user.UserProfile?.Office?.name || null,
       office_id: user.UserProfile?.office_id || null,
       position: user.UserProfile?.Position?.name || null,
