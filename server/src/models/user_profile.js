@@ -10,6 +10,10 @@ const UserProfile = sequelize.define('user_profile', {
     type: DataTypes.TEXT,
     allowNull: true
   },
+  full_name: {    
+    type: DataTypes.STRING(255),
+    allowNull: true
+  },
   department_id: {
     type: DataTypes.UUID,
     allowNull: true
@@ -22,7 +26,7 @@ const UserProfile = sequelize.define('user_profile', {
     type: DataTypes.UUID,
     allowNull: true
   },
-  position_id: {        
+  position_id: {
     type: DataTypes.UUID,
     allowNull: true
   }

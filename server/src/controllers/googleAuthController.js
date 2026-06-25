@@ -112,7 +112,6 @@ exports.completeGoogleRegistration = async (req, res) => {
       return res.status(400).json({ ok: false, message: 'This code is for admin accounts only.' });
     }
 
-    // Create user with transaction
     const t = await sequelize.transaction();
     try {
       const user = await User.create({
@@ -123,15 +122,16 @@ exports.completeGoogleRegistration = async (req, res) => {
         status: 'active'
       }, { transaction: t });
 
+      // Save full_name from Google
       await UserProfile.create({
         user_id: user.id,
         department_id: code.department_id,
         office_id: code.office_id,
         role_id: code.role_id,
-        position_id: code.position_id
+        position_id: code.position_id,
+        full_name: name || email  
       }, { transaction: t });
 
-      // create position assignment if position is present
       if (code.position_id) {
         await PositionAssignment.create({
           position_id: code.position_id,
@@ -148,7 +148,6 @@ exports.completeGoogleRegistration = async (req, res) => {
 
       await t.commit();
 
-      // Issue real session token
       const token = jwt.sign(
         { userId: user.id, isAdmin: false },
         process.env.JWT_SECRET,

@@ -27,13 +27,14 @@ router.get('/me', authenticate, async (req, res) => {
     });
     if (!user) return res.status(404).json({ ok: false, message: 'User not found.' });
 
-    // Manually fetch the profile and lookups
     const profile = await UserProfile.findByPk(req.userId);
     let role = null,
-        department = null,
-        office = null;
+      department = null,
+      office = null,
+      fullName = null;
 
     if (profile) {
+      fullName = profile.full_name;
       if (profile.role_id) {
         const roleObj = await Role.findByPk(profile.role_id);
         if (roleObj) role = roleObj.name;
@@ -56,7 +57,8 @@ router.get('/me', authenticate, async (req, res) => {
         status: user.status,
         role,
         department,
-        office
+        office,
+        full_name: fullName
       }
     });
   } catch (error) {
@@ -65,13 +67,12 @@ router.get('/me', authenticate, async (req, res) => {
   }
 });
 
-
+// List users (for Invite Attendees modal)
 router.get('/users', authenticate, async (req, res) => {
   try {
     const { department_id } = req.query;
     const where = {};
     if (department_id) {
-      // Find profiles with that department, then get the user IDs
       const profiles = await UserProfile.findAll({
         where: { department_id },
         attributes: ['user_id']
@@ -86,7 +87,7 @@ router.get('/users', authenticate, async (req, res) => {
       include: [
         {
           model: UserProfile,
-          attributes: ['department_id'],
+          attributes: ['department_id', 'full_name'],
           include: [{ model: Department, attributes: ['name'] }]
         }
       ]
@@ -95,7 +96,7 @@ router.get('/users', authenticate, async (req, res) => {
     const result = users.map(user => ({
       id: user.id,
       email: user.email,
-      name: user.username || user.email,
+      name: user.UserProfile?.full_name || user.username || user.email,
       department: user.UserProfile?.Department?.name || null,
     }));
 
