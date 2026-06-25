@@ -65,4 +65,35 @@ router.get('/me', authenticate, async (req, res) => {
   }
 });
 
+// ── New endpoint for Invite Attendees ─────────────────
+router.get('/users', authenticate, async (req, res) => {
+  try {
+    const { department_id } = req.query;
+    const whereProfile = {};
+    if (department_id) {
+      whereProfile.department_id = department_id;
+    }
+
+    const profiles = await UserProfile.findAll({
+      where: whereProfile,
+      include: [
+        { model: User, attributes: ['id', 'email', 'username'] },
+        { model: Department, attributes: ['id', 'name'] }
+      ]
+    });
+
+    const users = profiles.map(profile => ({
+      id: profile.User.id,
+      email: profile.User.email,
+      name: profile.User.username || profile.User.email,
+      department: profile.Department ? profile.Department.name : null,
+    }));
+
+    res.json({ ok: true, users });
+  } catch (error) {
+    console.error('List users error:', error);
+    res.status(500).json({ ok: false, message: 'Server error.' });
+  }
+});
+
 module.exports = router;
