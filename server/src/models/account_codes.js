@@ -17,11 +17,11 @@ const AccountCode = sequelize.define('account_codes', {
   },
   office_id: {
     type: DataTypes.UUID,
-    allowNull: false
+    allowNull: true
   },
   role_id: {
     type: DataTypes.UUID,
-    allowNull: false
+    allowNull: true
   },
   position_id: {
     type: DataTypes.UUID,

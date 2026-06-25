@@ -6,10 +6,10 @@ const {
 } = require('../models');
 
 function makePrefix(name) {
-  if (!name) return 'ADM';
+  if (!name) return 'NON';                  // "NON" for none
   const cleaned = name.replace(/[^a-zA-Z0-9 ]/g, ' ').trim();
   const parts = cleaned.split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return 'ADM';
+  if (parts.length === 0) return 'NON';
   if (parts.length === 1) return parts[0].substring(0, 3).toUpperCase();
   return parts.map(p => p[0]).join('').substring(0, 3).toUpperCase();
 }
@@ -17,10 +17,6 @@ function makePrefix(name) {
 exports.generateAccountCode = async (req, res) => {
   try {
     const { department_id, office_id, role_id, position_id, is_admin = false, expires_at } = req.body;
-
-    if (!is_admin && (!office_id || !role_id)) {
-      return res.status(400).json({ ok: false, message: 'office_id and role_id are required for user codes.' });
-    }
 
     let dept = null, office = null, role = null, pos = null;
 
@@ -106,17 +102,20 @@ exports.listCodes = async (req, res) => {
       if (code.office_id) {
         const off = await Office.findByPk(code.office_id);
         if (off) office = off.name;
+      } else {
+        office = '—';
       }
       if (code.role_id) {
         const rol = await Role.findByPk(code.role_id);
         if (rol) role = rol.name;
+      } else {
+        role = '—';
       }
       if (code.position_id) {
         const pos = await Position.findByPk(code.position_id);
         if (pos) position = pos.name;
       }
 
-      // Resolve generated_by admin username – manual fetch to avoid association issues
       if (code.generated_by_admin_id) {
         const admin = await Admin.findByPk(code.generated_by_admin_id, {
           attributes: ['user_id']
