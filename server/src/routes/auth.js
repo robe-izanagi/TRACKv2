@@ -8,7 +8,8 @@ const {
 } = require('../controllers/googleAuthController');
 
 const { authenticate } = require('../middleware/auth');
-const { User, UserProfile, Department, Office, Role } = require('../models');
+const { User, UserProfile, Department, Office, Role, Admin, Position } = require('../models');
+const { Op } = require('sequelize');
 
 // Local admin login
 router.post('/login', login);
@@ -70,8 +71,12 @@ router.get('/me', authenticate, async (req, res) => {
 // List users (for Invite Attendees modal)
 router.get('/users', authenticate, async (req, res) => {
   try {
-    const { department_id } = req.query;
+    const { department_id, exclude_admins } = req.query;
+
+    // Build the initial where clause for users
     const where = {};
+
+    // If a department is specified, restrict to users in that department
     if (department_id) {
       const profiles = await UserProfile.findAll({
         where: { department_id },
@@ -81,14 +86,31 @@ router.get('/users', authenticate, async (req, res) => {
       where.id = userIds;
     }
 
+    // Exclude admin users if requested (exclude_admins=true)
+    if (exclude_admins === 'true') {
+      const adminUsers = await Admin.findAll({ attributes: ['user_id'] });
+      const adminIds = adminUsers.map(a => a.user_id);
+      if (where.id) {
+        // If we already have a list, filter out admin IDs
+        where.id = where.id.filter(id => !adminIds.includes(id));
+      } else {
+        // If no filter yet, exclude all admin IDs
+        where.id = { [Op.notIn]: adminIds };
+      }
+    }
+
     const users = await User.findAll({
       where,
       attributes: ['id', 'email', 'username'],
       include: [
         {
           model: UserProfile,
-          attributes: ['department_id', 'full_name'],
-          include: [{ model: Department, attributes: ['name'] }]
+          attributes: ['full_name', 'department_id', 'office_id', 'position_id'],
+          include: [
+            { model: Department, attributes: ['id', 'name'] },
+            { model: Office, attributes: ['id', 'name'] },
+            { model: Position, attributes: ['id', 'name'] }
+          ]
         }
       ]
     });
@@ -98,6 +120,10 @@ router.get('/users', authenticate, async (req, res) => {
       email: user.email,
       name: user.UserProfile?.full_name || user.username || user.email,
       department: user.UserProfile?.Department?.name || null,
+      department_id: user.UserProfile?.department_id || null,
+      office: user.UserProfile?.Office?.name || null,
+      office_id: user.UserProfile?.office_id || null,
+      position: user.UserProfile?.Position?.name || null,
     }));
 
     res.json({ ok: true, users: result });
