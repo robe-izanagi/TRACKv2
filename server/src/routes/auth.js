@@ -65,31 +65,41 @@ router.get('/me', authenticate, async (req, res) => {
   }
 });
 
-// ── New endpoint for Invite Attendees ─────────────────
+
 router.get('/users', authenticate, async (req, res) => {
   try {
     const { department_id } = req.query;
-    const whereProfile = {};
+    const where = {};
     if (department_id) {
-      whereProfile.department_id = department_id;
+      // Find profiles with that department, then get the user IDs
+      const profiles = await UserProfile.findAll({
+        where: { department_id },
+        attributes: ['user_id']
+      });
+      const userIds = profiles.map(p => p.user_id);
+      where.id = userIds;
     }
 
-    const profiles = await UserProfile.findAll({
-      where: whereProfile,
+    const users = await User.findAll({
+      where,
+      attributes: ['id', 'email', 'username'],
       include: [
-        { model: User, attributes: ['id', 'email', 'username'] },
-        { model: Department, attributes: ['id', 'name'] }
+        {
+          model: UserProfile,
+          attributes: ['department_id'],
+          include: [{ model: Department, attributes: ['name'] }]
+        }
       ]
     });
 
-    const users = profiles.map(profile => ({
-      id: profile.User.id,
-      email: profile.User.email,
-      name: profile.User.username || profile.User.email,
-      department: profile.Department ? profile.Department.name : null,
+    const result = users.map(user => ({
+      id: user.id,
+      email: user.email,
+      name: user.username || user.email,
+      department: user.UserProfile?.Department?.name || null,
     }));
 
-    res.json({ ok: true, users });
+    res.json({ ok: true, users: result });
   } catch (error) {
     console.error('List users error:', error);
     res.status(500).json({ ok: false, message: 'Server error.' });
