@@ -91,10 +91,10 @@ router.get('/users', authenticate, async (req, res) => {
       const adminUsers = await Admin.findAll({ attributes: ['user_id'] });
       const adminIds = adminUsers.map(a => a.user_id);
       if (where.id) {
-        // If we already have a list, filter out admin IDs
-        where.id = where.id.filter(id => !adminIds.includes(id));
+        // Filter out admin IDs from the existing list
+        where.id = { [Op.in]: where.id, [Op.notIn]: adminIds };
       } else {
-        // If no filter yet, exclude all admin IDs
+        // Exclude all admin IDs
         where.id = { [Op.notIn]: adminIds };
       }
     }
