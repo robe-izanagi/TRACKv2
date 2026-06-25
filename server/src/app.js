@@ -1,14 +1,16 @@
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
+const fs = require('fs');
+const path = require('path');
 const sequelize = require('./config/database');
 const models = require('./models');
-models.Location.sync();
 const seed = require('./seeders/seed');
-const path = require('path');
 
 const app = express();
 
+// ============
+// Routes
 // ============
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
@@ -17,7 +19,6 @@ const lookupsRoutes = require('./routes/lookups');
 const venueRoutes = require('./routes/venues');
 const eventRoutes = require('./routes/events');
 const attachmentRoutes = require('./routes/attachments');
-
 
 app.use(cors());
 app.use(morgan('dev'));
@@ -28,28 +29,46 @@ app.get('/', (req, res) => {
 });
 
 // ============
+// Mount routes
+// ============
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/account-code-requests', accountCodeRequestsRoutes);
 app.use('/api/lookups', lookupsRoutes);
 app.use('/api/venues', venueRoutes);
 app.use('/api/events', eventRoutes);
-app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 app.use('/api/attachments', attachmentRoutes);
 
-// Only sync & seed when RUN_SYNC=true
-if (process.env.RUN_SYNC === 'true') {
-  sequelize.authenticate()
-    .then(() => {
-      console.log('Connected to TiDB Cloud');
-      return sequelize.sync({ force: true });
-    })
-    .then(() => {
-      console.log('Tables synced');
-      return seed();
-    })
-    .then(() => console.log('Seed complete'))
-    .catch(err => console.error('Error:', err));
+// Serve uploaded files statically
+const uploadsPath = path.join(__dirname, '..', 'uploads');
+if (!fs.existsSync(uploadsPath)) {
+  fs.mkdirSync(uploadsPath, { recursive: true });
 }
+app.use('/uploads', express.static(uploadsPath));
+
+// ============
+// Database sync & seed (when RUN_SYNC=true)
+// ============
+async function initializeDatabase() {
+  try {
+    await sequelize.authenticate();
+    console.log('✅ Connected to TiDB Cloud');
+
+    if (process.env.RUN_SYNC === 'true') {
+      // Force recreate all tables (development only)
+      await sequelize.sync({ force: true });
+      console.log('✅ Tables synced');
+      await seed();
+      console.log('✅ Seed complete');
+    } else {
+      // Ensure the locations table exists (safe – only creates if missing)
+      await models.Location.sync();
+    }
+  } catch (err) {
+    console.error('❌ Database initialization error:', err);
+  }
+}
+
+initializeDatabase();
 
 module.exports = app;
