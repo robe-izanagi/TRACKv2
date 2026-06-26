@@ -46,26 +46,31 @@ if (!fs.existsSync(uploadsPath)) {
 }
 app.use('/uploads', express.static(uploadsPath));
 
+// Serve public assets (holidays.json, etc.)
+const publicPath = path.join(__dirname, '..', 'public');
+if (!fs.existsSync(publicPath)) {
+  fs.mkdirSync(publicPath, { recursive: true });
+}
+app.use('/data', express.static(publicPath));
+
 // ============
 // Database sync & seed (when RUN_SYNC=true)
 // ============
 async function initializeDatabase() {
   try {
     await sequelize.authenticate();
-    console.log('✅ Connected to TiDB Cloud');
+    console.log('Connected to TiDB Cloud');
 
     if (process.env.RUN_SYNC === 'true') {
-      // Force recreate all tables (development only)
       await sequelize.sync({ force: true });
-      console.log('✅ Tables synced');
+      console.log('Tables synced');
       await seed();
-      console.log('✅ Seed complete');
+      console.log('Seed complete');
     } else {
-      // Ensure the locations table exists (safe – only creates if missing)
       await models.Location.sync();
     }
   } catch (err) {
-    console.error('❌ Database initialization error:', err);
+    console.error('Database initialization error:', err);
   }
 }
 

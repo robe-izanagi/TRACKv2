@@ -1,0 +1,112 @@
+[
+  {
+    "id": "holiday-1",
+    "title": "New Year's Day",
+    "date": "2026-01-01",
+    "time": "00:00",
+    "endTime": "23:59",
+    "type": "campus",
+    "color": "#800000",
+    "description": "Regular holiday",
+    "location": "Philippines"
+  },
+  {
+    "id": "holiday-2",
+    "title": "Maundy Thursday",
+    "date": "2026-04-02",
+    "time": "00:00",
+    "endTime": "23:59",
+    "type": "campus",
+    "color": "#800000",
+    "description": "Regular holiday",
+    "location": "Philippines"
+  },
+  {
+    "id": "holiday-3",
+    "title": "Good Friday",
+    "date": "2026-04-03",
+    "time": "00:00",
+    "endTime": "23:59",
+    "type": "campus",
+    "color": "#800000",
+    "description": "Regular holiday",
+    "location": "Philippines"
+  },
+  {
+    "id": "holiday-4",
+    "title": "Araw ng Kagitingan",
+    "date": "2026-04-09",
+    "time": "00:00",
+    "endTime": "23:59",
+    "type": "campus",
+    "color": "#800000",
+    "description": "Regular holiday",
+    "location": "Philippines"
+  },
+  {
+    "id": "holiday-5",
+    "title": "Labor Day",
+    "date": "2026-05-01",
+    "time": "00:00",
+    "endTime": "23:59",
+    "type": "campus",
+    "color": "#800000",
+    "description": "Regular holiday",
+    "location": "Philippines"
+  },
+  {
+    "id": "holiday-6",
+    "title": "Independence Day",
+    "date": "2026-06-12",
+    "time": "00:00",
+    "endTime": "23:59",
+    "type": "campus",
+    "color": "#800000",
+    "description": "Regular holiday",
+    "location": "Philippines"
+  },
+  {
+    "id": "holiday-7",
+    "title": "National Heroes Day",
+    "date": "2026-08-31",
+    "time": "00:00",
+    "endTime": "23:59",
+    "type": "campus",
+    "color": "#800000",
+    "description": "Regular holiday",
+    "location": "Philippines"
+  },
+  {
+    "id": "holiday-8",
+    "title": "Bonifacio Day",
+    "date": "2026-11-30",
+    "time": "00:00",
+    "endTime": "23:59",
+    "type": "campus",
+    "color": "#800000",
+    "description": "Regular holiday",
+    "location": "Philippines"
+  },
+  {
+    "id": "holiday-9",
+    "title": "Christmas Day",
+    "date": "2026-12-25",
+    "time": "00:00",
+    "endTime": "23:59",
+    "type": "campus",
+    "color": "#800000",
+    "description": "Regular holiday",
+    "location": "Philippines"
+  },
+  {
+    "id": "holiday-10",
+    "title": "Rizal Day",
+    "date": "2026-12-30",
+    "time": "00:00",
+    "endTime": "23:59",
+    "type": "campus",
+    "color": "#800000",
+    "description": "Regular holiday",
+    "location": "Philippines"
+  }
+]
