@@ -1,5 +1,9 @@
 const { v4: uuidv4 } = require('uuid');
-const { sequelize, Event, EventAttendee, EventCollaborator, Venue, Location, UserProfile } = require('../models');
+const { Op } = require('sequelize');
+const {
+  sequelize, Event, EventAttendee, EventCollaborator,
+  Venue, Location, UserProfile, Department, Office, User
+} = require('../models');
 
 exports.createEvent = async (req, res) => {
   const t = await sequelize.transaction();
