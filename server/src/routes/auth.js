@@ -68,58 +68,84 @@ router.get('/me', authenticate, async (req, res) => {
   }
 });
 
-// List users (for Invite Attendees modal)
+// List users (for Invite Attendees modal) – uses manual fetching
 router.get('/users', authenticate, async (req, res) => {
   try {
     const { department_id, exclude_admins } = req.query;
 
-    const where = {};
-
-    if (department_id) {
-      const profiles = await UserProfile.findAll({
-        where: { department_id },
-        attributes: ['user_id']
-      });
-      const userIds = profiles.map(p => p.user_id);
-      where.id = userIds;
-    }
-
+    // Get all non‑admin user IDs if needed
+    let userIds = null;
     if (exclude_admins === 'true') {
       const adminUsers = await Admin.findAll({ attributes: ['user_id'] });
       const adminIds = adminUsers.map(a => a.user_id);
-      if (where.id) {
-        where.id = { [Op.in]: where.id, [Op.notIn]: adminIds };
+      const allProfiles = await UserProfile.findAll({ attributes: ['user_id'] });
+      userIds = allProfiles
+        .map(p => p.user_id)
+        .filter(id => !adminIds.includes(id));
+    }
+
+    // If a department_id is given, filter further
+    if (department_id) {
+      const deptProfiles = await UserProfile.findAll({
+        where: { department_id },
+        attributes: ['user_id']
+      });
+      const deptUserIds = deptProfiles.map(p => p.user_id);
+      if (userIds) {
+        userIds = userIds.filter(id => deptUserIds.includes(id));
       } else {
-        where.id = { [Op.notIn]: adminIds };
+        userIds = deptUserIds;
       }
     }
 
+    // Fetch users (either filtered or all)
+    const where = userIds ? { id: userIds } : {};
     const users = await User.findAll({
       where,
-      attributes: ['id', 'email', 'username'],
-      include: [
-        {
-          model: UserProfile,
-          attributes: ['full_name', 'department_id', 'office_id', 'position_id'],
-          include: [
-            { model: Department, attributes: ['id', 'name'] },
-            { model: Office, attributes: ['id', 'name'] },
-            { model: Position, attributes: ['id', 'name'] }
-          ]
-        }
-      ]
+      attributes: ['id', 'email', 'username']
     });
 
-    const result = users.map(user => ({
-      id: user.id,
-      email: user.email,
-      name: user.UserProfile?.full_name || user.username || user.email,
-      department: user.UserProfile?.Department?.name || null,
-      department_id: user.UserProfile?.department_id || null,   // ← this was missing
-      office: user.UserProfile?.Office?.name || null,
-      office_id: user.UserProfile?.office_id || null,
-      position: user.UserProfile?.Position?.name || null,
-    }));
+    // Manually build the response with profile data
+    const result = [];
+    for (const user of users) {
+      const profile = await UserProfile.findByPk(user.id);
+      let department = null,
+        departmentId = null,
+        office = null,
+        officeId = null,
+        position = null,
+        fullName = null;
+
+      if (profile) {
+        fullName = profile.full_name;
+        departmentId = profile.department_id;
+        officeId = profile.office_id;
+
+        if (profile.department_id) {
+          const dept = await Department.findByPk(profile.department_id);
+          if (dept) department = dept.name;
+        }
+        if (profile.office_id) {
+          const off = await Office.findByPk(profile.office_id);
+          if (off) office = off.name;
+        }
+        if (profile.position_id) {
+          const pos = await Position.findByPk(profile.position_id);
+          if (pos) position = pos.name;
+        }
+      }
+
+      result.push({
+        id: user.id,
+        email: user.email,
+        name: fullName || user.username || user.email,
+        department,
+        department_id: departmentId,
+        office,
+        office_id: officeId,
+        position,
+      });
+    }
 
     res.json({ ok: true, users: result });
   } catch (error) {
