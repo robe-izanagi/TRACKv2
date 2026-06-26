@@ -1,6 +1,6 @@
 /* Mobile‑only container */
 .mobileContainer {
-  max-width: 480px;
+  max-width: 500px;
   margin: 0 auto;
   height: 100vh;
   display: flex;
@@ -52,7 +52,7 @@
 .mainContent {
   flex: 1;
   overflow-y: auto;
-  padding: 16px;
+  /* padding: 16px; */
   background: inherit;
 }
 

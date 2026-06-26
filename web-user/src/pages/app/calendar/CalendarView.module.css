@@ -1,4 +1,5 @@
-/* Container */
+
+
 .container {
   max-width: 480px;
   margin: 0 auto;
@@ -111,16 +112,20 @@
   padding: 4px 10px;
 }
 
-/* Monthly calendar grid */
+/* ── Monthly calendar grid (edge‑to‑edge, no gaps) ── */
 .calendarGridContainer {
-  margin-top: 8px;
+  margin: 0;
+  padding: 0;
+  width: 100%;
 }
 
 .calendarGrid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  grid-template-rows: auto repeat(5, minmax(80px, 1fr));
-  gap: 2px;
+  grid-template-rows: auto repeat(5, minmax(112px, 1fr));
+  /* ~40% taller rows */
+  gap: 0;
+  border: none;
 }
 
 .dayHeader {
@@ -129,6 +134,7 @@
   font-weight: 600;
   color: #6b7280;
   padding: 4px 0;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .dayCell {
@@ -136,19 +142,21 @@
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  padding: 6px 4px 4px;
-  border-radius: 8px;
+  padding: 2px;
+  /* minimal inner spacing */
+  border-radius: 0;
+  /* no rounding */
   background: white;
   border: 1px solid #e5e7eb;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  box-shadow: none;
   cursor: pointer;
-  transition: all 0.2s;
   overflow: hidden;
 }
 
 .otherMonthCell {
   background: #f3f4f6;
   opacity: 0.7;
+  border-radius: 0;
 }
 
 .otherMonthNumber {
@@ -157,7 +165,7 @@
 
 .todayCell {
   border-color: #800000;
-  box-shadow: 0 0 0 2px rgba(128, 0, 0, 0.2);
+  box-shadow: inset 0 0 0 2px rgba(128, 0, 0, 0.2);
 }
 
 .activeCell {
@@ -174,7 +182,7 @@
 .eventPills {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
   width: 100%;
   overflow: hidden;
 }
@@ -196,18 +204,18 @@
   padding-left: 4px;
 }
 
-/* ── Daily Timeline ── */
+/* ── Daily Timeline (flush edges) ── */
 .dailyContainer {
-  margin-top: 8px;
+  margin: 0;
+  padding: 0;
 }
 
 .timelineWrapper {
   position: relative;
   width: 100%;
   height: calc(24 * 64px);
-  /* 24 hours * 64px */
   background: #f9fafb;
-  border-radius: 12px;
+  border-radius: 0;
   border: 1px solid #e5e7eb;
   overflow: hidden;
 }
@@ -242,7 +250,6 @@
 .timelineEvent {
   position: absolute;
   left: 54px;
-  /* after hour labels */
   right: 4px;
   border-radius: 8px;
   padding: 4px 8px;
@@ -402,4 +409,132 @@
 .desc {
   color: #4b5563;
   line-height: 1.5;
+}
+
+/* ── Controls row ── */
+.controlsRow {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  align-items: center;
+}
+
+.durationSelect,
+.monthSelect {
+  padding: 6px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 13px;
+  background: white;
+  color: #374151;
+  cursor: pointer;
+}
+
+.monthSelect {
+  min-width: 120px;
+}
+
+/* ── Week View (edge‑to‑edge grid) ── */
+.weekContainer {
+  margin-top: 0;
+}
+
+.weekGrid {
+  border: 1px solid #e5e7eb;
+  border-radius: 0;
+  overflow: hidden;
+  background: white;
+}
+
+.weekDayHeader {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-left: 50px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.weekDayLabel {
+  padding: 8px 4px;
+  text-align: center;
+  font-size: 12px;
+  color: #374151;
+}
+
+.weekDayName {
+  display: block;
+  font-weight: 600;
+}
+
+.weekDayNumber {
+  font-size: 11px;
+  color: #6b7280;
+}
+
+.weekTimeline {
+  overflow-y: auto;
+  max-height: calc(100vh - 250px);
+}
+
+.weekHourRow {
+  display: grid;
+  grid-template-columns: 50px repeat(7, 1fr);
+  border-bottom: 1px solid #f3f4f6;
+  min-height: 48px;
+}
+
+.weekHourLabel {
+  padding: 4px;
+  font-size: 11px;
+  color: #6b7280;
+  text-align: right;
+  background: #f9fafb;
+  border-right: 1px solid #e5e7eb;
+}
+
+.weekHourCells {
+  display: contents;
+}
+
+.weekCell {
+  position: relative;
+  border-right: 1px solid #f3f4f6;
+  min-height: 48px;
+}
+
+.weekCell:last-child {
+  border-right: none;
+}
+
+.weekEvent {
+  font-size: 11px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  color: white;
+  margin: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+/* Adjust header title font size */
+.headerTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+  text-align: center;
+}
+
+/* Year select */
+.yearSelect {
+  padding: 6px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 13px;
+  background: white;
+  color: #374151;
+  cursor: pointer;
+  width: 80px;
 }
