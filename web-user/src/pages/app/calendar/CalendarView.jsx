@@ -9,6 +9,7 @@ import {
   FiLock,
   FiTarget,
 } from "react-icons/fi";
+import apiClient from "../../../api/client"; // ← adjust import path if needed
 import styles from "./CalendarView.module.css";
 
 // ── Constants ──────────────────────────────────────
@@ -63,9 +64,7 @@ const timeToMinutes = (timeStr) => {
 
 const HOUR_HEIGHT = 64;
 
-// ── Component ──────────────────────────────────────
 export default function CalendarView() {
-  // ── State ────────────────────────────────────────
   const [currentDate, setCurrentDate] = useState(new Date(2026, 5, 1));
   const [selectedDate, setSelectedDate] = useState("2026-06-10");
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -79,11 +78,9 @@ export default function CalendarView() {
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
 
-  // Year options
   const currentYear = new Date().getFullYear();
   const yearOptions = Array.from({ length: 11 }, (_, i) => currentYear - 5 + i);
 
-  // Derived data
   const weekStart = useMemo(() => {
     const d = new Date(currentDate);
     d.setDate(d.getDate() - d.getDay());
@@ -91,18 +88,58 @@ export default function CalendarView() {
   }, [currentDate]);
 
   const weekDays = useMemo(() => getWeekDays(weekStart), [weekStart]);
-  const monthGrid = useMemo(() => generateMonthGrid(year, month), [year, month]);
+  const monthGrid = useMemo(
+    () => generateMonthGrid(year, month),
+    [year, month],
+  );
 
-  // ── Events – holidays loaded from file, user events (empty for now) ──
+  // ── Events state ──────────────────────────────────
   const [holidays, setHolidays] = useState([]);
-  const userEvents = [];   // will be replaced later with API fetch
+  const [userEvents, setUserEvents] = useState([]);
 
+  // Determine the visible date range based on current view
+  const visibleRange = useMemo(() => {
+    let start, end;
+    if (duration === "day") {
+      start = selectedDate;
+      end = selectedDate;
+    } else if (duration === "week") {
+      const d = new Date(weekStart);
+      start = d.toISOString().slice(0, 10);
+      d.setDate(d.getDate() + 6);
+      end = d.toISOString().slice(0, 10);
+    } else {
+      // month
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      start = firstDay.toISOString().slice(0, 10);
+      end = lastDay.toISOString().slice(0, 10);
+    }
+    return { start, end };
+  }, [duration, selectedDate, weekStart, year, month]);
+
+  // Fetch holidays once
   useEffect(() => {
-    fetch('https://trackv2-68rg.onrender.com/data/holidays.json')
-      .then(res => res.json())
-      .then(data => setHolidays(data))
+    fetch("https://trackv2-68rg.onrender.com/data/holidays.json")
+      .then((res) => res.json())
+      .then((data) => setHolidays(data))
       .catch(() => {});
   }, []);
+
+  // Fetch user events when visible range changes
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const res = await apiClient.get("/events", {
+          params: { start: visibleRange.start, end: visibleRange.end },
+        });
+        setUserEvents(res.data.events || []);
+      } catch (err) {
+        console.error("Failed to fetch events:", err);
+      }
+    };
+    fetchEvents();
+  }, [visibleRange.start, visibleRange.end]);
 
   const allEvents = [...holidays, ...userEvents];
 
@@ -130,7 +167,7 @@ export default function CalendarView() {
 
   const dailyEvents = selectedDate ? eventsByDate[selectedDate] || [] : [];
 
-  // ── Navigation ───────────────────────────────────
+  // Navigation
   const goToToday = () => {
     const today = new Date();
     setCurrentDate(today);
@@ -154,51 +191,78 @@ export default function CalendarView() {
   const goToPrev = () => navigate(-1);
   const goToNext = () => navigate(1);
 
-  // Swipe handlers
-  const handleTouchStart = (e) => { touchStartX.current = e.touches[0].clientX; };
+  // Swipe
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
   const handleTouchEnd = (e) => {
     touchEndX.current = e.changedTouches[0].clientX;
     const diff = touchStartX.current - touchEndX.current;
     if (Math.abs(diff) > 50) diff > 0 ? goToNext() : goToPrev();
   };
 
-  // Event handlers
-  const handleDayClick = useCallback((dateStr) => {
-    setSelectedDate(dateStr);
-    setSelectedEvent(null);
-    if (duration !== "day") setSheetOpen(true);
-  }, [duration]);
+  const handleDayClick = useCallback(
+    (dateStr) => {
+      setSelectedDate(dateStr);
+      setSelectedEvent(null);
+      if (duration !== "day") setSheetOpen(true);
+    },
+    [duration],
+  );
 
-  const handleEventClick = useCallback((ev) => { setSelectedEvent(ev); setSheetOpen(true); }, []);
-  const closeSheet = () => { setSheetOpen(false); setSelectedEvent(null); };
+  const handleEventClick = useCallback((ev) => {
+    setSelectedEvent(ev);
+    setSheetOpen(true);
+  }, []);
+  const closeSheet = () => {
+    setSheetOpen(false);
+    setSelectedEvent(null);
+  };
 
   // Header title
   const headerTitle = useMemo(() => {
     if (duration === "day") {
       return new Date(selectedDate + "T12:00:00").toLocaleDateString("en-US", {
-        weekday: "long", month: "short", day: "numeric", year: "numeric",
+        weekday: "long",
+        month: "short",
+        day: "numeric",
+        year: "numeric",
       });
     }
     if (duration === "week") {
       const start = new Date(weekStart);
       const end = new Date(weekStart);
       end.setDate(end.getDate() + 6);
-      const startStr = start.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-      const endStr = end.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+      const startStr = start.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      });
+      const endStr = end.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
       return `${startStr} – ${endStr}`;
     }
     return `${MONTH_NAMES[month]} ${year}`;
   }, [duration, selectedDate, weekStart, month, year]);
 
   // Month & Year dropdowns
-  const monthOptions = MONTH_NAMES.map((name, idx) => ({ value: idx, label: name }));
+  const monthOptions = MONTH_NAMES.map((name, idx) => ({
+    value: idx,
+    label: name,
+  }));
 
   const handleMonthChange = (e) => {
     const newMonth = parseInt(e.target.value, 10);
     const newDate = new Date(currentDate);
     newDate.setMonth(newMonth);
-    if (duration === "day") { newDate.setDate(1); setSelectedDate(newDate.toISOString().slice(0, 10)); }
-    else if (duration === "week") { newDate.setDate(1); }
+    if (duration === "day") {
+      newDate.setDate(1);
+      setSelectedDate(newDate.toISOString().slice(0, 10));
+    } else if (duration === "week") {
+      newDate.setDate(1);
+    }
     setCurrentDate(newDate);
   };
 
@@ -206,16 +270,20 @@ export default function CalendarView() {
     const newYear = parseInt(e.target.value, 10);
     const newDate = new Date(currentDate);
     newDate.setFullYear(newYear);
-    if (duration === "day") { if (newDate.getMonth() !== month) newDate.setDate(1); setSelectedDate(newDate.toISOString().slice(0, 10)); }
-    else if (duration === "week") { newDate.setDate(1); }
+    if (duration === "day") {
+      if (newDate.getMonth() !== month) newDate.setDate(1);
+      setSelectedDate(newDate.toISOString().slice(0, 10));
+    } else if (duration === "week") {
+      newDate.setDate(1);
+    }
     setCurrentDate(newDate);
   };
 
   const toggleFilter = (type) => {
-    setActiveFilters(prev => {
+    setActiveFilters((prev) => {
       if (type === "all" || prev.includes("all")) return [];
       if (prev.includes(type)) {
-        const next = prev.filter(t => t !== type);
+        const next = prev.filter((t) => t !== type);
         return next.length === 0 ? [] : next;
       }
       return [...prev, type];
@@ -224,65 +292,126 @@ export default function CalendarView() {
 
   return (
     <div className={styles.pageWrapper}>
-      <div className={styles.container} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
-        {/* Header */}
+      <div
+        className={styles.container}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         <div className={styles.header}>
-          <button onClick={goToPrev} className={styles.navBtn}><FiChevronLeft size={20} /></button>
+          <button onClick={goToPrev} className={styles.navBtn}>
+            <FiChevronLeft size={20} />
+          </button>
           <h2 className={styles.headerTitle}>{headerTitle}</h2>
-          <button onClick={goToNext} className={styles.navBtn}><FiChevronRight size={20} /></button>
+          <button onClick={goToNext} className={styles.navBtn}>
+            <FiChevronRight size={20} />
+          </button>
         </div>
 
-        {/* Controls row */}
         <div className={styles.controlsRow}>
-          <button className={`${styles.chip} ${styles.todayChip}`} onClick={goToToday}>Today</button>
-          <select className={styles.durationSelect} value={duration} onChange={e => setDuration(e.target.value)}>
+          <button
+            className={`${styles.chip} ${styles.todayChip}`}
+            onClick={goToToday}
+          >
+            Today
+          </button>
+          <select
+            className={styles.durationSelect}
+            value={duration}
+            onChange={(e) => setDuration(e.target.value)}
+          >
             <option value="day">Day</option>
             <option value="week">Week</option>
             <option value="month">Month</option>
           </select>
-          <select className={styles.monthSelect} value={month} onChange={handleMonthChange}>
-            {monthOptions.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+          <select
+            className={styles.monthSelect}
+            value={month}
+            onChange={handleMonthChange}
+          >
+            {monthOptions.map((m) => (
+              <option key={m.value} value={m.value}>
+                {m.label}
+              </option>
+            ))}
           </select>
-          <select className={styles.yearSelect} value={year} onChange={handleYearChange}>
-            {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
+          <select
+            className={styles.yearSelect}
+            value={year}
+            onChange={handleYearChange}
+          >
+            {yearOptions.map((y) => (
+              <option key={y} value={y}>
+                {y}
+              </option>
+            ))}
           </select>
         </div>
 
-        {/* Filter chips */}
         <div className={`${styles.chipRow} ${styles.scrollableRow}`}>
-          <button className={`${styles.chip} ${activeFilters.length === 0 ? styles.chipActive : ""}`} onClick={() => toggleFilter("all")}>
-            <FiTarget size={14} style={{ marginRight: 4 }} /> All ({eventCounts.all})
+          <button
+            className={`${styles.chip} ${activeFilters.length === 0 ? styles.chipActive : ""}`}
+            onClick={() => toggleFilter("all")}
+          >
+            <FiTarget size={14} style={{ marginRight: 4 }} /> All (
+            {eventCounts.all})
           </button>
-          <button className={`${styles.chip} ${activeFilters.includes("campus") ? styles.chipActive : ""}`} onClick={() => toggleFilter("campus")}>
-            <FiGlobe size={14} style={{ marginRight: 4 }} /> Campus ({eventCounts.campus || 0})
+          <button
+            className={`${styles.chip} ${activeFilters.includes("campus") ? styles.chipActive : ""}`}
+            onClick={() => toggleFilter("campus")}
+          >
+            <FiGlobe size={14} style={{ marginRight: 4 }} /> Campus (
+            {eventCounts.campus || 0})
           </button>
-          <button className={`${styles.chip} ${activeFilters.includes("department") ? styles.chipActive : ""}`} onClick={() => toggleFilter("department")}>
-            <FiUsers size={14} style={{ marginRight: 4 }} /> Dept ({eventCounts.department || 0})
+          <button
+            className={`${styles.chip} ${activeFilters.includes("department") ? styles.chipActive : ""}`}
+            onClick={() => toggleFilter("department")}
+          >
+            <FiUsers size={14} style={{ marginRight: 4 }} /> Dept (
+            {eventCounts.department || 0})
           </button>
-          <button className={`${styles.chip} ${activeFilters.includes("personal") ? styles.chipActive : ""}`} onClick={() => toggleFilter("personal")}>
-            <FiLock size={14} style={{ marginRight: 4 }} /> Private ({eventCounts.personal || 0})
+          <button
+            className={`${styles.chip} ${activeFilters.includes("personal") ? styles.chipActive : ""}`}
+            onClick={() => toggleFilter("personal")}
+          >
+            <FiLock size={14} style={{ marginRight: 4 }} /> Private (
+            {eventCounts.personal || 0})
           </button>
         </div>
 
-        {/* Main content (day/week/month) */}
+        {/* Day / Week / Month views – unchanged from previous version */}
         {duration === "day" && (
           <div className={styles.dailyContainer}>
             <div className={styles.timelineWrapper}>
               {Array.from({ length: 24 }, (_, i) => (
                 <div key={i} className={styles.hourSlot}>
-                  <span className={styles.hourLabel}>{i === 0 ? "12 AM" : i < 12 ? `${i} AM` : i === 12 ? "12 PM" : `${i - 12} PM`}</span>
+                  <span className={styles.hourLabel}>
+                    {i === 0
+                      ? "12 AM"
+                      : i < 12
+                        ? `${i} AM`
+                        : i === 12
+                          ? "12 PM"
+                          : `${i - 12} PM`}
+                  </span>
                   <div className={styles.hourLine} />
                 </div>
               ))}
-              {dailyEvents.map(ev => {
+              {dailyEvents.map((ev) => {
                 const startMin = timeToMinutes(ev.time);
                 const endMin = timeToMinutes(ev.endTime);
                 const top = (startMin / 60) * HOUR_HEIGHT;
                 const height = ((endMin - startMin) / 60) * HOUR_HEIGHT;
                 return (
-                  <div key={ev.id} className={styles.timelineEvent} style={{ backgroundColor: ev.color, top, height }} onClick={() => handleEventClick(ev)}>
+                  <div
+                    key={ev.id}
+                    className={styles.timelineEvent}
+                    style={{ backgroundColor: ev.color, top, height }}
+                    onClick={() => handleEventClick(ev)}
+                  >
                     <span className={styles.eventTitle}>{ev.title}</span>
-                    <span className={styles.eventTime}>{ev.time} – {ev.endTime}</span>
+                    <span className={styles.eventTime}>
+                      {ev.time} – {ev.endTime}
+                    </span>
                   </div>
                 );
               })}
@@ -296,24 +425,45 @@ export default function CalendarView() {
               <div className={styles.weekDayHeader}>
                 {weekDays.map((day, idx) => (
                   <div key={idx} className={styles.weekDayLabel}>
-                    <span className={styles.weekDayName}>{DAY_NAMES[day.getDay()]}</span>
-                    <span className={styles.weekDayNumber}>{day.getDate()}</span>
+                    <span className={styles.weekDayName}>
+                      {DAY_NAMES[day.getDay()]}
+                    </span>
+                    <span className={styles.weekDayNumber}>
+                      {day.getDate()}
+                    </span>
                   </div>
                 ))}
               </div>
               <div className={styles.weekTimeline}>
                 {Array.from({ length: 24 }, (_, hour) => (
                   <div key={hour} className={styles.weekHourRow}>
-                    <span className={styles.weekHourLabel}>{hour === 0 ? "12 AM" : hour < 12 ? `${hour} AM` : hour === 12 ? "12 PM" : `${hour - 12} PM`}</span>
+                    <span className={styles.weekHourLabel}>
+                      {hour === 0
+                        ? "12 AM"
+                        : hour < 12
+                          ? `${hour} AM`
+                          : hour === 12
+                            ? "12 PM"
+                            : `${hour - 12} PM`}
+                    </span>
                     <div className={styles.weekHourCells}>
                       {weekDays.map((day, dayIdx) => {
                         const dateStr = day.toISOString().slice(0, 10);
                         const events = eventsByDate[dateStr] || [];
-                        const eventsAtHour = events.filter(ev => parseInt(ev.time, 10) === hour);
+                        const eventsAtHour = events.filter(
+                          (ev) => parseInt(ev.time, 10) === hour,
+                        );
                         return (
                           <div key={dayIdx} className={styles.weekCell}>
-                            {eventsAtHour.map(ev => (
-                              <div key={ev.id} className={styles.weekEvent} style={{ backgroundColor: ev.color }} onClick={() => handleEventClick(ev)}>{ev.title}</div>
+                            {eventsAtHour.map((ev) => (
+                              <div
+                                key={ev.id}
+                                className={styles.weekEvent}
+                                style={{ backgroundColor: ev.color }}
+                                onClick={() => handleEventClick(ev)}
+                              >
+                                {ev.title}
+                              </div>
                             ))}
                           </div>
                         );
@@ -329,19 +479,46 @@ export default function CalendarView() {
         {duration === "month" && (
           <div className={styles.calendarGridContainer}>
             <div className={styles.calendarGrid}>
-              {DAY_NAMES.map(day => <div key={day} className={styles.dayHeader}>{day}</div>)}
+              {DAY_NAMES.map((day) => (
+                <div key={day} className={styles.dayHeader}>
+                  {day}
+                </div>
+              ))}
               {monthGrid.map((cell, idx) => {
                 const events = eventsByDate[cell.dateStr] || [];
                 const isToday = cell.dateStr === selectedDate;
                 return (
-                  <button key={idx} className={`${styles.dayCell} ${!cell.isCurrentMonth ? styles.otherMonthCell : ""} ${isToday ? styles.todayCell : ""}`} onClick={() => handleDayClick(cell.dateStr)}>
-                    <span className={`${styles.dayNumber} ${!cell.isCurrentMonth ? styles.otherMonthNumber : ""}`}>{cell.day}</span>
+                  <button
+                    key={idx}
+                    className={`${styles.dayCell} ${!cell.isCurrentMonth ? styles.otherMonthCell : ""} ${isToday ? styles.todayCell : ""}`}
+                    onClick={() => handleDayClick(cell.dateStr)}
+                  >
+                    <span
+                      className={`${styles.dayNumber} ${!cell.isCurrentMonth ? styles.otherMonthNumber : ""}`}
+                    >
+                      {cell.day}
+                    </span>
                     {cell.isCurrentMonth && events.length > 0 && (
                       <div className={styles.eventPills}>
-                        {events.slice(0, 2).map(ev => (
-                          <span key={ev.id} className={styles.eventPill} style={{ backgroundColor: ev.color }} onClick={e => { e.stopPropagation(); handleEventClick(ev); }}>{ev.title.substring(0, 10)}{ev.title.length > 10 ? "…" : ""}</span>
+                        {events.slice(0, 2).map((ev) => (
+                          <span
+                            key={ev.id}
+                            className={styles.eventPill}
+                            style={{ backgroundColor: ev.color }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEventClick(ev);
+                            }}
+                          >
+                            {ev.title.substring(0, 10)}
+                            {ev.title.length > 10 ? "…" : ""}
+                          </span>
                         ))}
-                        {events.length > 2 && <span className={styles.morePill}>+{events.length - 2}</span>}
+                        {events.length > 2 && (
+                          <span className={styles.morePill}>
+                            +{events.length - 2}
+                          </span>
+                        )}
                       </div>
                     )}
                   </button>
@@ -354,51 +531,100 @@ export default function CalendarView() {
         {/* Filter Checkboxes */}
         <div className={styles.filterCheckboxRow}>
           <label className={styles.filterCheckbox}>
-            <input type="checkbox" checked={activeFilters.includes("campus")} onChange={() => toggleFilter("campus")} /> Campus
+            <input
+              type="checkbox"
+              checked={activeFilters.includes("campus")}
+              onChange={() => toggleFilter("campus")}
+            />{" "}
+            Campus
           </label>
           <label className={styles.filterCheckbox}>
-            <input type="checkbox" checked={activeFilters.includes("department")} onChange={() => toggleFilter("department")} /> Department
+            <input
+              type="checkbox"
+              checked={activeFilters.includes("department")}
+              onChange={() => toggleFilter("department")}
+            />{" "}
+            Department
           </label>
           <label className={styles.filterCheckbox}>
-            <input type="checkbox" checked={activeFilters.includes("personal")} onChange={() => toggleFilter("personal")} /> Private
+            <input
+              type="checkbox"
+              checked={activeFilters.includes("personal")}
+              onChange={() => toggleFilter("personal")}
+            />{" "}
+            Private
           </label>
         </div>
 
         {/* Bottom Sheet */}
         {sheetOpen && (
           <div className={styles.sheetOverlay} onClick={closeSheet}>
-            <div className={styles.sheet} onClick={e => e.stopPropagation()}>
-              <div className={styles.sheetHandle}><FiChevronDown size={20} /></div>
+            <div className={styles.sheet} onClick={(e) => e.stopPropagation()}>
+              <div className={styles.sheetHandle}>
+                <FiChevronDown size={20} />
+              </div>
               {selectedEvent ? (
                 <div className={styles.eventDetail}>
-                  <button className={styles.backBtn} onClick={() => setSelectedEvent(null)}>← Back</button>
+                  <button
+                    className={styles.backBtn}
+                    onClick={() => setSelectedEvent(null)}
+                  >
+                    ← Back
+                  </button>
                   <h3>{selectedEvent.title}</h3>
                   <div className={styles.meta}>
-                    <div><strong>Date:</strong> {selectedEvent.date}</div>
-                    <div><strong>Time:</strong> {selectedEvent.time} – {selectedEvent.endTime}</div>
-                    <div><strong>Type:</strong> {selectedEvent.type}</div>
-                    {selectedEvent.location && <div><strong>Location:</strong> {selectedEvent.location}</div>}
+                    <div>
+                      <strong>Date:</strong> {selectedEvent.date}
+                    </div>
+                    <div>
+                      <strong>Time:</strong> {selectedEvent.time} –{" "}
+                      {selectedEvent.endTime}
+                    </div>
+                    <div>
+                      <strong>Type:</strong> {selectedEvent.type}
+                    </div>
+                    {selectedEvent.location && (
+                      <div>
+                        <strong>Location:</strong> {selectedEvent.location}
+                      </div>
+                    )}
                   </div>
                   <p className={styles.desc}>{selectedEvent.description}</p>
                 </div>
               ) : (
                 <div className={styles.agenda}>
                   <h3 className={styles.agendaTitle}>
-                    {new Date(selectedDate + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
+                    {new Date(selectedDate + "T00:00:00").toLocaleDateString(
+                      "en-US",
+                      { weekday: "long", month: "short", day: "numeric" },
+                    )}
                   </h3>
-                  {dailyEvents.length === 0 && <p className={styles.noTasks}>No events</p>}
-                  {dailyEvents.map(ev => (
-                    <div key={ev.id} className={styles.agendaItem} onClick={() => handleEventClick(ev)} style={{ borderLeftColor: ev.color }}>
-                      <div className={styles.agendaTime}>{ev.time} – {ev.endTime}</div>
+                  {dailyEvents.length === 0 && (
+                    <p className={styles.noTasks}>No events</p>
+                  )}
+                  {dailyEvents.map((ev) => (
+                    <div
+                      key={ev.id}
+                      className={styles.agendaItem}
+                      onClick={() => handleEventClick(ev)}
+                      style={{ borderLeftColor: ev.color }}
+                    >
+                      <div className={styles.agendaTime}>
+                        {ev.time} – {ev.endTime}
+                      </div>
                       <div className={styles.agendaInfo}>
                         <div className={styles.agendaTitle}>{ev.title}</div>
-                        <div className={styles.agendaMeta}>{ev.type} · {ev.location}</div>
+                        <div className={styles.agendaMeta}>
+                          {ev.type} · {ev.location}
+                        </div>
                       </div>
                     </div>
                   ))}
                 </div>
               )}
-              <button className={styles.closeBtn} onClick={closeSheet}><FiX size={20} /></button>
+              <button className={styles.closeBtn} onClick={closeSheet}>
+                <FiX size={20} />
+              </button>
             </div>
           </div>
         )}
