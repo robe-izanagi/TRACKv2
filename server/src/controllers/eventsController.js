@@ -162,3 +162,52 @@ exports.createEvent = async (req, res) => {
     res.status(500).json({ ok: false, message: 'Server error.' });
   }
 };
+
+
+// GET /api/events?start=YYYY-MM-DD&end=YYYY-MM-DD
+exports.listEvents = async (req, res) => {
+  try {
+    const { start, end } = req.query;
+    if (!start || !end) {
+      return res.status(400).json({ ok: false, message: 'start and end dates are required (YYYY-MM-DD).' });
+    }
+
+    // Overlap logic: event.start_datetime <= end AND event.end_datetime >= start
+    const { Op } = require('sequelize');
+    const events = await Event.findAll({
+      where: {
+        is_archived: false,
+        start_datetime: { [Op.lte]: new Date(`${end}T23:59:59`) },
+        end_datetime: { [Op.gte]: new Date(`${start}T00:00:00`) }
+      },
+      include: [
+        { model: Venue, attributes: ['id', 'name'] },
+        { model: Location, attributes: ['id', 'map_location'] },
+        { model: Department, attributes: ['id', 'name'] },
+        { model: Office, attributes: ['id', 'name'] },
+        { model: User, attributes: ['id', 'username', 'email'] },
+      ],
+      order: [['start_datetime', 'ASC']]
+    });
+
+    // Flatten to a shape the frontend expects
+    const result = events.map(ev => ({
+      id: ev.id,
+      title: ev.title,
+      date: ev.start_datetime.toISOString().slice(0, 10),   // YYYY-MM-DD
+      time: ev.start_datetime.toTimeString().slice(0, 5),    // HH:MM
+      endTime: ev.end_datetime.toTimeString().slice(0, 5),
+      type: ev.visibility,                                    // "campus" / "department" / "private"
+      hierarchy: ev.hierarchy,
+      color: ev.color,
+      description: ev.description,
+      location: ev.Venue ? ev.Venue.name : (ev.Location ? ev.Location.map_location : null),
+      creatorName: ev.User ? ev.User.username : null,
+    }));
+
+    res.json({ ok: true, events: result });
+  } catch (error) {
+    console.error('List events error:', error);
+    res.status(500).json({ ok: false, message: 'Server error.' });
+  }
+};
