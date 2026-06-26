@@ -1,3 +1,18 @@
+/* ── Wrapper ensures the modal body fills the modal content area ── */
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(90vh - 80px);
+  /* Modal header + padding leaves this much */
+  overflow: hidden;
+}
+
+/* Controls section – sits at top, does not scroll */
+.controls {
+  flex-shrink: 0;
+  margin-bottom: 8px;
+}
+
 .controlsRow {
   display: flex;
   gap: 8px;
@@ -8,7 +23,7 @@
   flex: 1;
   display: flex;
   align-items: center;
-  background: #f3f4f6;
+  background: var(--input-background-color);
   border-radius: 12px;
   padding: 8px 12px;
   gap: 8px;
@@ -20,6 +35,7 @@
   font-size: 14px;
   outline: none;
   width: 100%;
+  color: var(--text-color);
 }
 
 .sortSelect,
@@ -29,7 +45,8 @@
   border: 1px solid #d1d5db;
   border-radius: 8px;
   font-size: 13px;
-  background: white;
+  background: var(--background-color);
+  color: var(--text-color);
   cursor: pointer;
 }
 
@@ -38,7 +55,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .filterGroup {
@@ -51,30 +68,33 @@
   align-items: center;
   gap: 6px;
   font-size: 13px;
-  color: #374151;
+  color: var(--text-color);
   cursor: pointer;
 }
 
+/* ── Scrollable user list ── */
 .list {
-  max-height: 320px;
+  flex: 1;
   overflow-y: auto;
-  margin-bottom: 12px;
+  padding-right: 4px;
+  /* small space for the scrollbar */
 }
 
 .userCard {
   display: flex;
   align-items: center;
   padding: 12px;
-  border: 1px solid #f3f4f6;
+  border: 1px solid var(--input-background-color);
   border-radius: 12px;
   margin-bottom: 8px;
-  background: #fafbfc;
+  background: var(--background-color);
   cursor: pointer;
   transition: background 0.2s;
 }
 
 .userCard:hover {
-  background: #f0f4ff;
+  background: #fef2f2;
+  /* light maroon tint */
 }
 
 .checkbox {
@@ -94,7 +114,7 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: #e5e7eb;
+  background: var(--input-background-color);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -110,7 +130,7 @@
 .userName {
   font-weight: 600;
   font-size: 14px;
-  color: #111827;
+  color: var(--text-color);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -138,8 +158,8 @@
   align-items: center;
   gap: 4px;
   font-size: 11px;
-  color: #374151;
-  background: #e5e7eb;
+  color: var(--primary-color);
+  background: #fef2f2;
   padding: 2px 8px;
   border-radius: 12px;
   white-space: nowrap;
@@ -151,10 +171,13 @@
   padding: 20px;
 }
 
+/* ── Actions (sticky at bottom) ── */
 .actions {
+  flex-shrink: 0;
   display: flex;
   justify-content: flex-end;
   gap: 8px;
+  margin-top: 8px;
 }
 
 .cancelBtn,
@@ -168,10 +191,10 @@
 
 .cancelBtn {
   background: #e5e7eb;
-  color: #374151;
+  color: var(--fourth-color);
 }
 
 .saveBtn {
-  background: var(--primary-color, #800000);
-  color: white;
+  background: var(--primary-color);
+  color: var(--tertiary-color);
 }

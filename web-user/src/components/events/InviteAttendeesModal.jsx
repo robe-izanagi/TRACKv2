@@ -8,6 +8,7 @@ import {
   FiMapPin,
   FiHome,
 } from "react-icons/fi";
+import { useAuth } from "../../context/AuthContext"; 
 import styles from "./InviteAttendeesModal.module.css";
 
 export default function InviteAttendeesModal({
@@ -18,23 +19,29 @@ export default function InviteAttendeesModal({
   departmentId = null,
   type = "attendees",
 }) {
+  const { user: currentUser } = useAuth(); 
+
   const [users, setUsers] = useState([]);
   const [search, setSearch] = useState("");
   const [tempSelected, setTempSelected] = useState([...selectedIds]);
 
-  // Sort & Filter states
   const [sortBy, setSortBy] = useState("name");
-  const [filterType, setFilterType] = useState("all"); // all, department, office
-  const [filterValue, setFilterValue] = useState(""); // UUID of selected department/office
+  const [filterType, setFilterType] = useState("all");
+  const [filterValue, setFilterValue] = useState("");
   const [selectAllChecked, setSelectAllChecked] = useState(false);
 
-  // Dropdown options for filter
   const [departments, setDepartments] = useState([]);
   const [offices, setOffices] = useState([]);
 
-  // Fetch non‑admin users and lookup data on open
   useEffect(() => {
     if (!isOpen) return;
+
+    // Reset on open
+    setSearch("");
+    setFilterType("all");
+    setFilterValue("");
+    setSortBy("name");
+    setTempSelected([...selectedIds]);
 
     const fetchData = async () => {
       try {
@@ -43,55 +50,51 @@ export default function InviteAttendeesModal({
           apiClient.get("/lookups/departments"),
           apiClient.get("/lookups/offices"),
         ]);
-        setUsers(usersRes.data.users || []);
+        const allUsers = usersRes.data.users || [];
+        const filteredOutSelf = allUsers.filter(
+          (u) => u.id !== currentUser?.id,
+        );
+        setUsers(filteredOutSelf);
         setDepartments(deptRes.data.items || []);
         setOffices(officeRes.data.items || []);
-        setTempSelected([...selectedIds]);
       } catch (err) {
         console.error("Failed to load data", err);
       }
     };
     fetchData();
-  }, [isOpen, selectedIds]);
+  }, [isOpen, selectedIds, currentUser?.id]);
 
-  // ── Filtered & sorted list ──────────────────────
+  // ── Filter & sort ──────────────────────────────
   const filteredUsers = users
     .filter((u) => {
-      // Search filter
       if (search) {
         const term = search.toLowerCase();
-        const matchName = (u.name || "").toLowerCase().includes(term);
-        const matchEmail = (u.email || "").toLowerCase().includes(term);
-        if (!matchName && !matchEmail) return false;
+        const name = (u.name || "").toLowerCase();
+        const email = (u.email || "").toLowerCase();
+        if (!name.includes(term) && !email.includes(term)) return false;
       }
-
-      // Filter type
       if (filterType === "department" && filterValue) {
-        return u.department_id === filterValue;
+        return u.department === filterValue;
       }
       if (filterType === "office" && filterValue) {
-        return u.office_id === filterValue;
+        return u.office === filterValue;
       }
       return true;
     })
     .sort((a, b) => {
       const valA = (a[sortBy] || "").toLowerCase();
       const valB = (b[sortBy] || "").toLowerCase();
-      if (valA < valB) return -1;
-      if (valA > valB) return 1;
-      return 0;
+      return valA.localeCompare(valB);
     });
 
-  // Manage "Select All" checkbox based on filtered list
+  // ── Select‑all logic ───────────────────────────
   useEffect(() => {
     if (filteredUsers.length === 0) {
       setSelectAllChecked(false);
       return;
     }
-    const allVisibleSelected = filteredUsers.every((u) =>
-      tempSelected.includes(u.id),
-    );
-    setSelectAllChecked(allVisibleSelected);
+    const allSelected = filteredUsers.every((u) => tempSelected.includes(u.id));
+    setSelectAllChecked(allSelected);
   }, [filteredUsers, tempSelected]);
 
   const toggleUser = (userId) => {
@@ -104,11 +107,9 @@ export default function InviteAttendeesModal({
 
   const handleSelectAll = () => {
     if (selectAllChecked) {
-      // Deselect all visible
       const visibleIds = new Set(filteredUsers.map((u) => u.id));
       setTempSelected((prev) => prev.filter((id) => !visibleIds.has(id)));
     } else {
-      // Select all visible
       const visibleIds = filteredUsers.map((u) => u.id);
       setTempSelected((prev) => [...new Set([...prev, ...visibleIds])]);
     }
@@ -120,9 +121,10 @@ export default function InviteAttendeesModal({
     onClose();
   };
 
+  // ── Helpers for filter changes ─────────────────
   const handleFilterTypeChange = (e) => {
     setFilterType(e.target.value);
-    setFilterValue(""); // reset value when switching filter type
+    setFilterValue("");
   };
 
   const handleFilterValueChange = (e) => {
@@ -137,132 +139,135 @@ export default function InviteAttendeesModal({
         type === "collaborators" ? "Add Collaborators" : "Invite Attendees"
       }
     >
-      {/* Search + Sort */}
-      <div className={styles.controlsRow}>
-        <div className={styles.searchBar}>
-          <FiSearch size={16} />
-          <input
-            type="text"
-            placeholder="Search users..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className={styles.searchInput}
-          />
-        </div>
-        <select
-          className={styles.sortSelect}
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value)}
-        >
-          <option value="name">Name</option>
-          <option value="email">Email</option>
-          <option value="department">Department</option>
-          <option value="office">Office</option>
-        </select>
-      </div>
-
-      {/* Filter row: Filter type + value + Select All */}
-      <div className={styles.filterRow}>
-        <div className={styles.filterGroup}>
-          <select
-            className={styles.filterSelect}
-            value={filterType}
-            onChange={handleFilterTypeChange}
-          >
-            <option value="all">All</option>
-            <option value="department">Department</option>
-            <option value="office">Office</option>
-          </select>
-
-          {filterType !== "all" && (
+      <div className={styles.wrapper}>
+        {/* === Controls (search, sort, filters, select all) === */}
+        <div className={styles.controls}>
+          {/* Row 1 – Search + Sort */}
+          <div className={styles.controlsRow}>
+            <div className={styles.searchBar}>
+              <FiSearch size={16} />
+              <input
+                type="text"
+                placeholder="Search users..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className={styles.searchInput}
+              />
+            </div>
             <select
-              className={styles.filterValueSelect}
-              value={filterValue}
-              onChange={handleFilterValueChange}
+              className={styles.sortSelect}
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
             >
-              <option value="">-- Select {filterType} --</option>
-              {filterType === "department" &&
-                departments.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.name}
-                  </option>
-                ))}
-              {filterType === "office" &&
-                offices.map((o) => (
-                  <option key={o.id} value={o.id}>
-                    {o.name}
-                  </option>
-                ))}
+              <option value="name">Name</option>
+              <option value="email">Email</option>
+              <option value="department">Department</option>
+              <option value="office">Office</option>
             </select>
+          </div>
+
+          {/* Row 2 – Filter type + value + Select All */}
+          <div className={styles.filterRow}>
+            <div className={styles.filterGroup}>
+              <select
+                className={styles.filterSelect}
+                value={filterType}
+                onChange={handleFilterTypeChange}
+              >
+                <option value="all">All</option>
+                <option value="department">Department</option>
+                <option value="office">Office</option>
+              </select>
+
+              {filterType !== "all" && (
+                <select
+                  className={styles.filterValueSelect}
+                  value={filterValue}
+                  onChange={handleFilterValueChange}
+                >
+                  <option value="">-- Select {filterType} --</option>
+                  {filterType === "department" &&
+                    departments.map((d) => (
+                      <option key={d.id} value={d.name}>
+                        {d.name}
+                      </option>
+                    ))}
+                  {filterType === "office" &&
+                    offices.map((o) => (
+                      <option key={o.id} value={o.name}>
+                        {o.name}
+                      </option>
+                    ))}
+                </select>
+              )}
+            </div>
+
+            <label className={styles.selectAllLabel}>
+              <input
+                type="checkbox"
+                checked={selectAllChecked}
+                onChange={handleSelectAll}
+              />
+              Select All
+            </label>
+          </div>
+        </div>
+
+        {/* === Scrollable user list === */}
+        <div className={styles.list}>
+          {filteredUsers.map((user) => (
+            <label key={user.id} className={styles.userCard}>
+              <input
+                type="checkbox"
+                checked={tempSelected.includes(user.id)}
+                onChange={() => toggleUser(user.id)}
+                className={styles.checkbox}
+              />
+              <div className={styles.userLeft}>
+                <div className={styles.avatarPlaceholder}>
+                  <FiUser size={24} />
+                </div>
+                <div className={styles.userInfo}>
+                  <div className={styles.userName}>
+                    {user.name || "Unknown"}
+                  </div>
+                  <div className={styles.userEmail}>{user.email}</div>
+                </div>
+              </div>
+              <div className={styles.userRight}>
+                {user.position && (
+                  <div className={styles.tag}>
+                    <FiBriefcase size={12} /> {user.position}
+                  </div>
+                )}
+                {user.department && (
+                  <div className={styles.tag}>
+                    <FiHome size={12} /> {user.department}
+                  </div>
+                )}
+                {user.office && (
+                  <div className={styles.tag}>
+                    <FiMapPin size={12} /> {user.office}
+                  </div>
+                )}
+              </div>
+            </label>
+          ))}
+          {filteredUsers.length === 0 && (
+            <p className={styles.empty}>No users found.</p>
           )}
         </div>
 
-        <label className={styles.selectAllLabel}>
-          <input
-            type="checkbox"
-            checked={selectAllChecked}
-            onChange={handleSelectAll}
-          />
-          Select All
-        </label>
-      </div>
-
-      {/* User list – fixed cards */}
-      <div className={styles.list}>
-        {filteredUsers.map((user) => (
-          <label key={user.id} className={styles.userCard}>
-            <input
-              type="checkbox"
-              checked={tempSelected.includes(user.id)}
-              onChange={() => toggleUser(user.id)}
-              className={styles.checkbox}
-            />
-            {/* LEFT SIDE */}
-            <div className={styles.userLeft}>
-              <div className={styles.avatarPlaceholder}>
-                <FiUser size={24} />
-              </div>
-              <div className={styles.userInfo}>
-                <div className={styles.userName}>{user.name || "Unknown"}</div>
-                <div className={styles.userEmail}>{user.email}</div>
-              </div>
-            </div>
-            {/* RIGHT SIDE */}
-            <div className={styles.userRight}>
-              {user.position && (
-                <div className={styles.tag}>
-                  <FiBriefcase size={12} /> {user.position}
-                </div>
-              )}
-              {user.department && (
-                <div className={styles.tag}>
-                  <FiHome size={12} /> {user.department}
-                </div>
-              )}
-              {user.office && (
-                <div className={styles.tag}>
-                  <FiMapPin size={12} /> {user.office}
-                </div>
-              )}
-            </div>
-          </label>
-        ))}
-        {filteredUsers.length === 0 && (
-          <p className={styles.empty}>No users found.</p>
-        )}
-      </div>
-
-      {/* Actions */}
-      <div className={styles.actions}>
-        <button type="button" onClick={onClose} className={styles.cancelBtn}>
-          Cancel
-        </button>
-        <button type="button" onClick={handleSave} className={styles.saveBtn}>
-          Save ({tempSelected.length})
-        </button>
+        {/* === Actions (sticky at bottom) === */}
+        <div className={styles.actions}>
+          <button type="button" onClick={onClose} className={styles.cancelBtn}>
+            Cancel
+          </button>
+          <button type="button" onClick={handleSave} className={styles.saveBtn}>
+            Save ({tempSelected.length})
+          </button>
+        </div>
       </div>
     </Modal>
   );
 }
-
-// just for updating the previews commit comments -_-
