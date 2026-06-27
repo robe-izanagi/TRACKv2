@@ -528,34 +528,6 @@ export default function CalendarView() {
           </div>
         )}
 
-        {/* Filter Checkboxes */}
-        <div className={styles.filterCheckboxRow}>
-          <label className={styles.filterCheckbox}>
-            <input
-              type="checkbox"
-              checked={activeFilters.includes("campus")}
-              onChange={() => toggleFilter("campus")}
-            />{" "}
-            Campus
-          </label>
-          <label className={styles.filterCheckbox}>
-            <input
-              type="checkbox"
-              checked={activeFilters.includes("department")}
-              onChange={() => toggleFilter("department")}
-            />{" "}
-            Department
-          </label>
-          <label className={styles.filterCheckbox}>
-            <input
-              type="checkbox"
-              checked={activeFilters.includes("personal")}
-              onChange={() => toggleFilter("personal")}
-            />{" "}
-            Private
-          </label>
-        </div>
-
         {/* Bottom Sheet */}
         {sheetOpen && (
           <div className={styles.sheetOverlay} onClick={closeSheet}>

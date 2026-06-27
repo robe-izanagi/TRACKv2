@@ -2,7 +2,7 @@
 
 /* ---------- Full‑width wrapper that cancels the 16px padding of the mobile layout ---------- */
 .pageWrapper {
-  margin: -16px;
+  /* margin: -16px; */
   /* counteract the mainContent padding */
   min-height: 100vh;
   background: var(--page-background-color);
@@ -14,8 +14,10 @@
 }
 
 /* ---------- Restore normal left/right padding for all sections except the title ---------- */
+
+
 .sectionContent {
-  padding: 0 1.5rem;
+  padding: 0 .5rem;
   /* ← normal side padding */
   display: flex;
   flex-direction: column;
@@ -52,6 +54,7 @@
   flex-direction: column;
   gap: 0.75rem;
   padding: 0;
+  
   /* no extra padding inside each section (already padded by sectionContent) */
 }
 
