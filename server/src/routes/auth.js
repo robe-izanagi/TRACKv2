@@ -30,12 +30,19 @@ router.get('/me', authenticate, async (req, res) => {
 
     const profile = await UserProfile.findByPk(req.userId);
     let role = null,
-      department = null,
-      office = null,
-      fullName = null;
+        department = null,
+        office = null,
+        fullName = null,
+        departmentId = null,
+        officeId = null,
+        roleId = null;
 
     if (profile) {
       fullName = profile.full_name;
+      departmentId = profile.department_id;
+      officeId = profile.office_id;
+      roleId = profile.role_id;
+
       if (profile.role_id) {
         const roleObj = await Role.findByPk(profile.role_id);
         if (roleObj) role = roleObj.name;
@@ -59,7 +66,10 @@ router.get('/me', authenticate, async (req, res) => {
         role,
         department,
         office,
-        full_name: fullName
+        full_name: fullName,
+        department_id: departmentId,   // ← new
+        office_id: officeId,
+        role_id: roleId
       }
     });
   } catch (error) {
