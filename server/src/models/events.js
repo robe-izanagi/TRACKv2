@@ -39,6 +39,10 @@ const Event = sequelize.define('events', {
     type: DataTypes.ENUM('local', 'regional', 'national', 'international'),
     allowNull: true
   },
+  event_type: {
+    type: DataTypes.ENUM('meeting', 'seminar', 'event'),
+    defaultValue: 'event'
+  },
   visibility: {
     type: DataTypes.ENUM('campus', 'department', 'private'),
     allowNull: false
@@ -47,7 +51,7 @@ const Event = sequelize.define('events', {
     type: DataTypes.UUID,
     allowNull: true
   },
-  location_id: {                     // NEW – points to user‑created location
+  location_id: {
     type: DataTypes.UUID,
     allowNull: true
   },

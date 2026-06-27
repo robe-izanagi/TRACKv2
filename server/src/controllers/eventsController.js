@@ -9,24 +9,13 @@ exports.createEvent = async (req, res) => {
   const t = await sequelize.transaction();
   try {
     const {
-      title,
-      visibility,
-      hierarchy,
-      start_datetime,
-      end_datetime,
-      method,
-      venue_id,
-      map_location,
-      department_id,
-      description,
-      color,
-      attendee_ids,
-      collaborator_ids,
-      remind_before_minutes,
-      is_email_reminder
+      title, visibility, hierarchy, start_datetime, end_datetime,
+      method, venue_id, map_location, department_id, description,
+      color, attendee_ids, collaborator_ids, remind_before_minutes,
+      is_email_reminder, event_type
     } = req.body;
 
-    // ── Basic validation ────────────────────────────────
+    // Basic validation
     if (!title || !visibility || !hierarchy || !start_datetime || !end_datetime || !method || !description || !color) {
       await t.rollback();
       return res.status(400).json({ ok: false, message: 'Missing required fields.' });
@@ -37,7 +26,7 @@ exports.createEvent = async (req, res) => {
       return res.status(400).json({ ok: false, message: 'End time must be after start time.' });
     }
 
-    // ── Department event checks ────────────────────────
+    // Department event checks
     let finalDeptId = null;
     if (visibility === 'department') {
       if (!department_id) {
@@ -52,13 +41,12 @@ exports.createEvent = async (req, res) => {
       finalDeptId = department_id;
     }
 
-    // ── Venue / Location logic (only if NOT online) ─────
+    // Venue / Location logic
     let finalVenueId = null;
     let finalLocationId = null;
 
     if (method !== 'online') {
       if (hierarchy === 'local') {
-        // Local → venue
         if (venue_id && venue_id !== 'undecided') {
           const venue = await Venue.findByPk(venue_id);
           if (!venue) {
@@ -68,7 +56,6 @@ exports.createEvent = async (req, res) => {
           finalVenueId = venue.id;
         }
       } else {
-        // External → only map_location, no saved locations
         if (map_location) {
           const newLoc = await Location.create({
             id: uuidv4(),
@@ -86,16 +73,14 @@ exports.createEvent = async (req, res) => {
       }
     }
 
-    // ── Create event ────────────────────────────────────
+    // Create event
     const event = await Event.create({
       id: uuidv4(),
-      title,
-      color,
-      method,
+      title, color, method,
       link: method === 'online' ? req.body.link || null : null,
-      start_datetime,
-      end_datetime,
+      start_datetime, end_datetime,
       hierarchy,
+      event_type: event_type || 'event',
       visibility,
       venue_id: finalVenueId,
       location_id: finalLocationId,
@@ -108,7 +93,7 @@ exports.createEvent = async (req, res) => {
       is_archived: false
     }, { transaction: t });
 
-    // ── Creator as accepted attendee ────────────────
+    // Creator as accepted attendee
     await EventAttendee.create({
       id: uuidv4(),
       event_id: event.id,
@@ -116,30 +101,24 @@ exports.createEvent = async (req, res) => {
       response: 'accepted'
     }, { transaction: t });
 
-    // ── Attendees ────────────────────────────────────
+    // Attendees
     if (attendee_ids && attendee_ids.length > 0) {
       const unique = [...new Set(attendee_ids)].filter(id => id !== req.userId);
       if (unique.length > 0) {
         await EventAttendee.bulkCreate(
-          unique.map(userId => ({
-            id: uuidv4(),
-            event_id: event.id,
-            user_id: userId,
-            response: 'pending'
-          })), { transaction: t });
+          unique.map(userId => ({ id: uuidv4(), event_id: event.id, user_id: userId, response: 'pending' })),
+          { transaction: t }
+        );
       }
     }
 
-    // ── Collaborators ────────────────────────────────
+    // Collaborators
     if (collaborator_ids && collaborator_ids.length > 0) {
       const unique = [...new Set(collaborator_ids)];
       await EventCollaborator.bulkCreate(
-        unique.map(userId => ({
-          id: uuidv4(),
-          event_id: event.id,
-          user_id: userId,
-          permission: 'edit'
-        })), { transaction: t });
+        unique.map(userId => ({ id: uuidv4(), event_id: event.id, user_id: userId, permission: 'edit' })),
+        { transaction: t }
+      );
     }
 
     await t.commit();
@@ -147,19 +126,13 @@ exports.createEvent = async (req, res) => {
     res.status(201).json({
       ok: true,
       event: {
-        id: event.id,
-        title: event.title,
-        visibility: event.visibility,
-        start_datetime: event.start_datetime,
-        end_datetime: event.end_datetime,
-        venue_id: event.venue_id,
-        location_id: event.location_id,
-        department_id: event.department_id,
-        creator_id: event.creator_id,
-        created_at: event.created_at
+        id: event.id, title: event.title, visibility: event.visibility,
+        start_datetime: event.start_datetime, end_datetime: event.end_datetime,
+        venue_id: event.venue_id, location_id: event.location_id,
+        department_id: event.department_id, creator_id: event.creator_id,
+        created_at: event.created_at, event_type: event.event_type
       }
     });
-
   } catch (error) {
     await t.rollback();
     console.error('Create event error:', error);
@@ -167,8 +140,6 @@ exports.createEvent = async (req, res) => {
   }
 };
 
-
-// GET /api/events?start=YYYY-MM-DD&end=YYYY-MM-DD
 exports.listEvents = async (req, res) => {
   try {
     const { start, end } = req.query;
@@ -176,8 +147,6 @@ exports.listEvents = async (req, res) => {
       return res.status(400).json({ ok: false, message: 'start and end dates are required (YYYY-MM-DD).' });
     }
 
-    // Overlap logic: event.start_datetime <= end AND event.end_datetime >= start
-    const { Op } = require('sequelize');
     const events = await Event.findAll({
       where: {
         is_archived: false,
@@ -194,15 +163,15 @@ exports.listEvents = async (req, res) => {
       order: [['start_datetime', 'ASC']]
     });
 
-    // Flatten to a shape the frontend expects
     const result = events.map(ev => ({
       id: ev.id,
       title: ev.title,
-      date: ev.start_datetime.toISOString().slice(0, 10),   // YYYY-MM-DD
-      time: ev.start_datetime.toTimeString().slice(0, 5),    // HH:MM
+      date: ev.start_datetime.toISOString().slice(0, 10),
+      time: ev.start_datetime.toTimeString().slice(0, 5),
       endTime: ev.end_datetime.toTimeString().slice(0, 5),
-      type: ev.visibility,                                    // "campus" / "department" / "private"
+      type: ev.visibility,
       hierarchy: ev.hierarchy,
+      event_type: ev.event_type,            // ← include event_type in response
       color: ev.color,
       description: ev.description,
       location: ev.Venue ? ev.Venue.name : (ev.Location ? ev.Location.map_location : null),

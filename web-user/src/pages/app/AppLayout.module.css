@@ -15,12 +15,19 @@
 .topBar {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   padding: 0 16px;
-  height: 52px;
-  background: #fff;
-  border-bottom: 1px solid #e5e7eb;
+  height: 60px;
+  background: var(--fifth-color);
+  /* border-bottom: 1px solid #e5e7eb; */
   flex-shrink: 0;
   z-index: 10;
+}
+
+.topSideContent {
+  display: flex;
+  gap: 10px;
+  align-items: center;
 }
 
 .menuBtn,
@@ -28,19 +35,23 @@
   background: none;
   border: none;
   cursor: pointer;
-  color: #374151;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 4px;
 }
 
+.menuBtn *,
+.iconBtn * {
+  color: var(--primary-color);
+}
+
 .title {
   flex: 1;
-  text-align: center;
   font-size: 20px;
   font-weight: 700;
   color: var(--primary-color, #800000);
+  align-self: center;
 }
 
 .topActions {

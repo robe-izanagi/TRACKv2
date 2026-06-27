@@ -42,13 +42,14 @@ export default function CreateEvent() {
     map_location: "",
     remind_before_minutes: "",
     is_email_reminder: false,
+    event_type: "event", // ← new field
   });
 
   const [attendeeIds, setAttendeeIds] = useState([]);
   const [collaboratorIds, setCollaboratorIds] = useState([]);
   const [showAttendeeModal, setShowAttendeeModal] = useState(false);
   const [showCollabModal, setShowCollabModal] = useState(false);
-  const [attachments, setAttachments] = useState([]); // [{ file, name, size }]
+  const [attachments, setAttachments] = useState([]);
 
   const [departments, setDepartments] = useState([]);
   const [venues, setVenues] = useState([]);
@@ -91,7 +92,6 @@ export default function CreateEvent() {
   const handleFileAdd = () => {
     fileInputRef.current?.click();
   };
-
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files);
     const newAttachments = files.map((file) => ({
@@ -102,7 +102,6 @@ export default function CreateEvent() {
     setAttachments((prev) => [...prev, ...newAttachments]);
     e.target.value = "";
   };
-
   const handleRemoveFile = (fileToRemove) => {
     setAttachments((prev) => prev.filter((f) => f !== fileToRemove));
   };
@@ -136,9 +135,9 @@ export default function CreateEvent() {
       collaborator_ids: collaboratorIds,
       remind_before_minutes: form.remind_before_minutes || null,
       is_email_reminder: form.is_email_reminder,
+      event_type: form.event_type, // ← send event_type
     };
 
-    // 👇 PRINT THE EXACT JSON BEING SENT TO THE SERVER
     console.log("Submitting event payload:", payload);
 
     try {
@@ -153,10 +152,7 @@ export default function CreateEvent() {
 
       if (attachments.length > 0) {
         const formData = new FormData();
-        attachments.forEach(({ file }) => {
-          formData.append("files", file);
-        });
-
+        attachments.forEach(({ file }) => formData.append("files", file));
         try {
           await apiClient.post(`/attachments/event/${eventId}`, formData, {
             headers: { "Content-Type": "multipart/form-data" },
@@ -183,7 +179,6 @@ export default function CreateEvent() {
   } else {
     visibilityOptions.push({ value: "private", label: "Private" });
   }
-
   const showVisibilityRadio = visibilityOptions.length > 1;
 
   return (
@@ -261,6 +256,20 @@ export default function CreateEvent() {
                 onChange={(e) => updateField("department_id", e.target.value)}
               />
             )}
+          </div>
+
+          {/* ── Event Type (new dropdown) ── */}
+          <div className={styles.section}>
+            <SelectDropdown
+              label="EVENT TYPE"
+              options={[
+                { value: "meeting", label: "Meeting" },
+                { value: "seminar", label: "Seminar" },
+                { value: "event", label: "Event" },
+              ]}
+              value={form.event_type}
+              onChange={(e) => updateField("event_type", e.target.value)}
+            />
           </div>
 
           {form.method !== "online" && (

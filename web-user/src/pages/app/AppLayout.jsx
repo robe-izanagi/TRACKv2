@@ -2,8 +2,17 @@ import { useState } from "react";
 import { Outlet, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import {
-  FiMenu, FiBell, FiUser, FiPlus, FiX, FiArrowLeft,
-  FiHome, FiCalendar, FiCheckSquare, FiBarChart2, FiMapPin   // ← new icons
+  FiMenu,
+  FiBell,
+  FiUser,
+  FiPlus,
+  FiX,
+  FiArrowLeft,
+  FiHome,
+  FiCalendar,
+  FiCheckSquare,
+  FiBarChart2,
+  FiMapPin, // ← new icons
 } from "react-icons/fi";
 import styles from "./AppLayout.module.css";
 
@@ -25,7 +34,7 @@ export default function AppLayout() {
 
   // Determine if we're on a focused screen
   const isFocused = FOCUSED_ROUTES.some((route) =>
-    location.pathname.startsWith(route)
+    location.pathname.startsWith(route),
   );
 
   // Role‑based bottom nav items (always shown when not focused)
@@ -36,17 +45,33 @@ export default function AppLayout() {
       bottomItems.push(
         { label: "Home", path: `/${role}/home`, icon: <FiHome size={20} /> },
         { label: "Venues", path: "/venues", icon: <FiMapPin size={20} /> },
-        { label: "Calendar", path: "/calendar", icon: <FiCalendar size={20} /> },
+        {
+          label: "Calendar",
+          path: "/calendar",
+          icon: <FiCalendar size={20} />,
+        },
         { label: "Tasks", path: "/tasks", icon: <FiCheckSquare size={20} /> },
-        { label: "Analytics", path: "/analytics", icon: <FiBarChart2 size={20} /> }
+        {
+          label: "Analytics",
+          path: "/analytics",
+          icon: <FiBarChart2 size={20} />,
+        },
       );
     } else {
       // officials & faculty
       bottomItems.push(
         { label: "Home", path: `/${role}/home`, icon: <FiHome size={20} /> },
         { label: "Tasks", path: "/tasks", icon: <FiCheckSquare size={20} /> },
-        { label: "Calendar", path: "/calendar", icon: <FiCalendar size={20} /> },
-        { label: "Analytics", path: "/analytics", icon: <FiBarChart2 size={20} /> }
+        {
+          label: "Calendar",
+          path: "/calendar",
+          icon: <FiCalendar size={20} />,
+        },
+        {
+          label: "Analytics",
+          path: "/analytics",
+          icon: <FiBarChart2 size={20} />,
+        },
       );
     }
   }
@@ -71,7 +96,10 @@ export default function AppLayout() {
           >
             <div className={styles.drawerHeader}>
               <h2>Menu</h2>
-              <button onClick={() => setDrawerOpen(false)} className={styles.closeBtn}>
+              <button
+                onClick={() => setDrawerOpen(false)}
+                className={styles.closeBtn}
+              >
                 <FiX size={24} />
               </button>
             </div>
@@ -79,7 +107,12 @@ export default function AppLayout() {
               <p>Navigation options will go here.</p>
             </div>
           </div>
-          {drawerOpen && <div className={styles.overlay} onClick={() => setDrawerOpen(false)} />}
+          {drawerOpen && (
+            <div
+              className={styles.overlay}
+              onClick={() => setDrawerOpen(false)}
+            />
+          )}
         </>
       )}
 
@@ -97,15 +130,26 @@ export default function AppLayout() {
           </>
         ) : (
           <>
-            <button className={styles.menuBtn} onClick={() => setDrawerOpen(true)}>
-              <FiMenu size={24} />
-            </button>
-            <span className={styles.title}>TRACK</span>
+            <div className={styles.topSideContent}>
+              <button
+                className={styles.menuBtn}
+                onClick={() => setDrawerOpen(true)}
+              >
+                <FiMenu size={24} />
+              </button>
+              <span className={styles.title}>TRACK</span>
+            </div>
             <div className={styles.topActions}>
-              <button onClick={() => navigate("/notifications")} className={styles.iconBtn}>
+              <button
+                onClick={() => navigate("/notifications")}
+                className={styles.iconBtn}
+              >
                 <FiBell size={22} />
               </button>
-              <button onClick={() => navigate("/profile")} className={styles.iconBtn}>
+              <button
+                onClick={() => navigate("/profile")}
+                className={styles.iconBtn}
+              >
                 <FiUser size={22} />
               </button>
             </div>
@@ -123,14 +167,15 @@ export default function AppLayout() {
         <div className={styles.fabContainer}>
           {fabOpen && (
             <div className={styles.fabMenu}>
-              <button onClick={() => navigate("/create-event")}>Create Event</button>
-              <button onClick={() => navigate("/create-task")}>Create Task</button>
+              <button onClick={() => navigate("/create-event")}>
+                Create Event
+              </button>
+              <button onClick={() => navigate("/create-task")}>
+                Create Task
+              </button>
             </div>
           )}
-          <button
-            className={styles.fab}
-            onClick={() => setFabOpen(!fabOpen)}
-          >
+          <button className={styles.fab} onClick={() => setFabOpen(!fabOpen)}>
             <FiPlus size={24} />
           </button>
         </div>
