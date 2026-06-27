@@ -8,7 +8,7 @@ import {
   FiMapPin,
   FiHome,
 } from "react-icons/fi";
-import { useAuth } from "../../context/AuthContext"; 
+import { useAuth } from "../../context/AuthContext";
 import styles from "./InviteAttendeesModal.module.css";
 
 export default function InviteAttendeesModal({
@@ -19,7 +19,7 @@ export default function InviteAttendeesModal({
   departmentId = null,
   type = "attendees",
 }) {
-  const { user: currentUser } = useAuth(); 
+  const { user: currentUser } = useAuth();
 
   const [users, setUsers] = useState([]);
   const [search, setSearch] = useState("");
@@ -121,7 +121,6 @@ export default function InviteAttendeesModal({
     onClose();
   };
 
-  // ── Helpers for filter changes ─────────────────
   const handleFilterTypeChange = (e) => {
     setFilterType(e.target.value);
     setFilterValue("");
@@ -140,9 +139,7 @@ export default function InviteAttendeesModal({
       }
     >
       <div className={styles.wrapper}>
-        {/* === Controls (search, sort, filters, select all) === */}
         <div className={styles.controls}>
-          {/* Row 1 – Search + Sort */}
           <div className={styles.controlsRow}>
             <div className={styles.searchBar}>
               <FiSearch size={16} />
@@ -166,7 +163,6 @@ export default function InviteAttendeesModal({
             </select>
           </div>
 
-          {/* Row 2 – Filter type + value + Select All */}
           <div className={styles.filterRow}>
             <div className={styles.filterGroup}>
               <select
@@ -213,7 +209,6 @@ export default function InviteAttendeesModal({
           </div>
         </div>
 
-        {/* === Scrollable user list === */}
         <div className={styles.list}>
           {filteredUsers.map((user) => (
             <label key={user.id} className={styles.userCard}>
@@ -258,7 +253,6 @@ export default function InviteAttendeesModal({
           )}
         </div>
 
-        {/* === Actions (sticky at bottom) === */}
         <div className={styles.actions}>
           <button type="button" onClick={onClose} className={styles.cancelBtn}>
             Cancel

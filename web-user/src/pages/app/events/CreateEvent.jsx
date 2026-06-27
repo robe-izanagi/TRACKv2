@@ -17,7 +17,7 @@ export default function CreateEvent() {
   const navigate = useNavigate();
 
   const role = user?.role || "faculty";
-  const hasDepartment = !!user?.department;
+  const hasDepartment = !!user?.department; // from context
 
   const initialVisibility =
     role === "staff" || role === "faculty" ? "private" : "private";
@@ -42,7 +42,7 @@ export default function CreateEvent() {
     map_location: "",
     remind_before_minutes: "",
     is_email_reminder: false,
-    event_type: "event", // ← new field
+    event_type: "event",
   });
 
   const [attendeeIds, setAttendeeIds] = useState([]);
@@ -56,17 +56,25 @@ export default function CreateEvent() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
+  // Store current user's full profile (includes department_id)
+  const [currentProfile, setCurrentProfile] = useState(null);
+
   const fileInputRef = useRef(null);
 
+  // Fetch lookup data and current user's profile (to get department_id)
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [deptRes, venueRes] = await Promise.all([
+        const [deptRes, venueRes, profileRes] = await Promise.all([
           apiClient.get("/lookups/departments"),
           apiClient.get("/venues"),
+          apiClient.get("/auth/me"),
         ]);
         setDepartments(deptRes.data.items || []);
         setVenues(venueRes.data.venues || []);
+        if (profileRes.data.ok) {
+          setCurrentProfile(profileRes.data.user);
+        }
       } catch (err) {
         console.error("Failed to load form data", err);
       }
@@ -74,24 +82,36 @@ export default function CreateEvent() {
     fetchData();
   }, []);
 
-  const updateField = (field, value) =>
-    setForm((prev) => ({ ...prev, [field]: value }));
+  // When visibility changes to "department", automatically set the department
+  // and trigger attendee auto‑selection (via the next effect)
+  useEffect(() => {
+    if (form.visibility === "department" && currentProfile?.department_id) {
+      // Only set if it's not already set (prevents overwriting if user came back)
+      if (form.department_id !== currentProfile.department_id) {
+        updateField("department_id", currentProfile.department_id);
+      }
+    }
+  }, [form.visibility, currentProfile]);
 
+  // Auto‑invite all members of the selected department (excluding the creator)
   useEffect(() => {
     if (form.visibility === "department" && form.department_id) {
       apiClient
         .get(`/auth/users?department_id=${form.department_id}`)
         .then((res) => {
-          const ids = (res.data.users || []).map((u) => u.id);
+          const ids = (res.data.users || [])
+            .filter((u) => u.id !== user?.id) // exclude creator
+            .map((u) => u.id);
           setAttendeeIds(ids);
         })
         .catch(console.error);
     }
-  }, [form.department_id, form.visibility]);
+  }, [form.department_id, form.visibility, user?.id]);
 
-  const handleFileAdd = () => {
-    fileInputRef.current?.click();
-  };
+  const updateField = (field, value) =>
+    setForm((prev) => ({ ...prev, [field]: value }));
+
+  const handleFileAdd = () => fileInputRef.current?.click();
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files);
     const newAttachments = files.map((file) => ({
@@ -135,7 +155,7 @@ export default function CreateEvent() {
       collaborator_ids: collaboratorIds,
       remind_before_minutes: form.remind_before_minutes || null,
       is_email_reminder: form.is_email_reminder,
-      event_type: form.event_type, // ← send event_type
+      event_type: form.event_type,
     };
 
     console.log("Submitting event payload:", payload);
@@ -169,6 +189,7 @@ export default function CreateEvent() {
     }
   };
 
+  // Visibility options – department only if user has a department
   const visibilityOptions = [];
   if (role === "officials") {
     visibilityOptions.push({ value: "private", label: "Private" });
@@ -245,20 +266,9 @@ export default function CreateEvent() {
               value={form.hierarchy}
               onChange={(e) => updateField("hierarchy", e.target.value)}
             />
-            {form.visibility === "department" && (
-              <SelectDropdown
-                label="DEPARTMENT"
-                options={departments.map((d) => ({
-                  value: d.id,
-                  label: d.name,
-                }))}
-                value={form.department_id}
-                onChange={(e) => updateField("department_id", e.target.value)}
-              />
-            )}
           </div>
 
-          {/* ── Event Type (new dropdown) ── */}
+          {/* ── Event Type ── */}
           <div className={styles.section}>
             <SelectDropdown
               label="EVENT TYPE"
@@ -385,6 +395,13 @@ export default function CreateEvent() {
           </div>
 
           <div className={styles.section}>
+            {form.visibility === "department" && (
+              <p style={{ fontSize: "0.85rem", color: "#374151" }}>
+                All users belongs to your department{" "}
+                <strong>{currentProfile?.department}</strong> will be
+                automatically invited.
+              </p>
+            )}
             <button
               type="button"
               className={styles.inviteBtn}
