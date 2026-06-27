@@ -1,9 +1,6 @@
 @import '../../../App.css';
 
-/* ---------- Full‑width wrapper that cancels the 16px padding of the mobile layout ---------- */
 .pageWrapper {
-  /* margin: -16px; */
-  /* counteract the mainContent padding */
   min-height: 100vh;
   background: var(--page-background-color);
 }
@@ -13,22 +10,17 @@
   padding-bottom: 5rem;
 }
 
-/* ---------- Restore normal left/right padding for all sections except the title ---------- */
-
-
 .sectionContent {
-  padding: 0 .5rem;
-  /* ← normal side padding */
+  padding: 0 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 2rem;
 }
 
-/* Title area – full width, no side margins, taller vertical padding */
+/* Title area */
 .titleSection {
   background: var(--input-background-color);
   padding: 3rem 0;
-  /* taller top & bottom, NO left/right */
   margin: 0;
 }
 
@@ -41,42 +33,35 @@
   width: 100%;
   outline: none;
   padding: 0;
-  /* no inner padding */
 }
 
 .titleInput::placeholder {
   color: var(--fifth-color);
 }
 
-/* Section groups */
 .section {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
   padding: 0;
-  
-  /* no extra padding inside each section (already padded by sectionContent) */
 }
 
-/* Side‑by‑side (date & time) */
 .row {
   display: flex;
   gap: 1rem;
   flex-wrap: wrap;
 }
 
-.row>* {
+.row > * {
   flex: 1 1 150px;
 }
 
-/* Stacked rows (visibility + method, reminder) */
 .stackRow {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
 }
 
-/* Reminder checkbox */
 .checkRow {
   display: flex;
   align-items: center;
@@ -131,7 +116,6 @@
   border-radius: 10px;
 }
 
-/* Invite & collaborator buttons */
 .inviteBtn {
   width: 100%;
   padding: 0.9rem 1rem;

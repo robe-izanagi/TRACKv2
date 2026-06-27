@@ -17,8 +17,8 @@ export default function CreateEvent() {
   const navigate = useNavigate();
 
   const role = user?.role || "faculty";
-  const hasDepartment = !!user?.department;
 
+  // Staff & faculty are forced to private; officials see all options
   const initialVisibility =
     role === "staff" || role === "faculty" ? "private" : "private";
 
@@ -42,7 +42,7 @@ export default function CreateEvent() {
     map_location: "",
     remind_before_minutes: "",
     is_email_reminder: false,
-    event_type: "event", // ← new field
+    event_type: "event",
   });
 
   const [attendeeIds, setAttendeeIds] = useState([]);
@@ -89,9 +89,7 @@ export default function CreateEvent() {
     }
   }, [form.department_id, form.visibility]);
 
-  const handleFileAdd = () => {
-    fileInputRef.current?.click();
-  };
+  const handleFileAdd = () => fileInputRef.current?.click();
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files);
     const newAttachments = files.map((file) => ({
@@ -135,7 +133,7 @@ export default function CreateEvent() {
       collaborator_ids: collaboratorIds,
       remind_before_minutes: form.remind_before_minutes || null,
       is_email_reminder: form.is_email_reminder,
-      event_type: form.event_type, // ← send event_type
+      event_type: form.event_type,
     };
 
     console.log("Submitting event payload:", payload);
@@ -169,14 +167,14 @@ export default function CreateEvent() {
     }
   };
 
+  // ── Visibility options (fixed) ──────────────────────
   const visibilityOptions = [];
   if (role === "officials") {
     visibilityOptions.push({ value: "private", label: "Private" });
-    if (hasDepartment) {
-      visibilityOptions.push({ value: "department", label: "Department" });
-    }
+    visibilityOptions.push({ value: "department", label: "Department" });
     visibilityOptions.push({ value: "campus", label: "Campus" });
   } else {
+    // staff / faculty – only private
     visibilityOptions.push({ value: "private", label: "Private" });
   }
   const showVisibilityRadio = visibilityOptions.length > 1;
@@ -194,6 +192,7 @@ export default function CreateEvent() {
         </div>
 
         <div className={styles.sectionContent}>
+          {/* Color & Visibility */}
           <div className={styles.section}>
             <EventColor
               value={form.color}
@@ -233,18 +232,31 @@ export default function CreateEvent() {
             )}
           </div>
 
+          {/* Hierarchy & Event Type – side by side */}
           <div className={styles.section}>
-            <SelectDropdown
-              label="HIERARCHY LEVEL"
-              options={[
-                { value: "local", label: "Local" },
-                { value: "regional", label: "Regional" },
-                { value: "national", label: "National" },
-                { value: "international", label: "International" },
-              ]}
-              value={form.hierarchy}
-              onChange={(e) => updateField("hierarchy", e.target.value)}
-            />
+            <div className={styles.row}>
+              <SelectDropdown
+                label="HIERARCHY LEVEL"
+                options={[
+                  { value: "local", label: "Local" },
+                  { value: "regional", label: "Regional" },
+                  { value: "national", label: "National" },
+                  { value: "international", label: "International" },
+                ]}
+                value={form.hierarchy}
+                onChange={(e) => updateField("hierarchy", e.target.value)}
+              />
+              <SelectDropdown
+                label="EVENT TYPE"
+                options={[
+                  { value: "meeting", label: "Meeting" },
+                  { value: "seminar", label: "Seminar" },
+                  { value: "event", label: "Event" },
+                ]}
+                value={form.event_type}
+                onChange={(e) => updateField("event_type", e.target.value)}
+              />
+            </div>
             {form.visibility === "department" && (
               <SelectDropdown
                 label="DEPARTMENT"
@@ -258,20 +270,7 @@ export default function CreateEvent() {
             )}
           </div>
 
-          {/* ── Event Type (new dropdown) ── */}
-          <div className={styles.section}>
-            <SelectDropdown
-              label="EVENT TYPE"
-              options={[
-                { value: "meeting", label: "Meeting" },
-                { value: "seminar", label: "Seminar" },
-                { value: "event", label: "Event" },
-              ]}
-              value={form.event_type}
-              onChange={(e) => updateField("event_type", e.target.value)}
-            />
-          </div>
-
+          {/* Venue / Location */}
           {form.method !== "online" && (
             <div className={styles.section}>
               {form.hierarchy === "local" ? (
@@ -301,6 +300,7 @@ export default function CreateEvent() {
             </div>
           )}
 
+          {/* Schedule & Reminder */}
           <div className={styles.section}>
             <div className={styles.row}>
               <InputField
@@ -362,6 +362,7 @@ export default function CreateEvent() {
             </div>
           </div>
 
+          {/* Description */}
           <div className={styles.section}>
             <InputField
               label="DESCRIPTION"
@@ -373,6 +374,7 @@ export default function CreateEvent() {
             />
           </div>
 
+          {/* Attachments */}
           <div className={styles.section}>
             <FileAttachment
               files={attachments.map(({ name, size }) => ({ name, size }))}
@@ -384,6 +386,7 @@ export default function CreateEvent() {
             />
           </div>
 
+          {/* Attendees & Collaborators */}
           <div className={styles.section}>
             <button
               type="button"
@@ -401,6 +404,7 @@ export default function CreateEvent() {
             </button>
           </div>
 
+          {/* Submit */}
           <div className={styles.section}>
             <Button type="submit" disabled={loading}>
               {loading ? "Creating..." : "Create Event"}
