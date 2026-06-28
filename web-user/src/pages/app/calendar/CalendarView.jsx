@@ -10,6 +10,7 @@ import {
   FiTarget,
 } from "react-icons/fi";
 import apiClient from "../../../api/client";
+import { getInvitations } from "../../../api/notifications"; // ✅ new import
 import styles from "./CalendarView.module.css";
 
 // ── Constants ──────────────────────────────────────
@@ -96,6 +97,7 @@ export default function CalendarView() {
   // ── Events state ──────────────────────────────────
   const [holidays, setHolidays] = useState([]);
   const [userEvents, setUserEvents] = useState([]);
+  const [pendingEventIds, setPendingEventIds] = useState([]); // ✅ IDs of pending invitations
 
   const visibleRange = useMemo(() => {
     let start, end;
@@ -116,6 +118,7 @@ export default function CalendarView() {
     return { start, end };
   }, [duration, selectedDate, weekStart, year, month]);
 
+  // ── Fetch holidays ───────────────────────────────
   useEffect(() => {
     fetch("https://trackv2-68rg.onrender.com/data/holidays.json")
       .then((res) => res.json())
@@ -123,6 +126,7 @@ export default function CalendarView() {
       .catch(() => {});
   }, []);
 
+  // ── Fetch user events ────────────────────────────
   useEffect(() => {
     const fetchEvents = async () => {
       try {
@@ -137,7 +141,28 @@ export default function CalendarView() {
     fetchEvents();
   }, [visibleRange.start, visibleRange.end]);
 
-  const allEvents = [...holidays, ...userEvents];
+  // ── Fetch pending invitations (to hide them) ─────
+  useEffect(() => {
+    const fetchPending = async () => {
+      try {
+        const data = await getInvitations({ response: "pending" });
+        const ids = data.events.map((ev) => ev.id);
+        setPendingEventIds(ids);
+      } catch (err) {
+        console.error("Failed to fetch pending invitations:", err);
+      }
+    };
+    fetchPending();
+  }, [visibleRange.start, visibleRange.end]); // refetch when range changes
+
+  // ── Combine events, excluding pending ones ──────
+  const allEvents = useMemo(() => {
+    // Filter out user events that are pending
+    const filteredUserEvents = userEvents.filter(
+      (ev) => !pendingEventIds.includes(ev.id),
+    );
+    return [...holidays, ...filteredUserEvents];
+  }, [holidays, userEvents, pendingEventIds]);
 
   const filteredEvents = useMemo(() => {
     if (activeFilters.length === 0) return allEvents;
@@ -163,7 +188,6 @@ export default function CalendarView() {
 
   const dailyEvents = selectedDate ? eventsByDate[selectedDate] || [] : [];
 
-  // TODAY's date string
   const todayStr = new Date().toISOString().slice(0, 10);
 
   // ── Navigation ───────────────────────────────────
@@ -171,7 +195,6 @@ export default function CalendarView() {
     const today = new Date();
     setCurrentDate(today);
     setSelectedDate(today.toISOString().slice(0, 10));
-    // duration stays unchanged
   };
 
   const navigate = (direction) => {
@@ -217,7 +240,6 @@ export default function CalendarView() {
     setSelectedEvent(null);
   };
 
-  // Header title
   const headerTitle = useMemo(() => {
     if (duration === "day") {
       return new Date(selectedDate + "T12:00:00").toLocaleDateString("en-US", {

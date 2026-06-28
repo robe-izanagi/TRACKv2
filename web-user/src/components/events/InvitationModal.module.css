@@ -1,0 +1,169 @@
+.mainContent {
+  padding: 0;
+}
+
+.titleSection {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.titleSection h2 {
+  margin: 0;
+  font-size: 20px;
+  color: #111827;
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.detailsGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.detailItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #374151;
+}
+
+.responseSection {
+  background: #f9fafb;
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.responseSection p {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: #374151;
+}
+
+.responseBtns {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.acceptBtn,
+.declineBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.acceptBtn {
+  background: var(--primary-color);
+  color: white;
+}
+
+.declineBtn {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.section {
+  margin-bottom: 20px;
+}
+
+.section h3 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 15px;
+  color: #111827;
+  margin-bottom: 8px;
+}
+
+.partGroup {
+  margin-bottom: 12px;
+}
+
+.partGroup h4 {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0 0 6px;
+}
+
+.partList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.partTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #f3f4f6;
+  padding: 4px 10px;
+  border-radius: 16px;
+  font-size: 12px;
+  color: #374151;
+}
+
+.showMoreBtn {
+  background: none;
+  border: 1px solid #d1d5db;
+  padding: 4px 10px;
+  border-radius: 16px;
+  font-size: 12px;
+  color: #374151;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.attachList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.attachItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--primary-color);
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.attachItem:hover {
+  text-decoration: underline;
+}
+
+.archiveSection {
+  text-align: right;
+  margin-top: 12px;
+}
+
+.archiveBtn {
+  background: #e5e7eb;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #374151;
+}
