@@ -9,7 +9,7 @@ import {
   FiLock,
   FiTarget,
 } from "react-icons/fi";
-import apiClient from "../../../api/client"; // adjust import path if needed
+import apiClient from "../../../api/client";
 import styles from "./CalendarView.module.css";
 
 // ── Constants ──────────────────────────────────────
@@ -163,12 +163,15 @@ export default function CalendarView() {
 
   const dailyEvents = selectedDate ? eventsByDate[selectedDate] || [] : [];
 
+  // TODAY's date string
+  const todayStr = new Date().toISOString().slice(0, 10);
+
   // ── Navigation ───────────────────────────────────
   const goToToday = () => {
     const today = new Date();
     setCurrentDate(today);
     setSelectedDate(today.toISOString().slice(0, 10));
-    setDuration("day");
+    // duration stays unchanged
   };
 
   const navigate = (direction) => {
@@ -284,9 +287,6 @@ export default function CalendarView() {
     });
   };
 
-  // TODAY's date string – used to highlight the current day
-  const todayStr = new Date().toISOString().slice(0, 10);
-
   return (
     <div className={styles.pageWrapper}>
       <div
@@ -294,6 +294,7 @@ export default function CalendarView() {
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
+        {/* Header */}
         <div className={styles.header}>
           <button onClick={goToPrev} className={styles.navBtn}>
             <FiChevronLeft size={20} />
@@ -304,6 +305,7 @@ export default function CalendarView() {
           </button>
         </div>
 
+        {/* Controls row */}
         <div className={styles.controlsRow}>
           <button
             className={`${styles.chip} ${styles.todayChip}`}
@@ -344,6 +346,7 @@ export default function CalendarView() {
           </select>
         </div>
 
+        {/* Filter chips */}
         <div className={`${styles.chipRow} ${styles.scrollableRow}`}>
           <button
             className={`${styles.chip} ${activeFilters.length === 0 ? styles.chipActive : ""}`}
@@ -375,7 +378,7 @@ export default function CalendarView() {
           </button>
         </div>
 
-        {/* Day / Week / Month views – unchanged from previous version */}
+        {/* ===== Day / Week / Month views ===== */}
         {duration === "day" && (
           <div className={styles.dailyContainer}>
             <div className={styles.timelineWrapper}>
@@ -419,18 +422,27 @@ export default function CalendarView() {
         {duration === "week" && (
           <div className={styles.weekContainer}>
             <div className={styles.weekGrid}>
+              {/* Week day headers – highlight today */}
               <div className={styles.weekDayHeader}>
-                {weekDays.map((day, idx) => (
-                  <div key={idx} className={styles.weekDayLabel}>
-                    <span className={styles.weekDayName}>
-                      {DAY_NAMES[day.getDay()]}
-                    </span>
-                    <span className={styles.weekDayNumber}>
-                      {day.getDate()}
-                    </span>
-                  </div>
-                ))}
+                {weekDays.map((day, idx) => {
+                  const dateStr = day.toISOString().slice(0, 10);
+                  const isToday = dateStr === todayStr;
+                  return (
+                    <div
+                      key={idx}
+                      className={`${styles.weekDayLabel} ${isToday ? styles.weekDayLabelToday : ""}`}
+                    >
+                      <span className={styles.weekDayName}>
+                        {DAY_NAMES[day.getDay()]}
+                      </span>
+                      <span className={styles.weekDayNumber}>
+                        {day.getDate()}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
+              {/* Time rows */}
               <div className={styles.weekTimeline}>
                 {Array.from({ length: 24 }, (_, hour) => (
                   <div key={hour} className={styles.weekHourRow}>
@@ -446,12 +458,16 @@ export default function CalendarView() {
                     <div className={styles.weekHourCells}>
                       {weekDays.map((day, dayIdx) => {
                         const dateStr = day.toISOString().slice(0, 10);
+                        const isToday = dateStr === todayStr;
                         const events = eventsByDate[dateStr] || [];
                         const eventsAtHour = events.filter(
                           (ev) => parseInt(ev.time, 10) === hour,
                         );
                         return (
-                          <div key={dayIdx} className={styles.weekCell}>
+                          <div
+                            key={dayIdx}
+                            className={`${styles.weekCell} ${isToday ? styles.weekCellToday : ""}`}
+                          >
                             {eventsAtHour.map((ev) => (
                               <div
                                 key={ev.id}

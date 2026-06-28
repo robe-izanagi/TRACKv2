@@ -520,7 +520,6 @@
   cursor: pointer;
 }
 
-/* Adjust header title font size */
 .headerTitle {
   font-size: 18px;
   font-weight: 700;
@@ -541,7 +540,6 @@
   width: 80px;
 }
 
-/* Filter checkboxes at bottom right */
 .filterCheckboxRow {
   display: flex;
   justify-content: flex-end;
@@ -567,9 +565,24 @@
   height: 16px;
 }
 
-/* Cancel mainContent padding for the calendar */
 .pageWrapper {
   margin: -16px;
   background: #f9fafb;
   min-height: 100vh;
+}
+
+.weekDayLabelToday {
+  background: #f0f0f0;
+}
+
+.weekCellToday {
+  /* background: #f5f5f5; */
+}
+
+.weekDayLabel.weekDayLabelToday {
+  /* background: #e5e7eb; */
+}
+
+.weekCell.weekCellToday {
+  background: #f3f4f6;
 }
