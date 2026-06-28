@@ -25,11 +25,11 @@ router.get('/invitations', authenticate, async (req, res) => {
       include: [
         {
           model: Event,
-          as: 'Event',             // default alias is 'Event'
+          as: 'event',                      // ✅ fixed alias (was 'Event')
           include: [
             { model: Venue, attributes: ['name'] },
             { model: Location, attributes: ['map_location', 'exact_location'] },
-            // Creator – alias is 'user' (lowercase), not 'User'
+            // Creator – alias is 'user' (lowercase)
             {
               model: User, as: 'user', attributes: ['id', 'email'],
               include: [
@@ -49,7 +49,7 @@ router.get('/invitations', authenticate, async (req, res) => {
     // Build result list
     const events = [];
     for (const record of attendeeRecords) {
-      const ev = record.Event;
+      const ev = record.event;              // ✅ changed from record.Event
       if (!ev) continue;
 
       // Filter by visibility type if requested
