@@ -1,50 +1,108 @@
 const express = require('express');
 const router = express.Router();
 const { authenticate } = require('../middleware/auth');
-const { Event, EventAttendee, EventCollaborator, Venue, Location, User, UserProfile, Department, Office, Position, Attachment } = require('../models');
+const {
+  Event, EventAttendee, Venue, Location,
+  User, UserProfile, Department, Office, Position,
+  Attachment
+} = require('../models');
 
-// GET /api/notifications/invitations?response=pending|accepted|declined&type=campus|department|private
+// GET /api/notifications/invitations?response=pending&type=campus|department|private
 router.get('/invitations', authenticate, async (req, res) => {
   try {
     const { response, type } = req.query;
 
-    // Find attendee records for the current user
+    // Default to pending only
     const whereAttendee = { user_id: req.userId };
     if (response && ['pending', 'accepted', 'declined'].includes(response)) {
       whereAttendee.response = response;
     } else {
-      // Default: show pending only
       whereAttendee.response = 'pending';
     }
 
     const attendeeRecords = await EventAttendee.findAll({
       where: whereAttendee,
-      attributes: ['event_id', 'response'],
       include: [
         {
           model: Event,
+          as: 'Event',             // default alias is 'Event'
           include: [
-            { model: Venue, attributes: ['id', 'name'] },
-            { model: Location, attributes: ['id', 'map_location', 'exact_location'] },
+            { model: Venue, attributes: ['name'] },
+            { model: Location, attributes: ['map_location', 'exact_location'] },
+            // Creator – alias is 'user' (lowercase), not 'User'
             {
-              model: User, as: 'User', attributes: ['id', 'email'],  // creator
-              include: [{
-                model: UserProfile, attributes: ['full_name', 'department_id', 'office_id', 'position_id'],
-                include: [Department, Office, Position]
-              }]
+              model: User, as: 'user', attributes: ['id', 'email'],
+              include: [
+                {
+                  model: UserProfile,
+                  include: [Department, Office, Position]
+                }
+              ]
             },
-            { model: Department, attributes: ['id', 'name'] },
-            { model: Office, attributes: ['id', 'name'] },
-            { model: Attachment, attributes: ['id', 'file_name', 'file_url', 'file_size'] }
+            { model: Department, attributes: ['name'] },
+            { model: Office, attributes: ['name'] }
           ]
         }
       ]
     });
 
-    // Map to a cleaner structure
-    let events = attendeeRecords.map(record => {
+    // Build result list
+    const events = [];
+    for (const record of attendeeRecords) {
       const ev = record.Event;
-      return {
+      if (!ev) continue;
+
+      // Filter by visibility type if requested
+      if (type && ['campus', 'department', 'private'].includes(type)) {
+        if (ev.visibility !== type) continue;
+      }
+
+      // Fetch attachments manually (polymorphic)
+      const attachments = await Attachment.findAll({
+        where: { entity_type: 'event', entity_id: ev.id },
+        attributes: ['id', 'file_name', 'file_url', 'file_size']
+      });
+
+      // Fetch participants (attendees) for this event
+      const participantsRaw = await EventAttendee.findAll({
+        where: { event_id: ev.id },
+        include: [
+          {
+            model: User, attributes: ['id', 'email'],
+            include: [
+              { model: UserProfile, include: [Department, Office, Position] }
+            ]
+          }
+        ]
+      });
+
+      // Group participants
+      const departments = new Map();
+      const offices = new Map();
+      const users = [];
+
+      participantsRaw.forEach(p => {
+        const user = p.User;
+        if (!user || !user.UserProfile) return;
+        const profile = user.UserProfile;
+        if (profile.department_id && profile.Department) {
+          departments.set(profile.Department.name, (departments.get(profile.Department.name) || 0) + 1);
+        }
+        if (profile.office_id && profile.Office) {
+          offices.set(profile.Office.name, (offices.get(profile.Office.name) || 0) + 1);
+        }
+        users.push({
+          id: user.id,
+          email: user.email,
+          name: profile.full_name || user.email,
+          department: profile.Department?.name,
+          office: profile.Office?.name,
+          position: profile.Position?.name,
+          response: p.response,
+        });
+      });
+
+      events.push({
         id: ev.id,
         title: ev.title,
         color: ev.color,
@@ -57,30 +115,30 @@ router.get('/invitations', authenticate, async (req, res) => {
         venue: ev.Venue ? ev.Venue.name : null,
         location: ev.Location ? `${ev.Location.map_location} ${ev.Location.exact_location || ''}`.trim() : null,
         description: ev.description,
-        creator: ev.User ? {
-          id: ev.User.id,
-          email: ev.User.email,
-          full_name: ev.User.UserProfile?.full_name || ev.User.email,
-          department: ev.User.UserProfile?.Department?.name,
-          office: ev.User.UserProfile?.Office?.name,
-          position: ev.User.UserProfile?.Position?.name,
+        creator: ev.user ? {
+          id: ev.user.id,
+          email: ev.user.email,
+          full_name: ev.user.UserProfile?.full_name || ev.user.email,
+          department: ev.user.UserProfile?.Department?.name,
+          office: ev.user.UserProfile?.Office?.name,
+          position: ev.user.UserProfile?.Position?.name,
         } : null,
         department: ev.Department ? ev.Department.name : null,
         office: ev.Office ? ev.Office.name : null,
-        attachments: ev.Attachments ? ev.Attachments.map(a => ({
+        attachments: attachments.map(a => ({
           id: a.id,
           file_name: a.file_name,
           file_url: a.file_url,
           file_size: a.file_size,
-        })) : [],
+        })),
         created_at: ev.created_at,
         response: record.response,
-      };
-    });
-
-    // Filter by event visibility if 'type' is specified
-    if (type && ['campus', 'department', 'private'].includes(type)) {
-      events = events.filter(e => e.visibility === type);
+        participants: {
+          departments: Array.from(departments, ([name, count]) => ({ name, count })),
+          offices: Array.from(offices, ([name, count]) => ({ name, count })),
+          users,
+        },
+      });
     }
 
     res.json({ ok: true, events });
@@ -90,27 +148,24 @@ router.get('/invitations', authenticate, async (req, res) => {
   }
 });
 
-// PUT /api/notifications/:eventId/respond  (body: { response: 'accepted' | 'declined' })
+// PUT /api/notifications/:eventId/respond
 router.put('/:eventId/respond', authenticate, async (req, res) => {
   try {
     const { eventId } = req.params;
     const { response } = req.body;
 
     if (!['accepted', 'declined'].includes(response)) {
-      return res.status(400).json({ ok: false, message: 'Invalid response. Must be "accepted" or "declined".' });
+      return res.status(400).json({ ok: false, message: 'Invalid response.' });
     }
 
-    // Find the attendee record for this user and event
     const attendee = await EventAttendee.findOne({
       where: { user_id: req.userId, event_id: eventId }
     });
-
     if (!attendee) {
-      return res.status(404).json({ ok: false, message: 'You are not invited to this event.' });
+      return res.status(404).json({ ok: false, message: 'Not invited.' });
     }
-
     if (attendee.response !== 'pending') {
-      return res.status(400).json({ ok: false, message: 'You have already responded to this invitation.' });
+      return res.status(400).json({ ok: false, message: 'Already responded.' });
     }
 
     attendee.response = response;
