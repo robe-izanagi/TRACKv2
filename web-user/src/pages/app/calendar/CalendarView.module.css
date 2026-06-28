@@ -1,5 +1,4 @@
-
-
+/* Container */
 .container {
   max-width: 480px;
   margin: 0 auto;
@@ -93,9 +92,9 @@
 }
 
 .chipActive {
-  background: #800000;
+  background: var(--primary-color);
   color: white;
-  border-color: #800000;
+  border-color: var(--primary-color);
 }
 
 .todayChip {
@@ -123,7 +122,6 @@
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   grid-template-rows: auto repeat(5, minmax(112px, 1fr));
-  /* ~40% taller rows */
   gap: 0;
   border: none;
 }
@@ -143,9 +141,7 @@
   align-items: center;
   justify-content: flex-start;
   padding: 2px;
-  /* minimal inner spacing */
   border-radius: 0;
-  /* no rounding */
   background: white;
   border: 1px solid #e5e7eb;
   box-shadow: none;
@@ -163,13 +159,19 @@
   color: #ef4444;
 }
 
+/* Today cell – strong highlight */
 .todayCell {
-  border-color: #800000;
-  box-shadow: inset 0 0 0 2px rgba(128, 0, 0, 0.2);
+  border-color: var(--primary-color);
+  background: #fef2f2;
+  /* very light maroon */
+  box-shadow: inset 0 0 0 3px rgba(168, 2, 2, 0.25);
 }
 
+/* Selected cell (clicked) */
 .activeCell {
   background: #fef2f2;
+  border-color: var(--primary-color);
+  box-shadow: inset 0 0 0 2px var(--primary-color);
 }
 
 .dayNumber {
@@ -337,7 +339,7 @@
 .backBtn {
   background: none;
   border: none;
-  color: #800000;
+  color: var(--primary-color);
   font-weight: 600;
   cursor: pointer;
   margin-bottom: 12px;
@@ -362,7 +364,7 @@
   align-items: flex-start;
   gap: 12px;
   padding: 12px;
-  border-left: 4px solid #800000;
+  border-left: 4px solid var(--primary-color);
   background: #f9fafb;
   border-radius: 8px;
   margin-bottom: 8px;
@@ -537,4 +539,37 @@
   color: #374151;
   cursor: pointer;
   width: 80px;
+}
+
+/* Filter checkboxes at bottom right */
+.filterCheckboxRow {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  margin-top: 12px;
+  padding: 8px 4px;
+  background: #f9fafb;
+  border-top: 1px solid #e5e7eb;
+}
+
+.filterCheckbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #374151;
+  cursor: pointer;
+}
+
+.filterCheckbox input {
+  accent-color: var(--primary-color);
+  width: 16px;
+  height: 16px;
+}
+
+/* Cancel mainContent padding for the calendar */
+.pageWrapper {
+  margin: -16px;
+  background: #f9fafb;
+  min-height: 100vh;
 }

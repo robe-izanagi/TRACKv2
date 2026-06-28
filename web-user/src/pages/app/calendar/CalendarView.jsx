@@ -9,7 +9,7 @@ import {
   FiLock,
   FiTarget,
 } from "react-icons/fi";
-import apiClient from "../../../api/client"; // ← adjust import path if needed
+import apiClient from "../../../api/client"; // adjust import path if needed
 import styles from "./CalendarView.module.css";
 
 // ── Constants ──────────────────────────────────────
@@ -97,7 +97,6 @@ export default function CalendarView() {
   const [holidays, setHolidays] = useState([]);
   const [userEvents, setUserEvents] = useState([]);
 
-  // Determine the visible date range based on current view
   const visibleRange = useMemo(() => {
     let start, end;
     if (duration === "day") {
@@ -109,7 +108,6 @@ export default function CalendarView() {
       d.setDate(d.getDate() + 6);
       end = d.toISOString().slice(0, 10);
     } else {
-      // month
       const firstDay = new Date(year, month, 1);
       const lastDay = new Date(year, month + 1, 0);
       start = firstDay.toISOString().slice(0, 10);
@@ -118,7 +116,6 @@ export default function CalendarView() {
     return { start, end };
   }, [duration, selectedDate, weekStart, year, month]);
 
-  // Fetch holidays once
   useEffect(() => {
     fetch("https://trackv2-68rg.onrender.com/data/holidays.json")
       .then((res) => res.json())
@@ -126,7 +123,6 @@ export default function CalendarView() {
       .catch(() => {});
   }, []);
 
-  // Fetch user events when visible range changes
   useEffect(() => {
     const fetchEvents = async () => {
       try {
@@ -167,7 +163,7 @@ export default function CalendarView() {
 
   const dailyEvents = selectedDate ? eventsByDate[selectedDate] || [] : [];
 
-  // Navigation
+  // ── Navigation ───────────────────────────────────
   const goToToday = () => {
     const today = new Date();
     setCurrentDate(today);
@@ -191,7 +187,6 @@ export default function CalendarView() {
   const goToPrev = () => navigate(-1);
   const goToNext = () => navigate(1);
 
-  // Swipe
   const handleTouchStart = (e) => {
     touchStartX.current = e.touches[0].clientX;
   };
@@ -247,7 +242,6 @@ export default function CalendarView() {
     return `${MONTH_NAMES[month]} ${year}`;
   }, [duration, selectedDate, weekStart, month, year]);
 
-  // Month & Year dropdowns
   const monthOptions = MONTH_NAMES.map((name, idx) => ({
     value: idx,
     label: name,
@@ -289,6 +283,9 @@ export default function CalendarView() {
       return [...prev, type];
     });
   };
+
+  // TODAY's date string – used to highlight the current day
+  const todayStr = new Date().toISOString().slice(0, 10);
 
   return (
     <div className={styles.pageWrapper}>
@@ -486,11 +483,12 @@ export default function CalendarView() {
               ))}
               {monthGrid.map((cell, idx) => {
                 const events = eventsByDate[cell.dateStr] || [];
-                const isToday = cell.dateStr === selectedDate;
+                const isToday = cell.dateStr === todayStr;
+                const isSelected = cell.dateStr === selectedDate;
                 return (
                   <button
                     key={idx}
-                    className={`${styles.dayCell} ${!cell.isCurrentMonth ? styles.otherMonthCell : ""} ${isToday ? styles.todayCell : ""}`}
+                    className={`${styles.dayCell} ${!cell.isCurrentMonth ? styles.otherMonthCell : ""} ${isToday ? styles.todayCell : ""} ${isSelected ? styles.activeCell : ""}`}
                     onClick={() => handleDayClick(cell.dateStr)}
                   >
                     <span
