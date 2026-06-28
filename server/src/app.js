@@ -20,6 +20,7 @@ const venueRoutes = require('./routes/venues');
 const eventRoutes = require('./routes/events');
 const attachmentRoutes = require('./routes/attachments');
 const notificationsRoutes = require('./routes/notifications');
+const conflictRoutes = require('./routes/conflict');
 
 app.use(cors());
 app.use(morgan('dev'));
@@ -40,6 +41,7 @@ app.use('/api/venues', venueRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/attachments', attachmentRoutes);
 app.use('/api/notifications', notificationsRoutes);
+app.use('/api/events', conflictRoutes);
 
 // Serve uploaded files statically
 const uploadsPath = path.join(__dirname, '..', 'uploads');
