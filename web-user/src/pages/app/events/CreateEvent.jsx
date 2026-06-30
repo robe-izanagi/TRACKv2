@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { debounce } from "lodash"; // npm install lodash
 import InputField from "../../../components/common/InputField";
 import Button from "../../../components/common/Button";
 import SelectDropdown from "../../../components/common/SelectDropdown";
@@ -8,6 +9,7 @@ import EventColor from "../../../components/events/EventColor";
 import InviteAttendeesModal from "../../../components/events/InviteAttendeesModal";
 import MapPicker from "../../../components/common/MapPicker";
 import FileAttachment from "../../../components/common/FileAttachment";
+import ConflictCard from "../../../components/events/ConflictCard"; // new component
 import apiClient from "../../../api/client";
 import { useAuth } from "../../../context/AuthContext";
 import styles from "./CreateEvent.module.css";
@@ -17,7 +19,7 @@ export default function CreateEvent() {
   const navigate = useNavigate();
 
   const role = user?.role || "faculty";
-  const hasDepartment = !!user?.department; // from context
+  const hasDepartment = !!user?.department;
 
   const initialVisibility =
     role === "staff" || role === "faculty" ? "private" : "private";
@@ -56,12 +58,17 @@ export default function CreateEvent() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
+  // Conflict detection states
+  const [conflictData, setConflictData] = useState(null);
+  const [checkingConflicts, setCheckingConflicts] = useState(false);
+  const [showConflictSheet, setShowConflictSheet] = useState(false);
+
   // Store current user's full profile (includes department_id)
   const [currentProfile, setCurrentProfile] = useState(null);
 
   const fileInputRef = useRef(null);
 
-  // Fetch lookup data and current user's profile (to get department_id)
+  // Fetch lookup data and current user's profile
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -82,25 +89,23 @@ export default function CreateEvent() {
     fetchData();
   }, []);
 
-  // When visibility changes to "department", automatically set the department
-  // and trigger attendee auto‑selection (via the next effect)
+  // When visibility changes to "department", auto‑set department
   useEffect(() => {
     if (form.visibility === "department" && currentProfile?.department_id) {
-      // Only set if it's not already set (prevents overwriting if user came back)
       if (form.department_id !== currentProfile.department_id) {
         updateField("department_id", currentProfile.department_id);
       }
     }
   }, [form.visibility, currentProfile]);
 
-  // Auto‑invite all members of the selected department (excluding the creator)
+  // Auto‑invite all members of the selected department (excluding creator)
   useEffect(() => {
     if (form.visibility === "department" && form.department_id) {
       apiClient
         .get(`/auth/users?department_id=${form.department_id}`)
         .then((res) => {
           const ids = (res.data.users || [])
-            .filter((u) => u.id !== user?.id) // exclude creator
+            .filter((u) => u.id !== user?.id)
             .map((u) => u.id);
           setAttendeeIds(ids);
         })
@@ -126,8 +131,74 @@ export default function CreateEvent() {
     setAttachments((prev) => prev.filter((f) => f !== fileToRemove));
   };
 
+  // ─── Conflict Detection ────────────────────────────────
+  const checkConflicts = useCallback(async () => {
+    // Only check if we have date and time
+    if (
+      !form.start_date ||
+      !form.end_date ||
+      !form.start_time ||
+      !form.end_time
+    ) {
+      setConflictData(null);
+      return;
+    }
+
+    const startDateTime = `${form.start_date}T${form.start_time}:00`;
+    const endDateTime = `${form.end_date}T${form.end_time}:00`;
+
+    setCheckingConflicts(true);
+    try {
+      const res = await apiClient.post("/events/check-conflicts", {
+        venue_id: form.venue_id || null,
+        attendee_ids: attendeeIds,
+        creator_id: user.id,
+        start_datetime: startDateTime,
+        end_datetime: endDateTime,
+        // exclude_event_id: null for create
+      });
+      if (res.data.ok) {
+        setConflictData(res.data);
+      } else {
+        setConflictData(null);
+      }
+    } catch (err) {
+      console.error("Conflict check error:", err);
+      setConflictData(null);
+    } finally {
+      setCheckingConflicts(false);
+    }
+  }, [
+    form.start_date,
+    form.end_date,
+    form.start_time,
+    form.end_time,
+    form.venue_id,
+    attendeeIds,
+    user.id,
+  ]);
+
+  const debouncedCheck = useCallback(debounce(checkConflicts, 500), [
+    checkConflicts,
+  ]);
+
+  useEffect(() => {
+    debouncedCheck();
+    return () => debouncedCheck.cancel();
+  }, [debouncedCheck]);
+
+  // ─── Submit ────────────────────────────────────────────
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // If there's a venue conflict, ask for confirmation
+    if (conflictData?.conflicts?.venue?.has) {
+      const confirmProceed = window.confirm(
+        "⚠️ The selected venue is already booked for this time. Are you sure you want to proceed?",
+      );
+      if (!confirmProceed) return;
+    }
+
     setLoading(true);
     setMessage("");
 
@@ -189,7 +260,7 @@ export default function CreateEvent() {
     }
   };
 
-  // Visibility options – department only if user has a department
+  // ─── Visibility Options ──────────────────────────────
   const visibilityOptions = [];
   if (role === "officials") {
     visibilityOptions.push({ value: "private", label: "Private" });
@@ -201,6 +272,13 @@ export default function CreateEvent() {
     visibilityOptions.push({ value: "private", label: "Private" });
   }
   const showVisibilityRadio = visibilityOptions.length > 1;
+
+  // Determine if there are any conflicts
+  const hasAnyConflict =
+    conflictData &&
+    (conflictData.conflicts.venue.has ||
+      conflictData.conflicts.attendees.has ||
+      conflictData.conflicts.creator.has);
 
   return (
     <div className={styles.pageWrapper}>
@@ -268,7 +346,6 @@ export default function CreateEvent() {
             />
           </div>
 
-          {/* ── Event Type ── */}
           <div className={styles.section}>
             <SelectDropdown
               label="EVENT TYPE"
@@ -312,6 +389,23 @@ export default function CreateEvent() {
           )}
 
           <div className={styles.section}>
+            {form.visibility === "department" && (
+              <p style={{ fontSize: "0.85rem", color: "#374151" }}>
+                All users belongs to your department{" "}
+                <strong>{currentProfile?.department}</strong> will be
+                automatically invited.
+              </p>
+            )}
+            <button
+              type="button"
+              className={styles.inviteBtn}
+              onClick={() => setShowAttendeeModal(true)}
+            >
+              Invite Attendees ({attendeeIds.length})
+            </button>
+          </div>
+
+          <div className={styles.section}>
             <div className={styles.row}>
               <InputField
                 label="START DATE"
@@ -340,6 +434,35 @@ export default function CreateEvent() {
                 onChange={(e) => updateField("end_time", e.target.value)}
               />
             </div>
+
+            {/* ── Conflict Notice Card ── */}
+            {checkingConflicts && (
+              <div className={styles.checkingNotice}>Checking conflicts...</div>
+            )}
+            {!checkingConflicts && hasAnyConflict && (
+              <div
+                className={styles.conflictNotice}
+                onClick={() => setShowConflictSheet(true)}
+              >
+                <span>
+                  ⚠️ {conflictData.conflicts.venue.has && "Venue conflict "}
+                  {conflictData.conflicts.attendees.has &&
+                    "· Attendee conflicts "}
+                  {conflictData.conflicts.creator.has &&
+                    "· You have a conflict "}
+                </span>
+                <span className={styles.viewDetails}>Tap to view details</span>
+              </div>
+            )}
+            {!checkingConflicts &&
+              !hasAnyConflict &&
+              form.start_date &&
+              form.start_time && (
+                <div className={styles.noConflictNotice}>
+                  ✅ No conflicts detected
+                </div>
+              )}
+
             <div className={styles.stackRow}>
               <SelectDropdown
                 label="REMINDER"
@@ -395,23 +518,9 @@ export default function CreateEvent() {
           </div>
 
           <div className={styles.section}>
-            {form.visibility === "department" && (
-              <p style={{ fontSize: "0.85rem", color: "#374151" }}>
-                All users belongs to your department{" "}
-                <strong>{currentProfile?.department}</strong> will be
-                automatically invited.
-              </p>
-            )}
             <button
               type="button"
-              className={styles.inviteBtn}
-              onClick={() => setShowAttendeeModal(true)}
-            >
-              Invite Attendees ({attendeeIds.length})
-            </button>
-            <button
-              type="button"
-              className={styles.inviteBtn}
+              className={styles.collabBtn}
               onClick={() => setShowCollabModal(true)}
             >
               Add Collaborators ({collaboratorIds.length})
@@ -449,6 +558,26 @@ export default function CreateEvent() {
           ref={fileInputRef}
           style={{ display: "none" }}
           onChange={handleFileChange}
+        />
+
+        {/* Conflict Bottom Sheet */}
+        <ConflictCard
+          conflictData={conflictData}
+          checking={checkingConflicts}
+          isOpen={showConflictSheet}
+          onClose={() => setShowConflictSheet(false)}
+          onApplyRecommendation={(slot) => {
+            // Apply the selected recommended slot to the form
+            const startDate = slot.start_datetime.split("T")[0];
+            const startTime = slot.start_datetime.split("T")[1].slice(0, 5);
+            const endDate = slot.end_datetime.split("T")[0];
+            const endTime = slot.end_datetime.split("T")[1].slice(0, 5);
+            updateField("start_date", startDate);
+            updateField("start_time", startTime);
+            updateField("end_date", endDate);
+            updateField("end_time", endTime);
+            setShowConflictSheet(false);
+          }}
         />
       </form>
     </div>
