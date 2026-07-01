@@ -2,9 +2,10 @@ const { v4: uuidv4 } = require('uuid');
 const { Op } = require('sequelize');
 const {
   sequelize, Event, EventAttendee, EventCollaborator,
-  Venue, Location, UserProfile, Department, Office, User
+  Venue, Location, UserProfile, Department, Office, User, Position
 } = require('../models');
 
+// ─── CREATE EVENT ──────────────────────────────────────
 exports.createEvent = async (req, res) => {
   const t = await sequelize.transaction();
   try {
@@ -15,7 +16,6 @@ exports.createEvent = async (req, res) => {
       is_email_reminder, event_type
     } = req.body;
 
-    // Basic validation
     if (!title || !visibility || !hierarchy || !start_datetime || !end_datetime || !method || !description || !color) {
       await t.rollback();
       return res.status(400).json({ ok: false, message: 'Missing required fields.' });
@@ -26,7 +26,6 @@ exports.createEvent = async (req, res) => {
       return res.status(400).json({ ok: false, message: 'End time must be after start time.' });
     }
 
-    // Department event checks
     let finalDeptId = null;
     if (visibility === 'department') {
       if (!department_id) {
@@ -41,7 +40,6 @@ exports.createEvent = async (req, res) => {
       finalDeptId = department_id;
     }
 
-    // Venue / Location logic
     let finalVenueId = null;
     let finalLocationId = null;
 
@@ -73,7 +71,6 @@ exports.createEvent = async (req, res) => {
       }
     }
 
-    // Create event
     const event = await Event.create({
       id: uuidv4(),
       title, color, method,
@@ -93,7 +90,6 @@ exports.createEvent = async (req, res) => {
       is_archived: false
     }, { transaction: t });
 
-    // Creator as accepted attendee
     await EventAttendee.create({
       id: uuidv4(),
       event_id: event.id,
@@ -101,7 +97,6 @@ exports.createEvent = async (req, res) => {
       response: 'accepted'
     }, { transaction: t });
 
-    // Attendees
     if (attendee_ids && attendee_ids.length > 0) {
       const unique = [...new Set(attendee_ids)].filter(id => id !== req.userId);
       if (unique.length > 0) {
@@ -112,7 +107,6 @@ exports.createEvent = async (req, res) => {
       }
     }
 
-    // Collaborators
     if (collaborator_ids && collaborator_ids.length > 0) {
       const unique = [...new Set(collaborator_ids)];
       await EventCollaborator.bulkCreate(
@@ -140,6 +134,7 @@ exports.createEvent = async (req, res) => {
   }
 };
 
+// ─── LIST EVENTS ──────────────────────────────────────
 exports.listEvents = async (req, res) => {
   try {
     const { start, end } = req.query;
@@ -171,7 +166,7 @@ exports.listEvents = async (req, res) => {
       endTime: ev.end_datetime.toTimeString().slice(0, 5),
       type: ev.visibility,
       hierarchy: ev.hierarchy,
-      event_type: ev.event_type,            // ← include event_type in response
+      event_type: ev.event_type,
       color: ev.color,
       description: ev.description,
       location: ev.Venue ? ev.Venue.name : (ev.Location ? ev.Location.map_location : null),
@@ -185,13 +180,12 @@ exports.listEvents = async (req, res) => {
   }
 };
 
-// ─── Get Event Statistics ──────────────────────────────
+// ─── GET EVENT STATISTICS ──────────────────────────────
 exports.getEventStats = async (req, res) => {
   try {
     const { type = 'campus', range = 'week' } = req.query;
     const userId = req.userId;
 
-    // Date range
     const now = new Date();
     let startDate;
     if (range === 'week') {
@@ -204,7 +198,6 @@ exports.getEventStats = async (req, res) => {
       startDate = new Date(0);
     }
 
-    // Build visibility condition
     let visibilityCondition;
     if (type === 'campus') {
       visibilityCondition = { visibility: 'campus' };
@@ -253,13 +246,12 @@ exports.getEventStats = async (req, res) => {
       if (response === 'accepted') accepted++;
       else if (response === 'declined') declined++;
       else if (response === 'pending') pending++;
-      // missed: events that ended but not accepted/declined (simplified)
       if (ev.end_datetime < now && response !== 'accepted' && response !== 'declined') missed++;
     }
 
     res.json({
       ok: true,
-      stats: { total, accepted, declined, missed, pending, conflicted: 0 } // conflicted not implemented yet
+      stats: { total, accepted, declined, missed, pending, conflicted: 0 }
     });
   } catch (error) {
     console.error('Get event stats error:', error);
@@ -267,7 +259,7 @@ exports.getEventStats = async (req, res) => {
   }
 };
 
-// ─── Get Today's Event ──────────────────────────────────
+// ─── GET TODAY'S EVENT (WITH PARTICIPANTS) ─────────────
 exports.getTodayEvent = async (req, res) => {
   try {
     const userId = req.userId;
@@ -295,18 +287,99 @@ exports.getTodayEvent = async (req, res) => {
       include: [
         { model: Venue, attributes: ['name'] },
         { model: Location, attributes: ['map_location'] },
-        {
-          model: User, as: 'user', attributes: ['id', 'username', 'email'],
-          include: [
-            { model: UserProfile, include: [Department, Office] }
-          ]
-        }
+        { model: User, as: 'user', attributes: ['id', 'username', 'email'] }
       ],
       order: [['start_datetime', 'ASC']]
     });
 
     if (!event) {
       return res.json({ ok: true, event: null });
+    }
+
+    // ── Creator profile ──
+    let creatorData = null;
+    if (event.user) {
+      const profile = await UserProfile.findOne({
+        where: { user_id: event.user.id }
+      });
+      let position = null, department = null, office = null;
+      if (profile) {
+        if (profile.position_id) {
+          const pos = await Position.findByPk(profile.position_id);
+          if (pos) position = pos.name;
+        }
+        if (profile.department_id) {
+          const dept = await Department.findByPk(profile.department_id);
+          if (dept) department = dept.name;
+        }
+        if (profile.office_id) {
+          const off = await Office.findByPk(profile.office_id);
+          if (off) office = off.name;
+        }
+      }
+      creatorData = {
+        username: event.user.username || 'Unknown',
+        email: event.user.email,
+        position,
+        department,
+        office
+      };
+    }
+
+    // ── Attendees with profiles ──
+    const attendees = await EventAttendee.findAll({
+      where: { event_id: event.id },
+      include: [
+        { model: User, attributes: ['id', 'username', 'email'] }
+      ]
+    });
+
+    const departmentSet = new Set();
+    const officeSet = new Set();
+    const usersList = [];
+
+    for (const attendee of attendees) {
+      const user = attendee.User;
+      if (!user) continue;
+
+      const profile = await UserProfile.findOne({
+        where: { user_id: user.id }
+      });
+
+      let deptName = null, officeName = null, positionName = null, fullName = null;
+
+      if (profile) {
+        fullName = profile.full_name;
+        if (profile.department_id) {
+          const dept = await Department.findByPk(profile.department_id);
+          if (dept) {
+            deptName = dept.name;
+            departmentSet.add(deptName);
+          }
+        }
+        if (profile.office_id) {
+          const off = await Office.findByPk(profile.office_id);
+          if (off) {
+            officeName = off.name;
+            officeSet.add(officeName);
+          }
+        }
+        if (profile.position_id) {
+          const pos = await Position.findByPk(profile.position_id);
+          if (pos) positionName = pos.name;
+        }
+      }
+
+      usersList.push({
+        id: user.id,
+        username: user.username || 'Unknown',
+        email: user.email,
+        full_name: fullName || user.username || user.email,
+        department: deptName,
+        office: officeName,
+        position: positionName,
+        response: attendee.response
+      });
     }
 
     const formatted = {
@@ -320,16 +393,11 @@ exports.getTodayEvent = async (req, res) => {
       event_type: event.event_type,
       venue: event.Venue ? event.Venue.name : null,
       location: event.Location ? event.Location.map_location : null,
-      creator: event.user ? {
-        username: event.user.username,
-        email: event.user.email,
-        position: event.user.UserProfile?.Position?.name,
-        department: event.user.UserProfile?.Department?.name,
-        office: event.user.UserProfile?.Office?.name
-      } : null,
+      creator: creatorData,
       participants: {
-        departments: [], // you can fill these later
-        offices: []
+        departments: Array.from(departmentSet),
+        offices: Array.from(officeSet),
+        users: usersList
       }
     };
 
@@ -340,7 +408,7 @@ exports.getTodayEvent = async (req, res) => {
   }
 };
 
-// ─── Get Upcoming Events (paginated) ──────────────────
+// ─── GET UPCOMING EVENTS ──────────────────────────────
 exports.getUpcomingEvents = async (req, res) => {
   try {
     const userId = req.userId;
