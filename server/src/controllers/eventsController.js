@@ -184,3 +184,211 @@ exports.listEvents = async (req, res) => {
     res.status(500).json({ ok: false, message: 'Server error.' });
   }
 };
+
+// ─── Get Event Statistics ──────────────────────────────
+exports.getEventStats = async (req, res) => {
+  try {
+    const { type = 'campus', range = 'week' } = req.query;
+    const userId = req.userId;
+
+    // Date range
+    const now = new Date();
+    let startDate;
+    if (range === 'week') {
+      startDate = new Date(now);
+      startDate.setDate(now.getDate() - 7);
+    } else if (range === 'month') {
+      startDate = new Date(now);
+      startDate.setMonth(now.getMonth() - 1);
+    } else {
+      startDate = new Date(0);
+    }
+
+    // Build visibility condition
+    let visibilityCondition;
+    if (type === 'campus') {
+      visibilityCondition = { visibility: 'campus' };
+    } else if (type === 'department') {
+      const profile = await UserProfile.findOne({ where: { user_id: userId } });
+      if (!profile || !profile.department_id) {
+        return res.json({ ok: true, stats: { total: 0, accepted: 0, declined: 0, missed: 0, pending: 0, conflicted: 0 } });
+      }
+      visibilityCondition = { visibility: 'department', department_id: profile.department_id };
+    } else if (type === 'private') {
+      const attendeeEvents = await EventAttendee.findAll({
+        where: { user_id: userId },
+        attributes: ['event_id']
+      });
+      const eventIds = attendeeEvents.map(a => a.event_id);
+      visibilityCondition = {
+        [Op.or]: [
+          { visibility: 'private', creator_id: userId },
+          { visibility: 'private', id: { [Op.in]: eventIds } }
+        ]
+      };
+    } else {
+      return res.status(400).json({ ok: false, message: 'Invalid type' });
+    }
+
+    const where = {
+      is_archived: false,
+      start_datetime: { [Op.gte]: startDate },
+      end_datetime: { [Op.lte]: now },
+      ...visibilityCondition
+    };
+
+    const events = await Event.findAll({ where });
+    const eventIds = events.map(e => e.id);
+    const attendances = await EventAttendee.findAll({
+      where: { user_id: userId, event_id: { [Op.in]: eventIds } }
+    });
+    const attendanceMap = {};
+    attendances.forEach(a => { attendanceMap[a.event_id] = a.response; });
+
+    let total = events.length;
+    let accepted = 0, declined = 0, pending = 0, missed = 0, conflicted = 0;
+
+    for (const ev of events) {
+      const response = attendanceMap[ev.id] || 'pending';
+      if (response === 'accepted') accepted++;
+      else if (response === 'declined') declined++;
+      else if (response === 'pending') pending++;
+      // missed: events that ended but not accepted/declined (simplified)
+      if (ev.end_datetime < now && response !== 'accepted' && response !== 'declined') missed++;
+    }
+
+    res.json({
+      ok: true,
+      stats: { total, accepted, declined, missed, pending, conflicted: 0 } // conflicted not implemented yet
+    });
+  } catch (error) {
+    console.error('Get event stats error:', error);
+    res.status(500).json({ ok: false, message: 'Server error.' });
+  }
+};
+
+// ─── Get Today's Event ──────────────────────────────────
+exports.getTodayEvent = async (req, res) => {
+  try {
+    const userId = req.userId;
+    const today = new Date();
+    const startOfDay = new Date(today);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(today);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const attendeeEvents = await EventAttendee.findAll({
+      where: { user_id: userId },
+      attributes: ['event_id']
+    });
+    const eventIds = attendeeEvents.map(a => a.event_id);
+
+    const event = await Event.findOne({
+      where: {
+        is_archived: false,
+        [Op.or]: [
+          { creator_id: userId },
+          { id: { [Op.in]: eventIds } }
+        ],
+        start_datetime: { [Op.between]: [startOfDay, endOfDay] }
+      },
+      include: [
+        { model: Venue, attributes: ['name'] },
+        { model: Location, attributes: ['map_location'] },
+        {
+          model: User, as: 'user', attributes: ['id', 'username', 'email'],
+          include: [
+            { model: UserProfile, include: [Department, Office] }
+          ]
+        }
+      ],
+      order: [['start_datetime', 'ASC']]
+    });
+
+    if (!event) {
+      return res.json({ ok: true, event: null });
+    }
+
+    const formatted = {
+      id: event.id,
+      title: event.title,
+      description: event.description,
+      start_datetime: event.start_datetime,
+      end_datetime: event.end_datetime,
+      method: event.method,
+      hierarchy: event.hierarchy,
+      event_type: event.event_type,
+      venue: event.Venue ? event.Venue.name : null,
+      location: event.Location ? event.Location.map_location : null,
+      creator: event.user ? {
+        username: event.user.username,
+        email: event.user.email,
+        position: event.user.UserProfile?.Position?.name,
+        department: event.user.UserProfile?.Department?.name,
+        office: event.user.UserProfile?.Office?.name
+      } : null,
+      participants: {
+        departments: [], // you can fill these later
+        offices: []
+      }
+    };
+
+    res.json({ ok: true, event: formatted });
+  } catch (error) {
+    console.error('Get today event error:', error);
+    res.status(500).json({ ok: false, message: 'Server error.' });
+  }
+};
+
+// ─── Get Upcoming Events (paginated) ──────────────────
+exports.getUpcomingEvents = async (req, res) => {
+  try {
+    const userId = req.userId;
+    const { limit = 4, offset = 0 } = req.query;
+    const now = new Date();
+
+    const attendeeEvents = await EventAttendee.findAll({
+      where: { user_id: userId },
+      attributes: ['event_id']
+    });
+    const eventIds = attendeeEvents.map(a => a.event_id);
+
+    const events = await Event.findAll({
+      where: {
+        is_archived: false,
+        [Op.or]: [
+          { creator_id: userId },
+          { id: { [Op.in]: eventIds } }
+        ],
+        start_datetime: { [Op.gte]: now }
+      },
+      include: [
+        { model: Venue, attributes: ['name'] },
+        { model: Location, attributes: ['map_location'] },
+        { model: User, as: 'user', attributes: ['username'] }
+      ],
+      order: [['start_datetime', 'ASC']],
+      limit: parseInt(limit),
+      offset: parseInt(offset)
+    });
+
+    const formatted = events.map(ev => ({
+      id: ev.id,
+      title: ev.title,
+      description: ev.description,
+      start_datetime: ev.start_datetime,
+      end_datetime: ev.end_datetime,
+      venue: ev.Venue ? ev.Venue.name : null,
+      location: ev.Location ? ev.Location.map_location : null,
+      event_type: ev.event_type,
+      hierarchy: ev.hierarchy,
+      method: ev.method,
+      creator: ev.user ? { username: ev.user.username } : null
+    }));
+
+    res.json({ ok: true, events: formatted });
+  } catch (error) {
+    console.error('Get upcoming events error:', error);
+    res.status(500).json({ ok: false, message: 'Server error.' });
+  }
+};
