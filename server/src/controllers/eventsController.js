@@ -261,6 +261,7 @@ exports.getEventStats = async (req, res) => {
 
 // ─── GET TODAY'S EVENT (WITH PARTICIPANTS) ─────────────
 // ─── GET TODAY'S EVENT (MANUAL FETCH – NO ASSOCIATIONS) ──
+// ─── GET TODAY'S EVENT (MANUAL FETCH) ──
 exports.getTodayEvent = async (req, res) => {
   try {
     const userId = req.userId;
@@ -270,14 +271,12 @@ exports.getTodayEvent = async (req, res) => {
     const endOfDay = new Date(today);
     endOfDay.setHours(23, 59, 59, 999);
 
-    // Get events the user is invited to or created
     const attendeeEvents = await EventAttendee.findAll({
       where: { user_id: userId },
       attributes: ['event_id']
     });
     const eventIds = attendeeEvents.map(a => a.event_id);
 
-    // Find the event – using raw query to avoid association issues
     const event = await Event.findOne({
       where: {
         is_archived: false,
@@ -297,33 +296,26 @@ exports.getTodayEvent = async (req, res) => {
     // ── 1. GET VENUE ──
     let venueName = null;
     if (event.venue_id) {
-      const venue = await Venue.findByPk(event.venue_id, {
-        attributes: ['name']
-      });
+      const venue = await Venue.findByPk(event.venue_id, { attributes: ['name'] });
       if (venue) venueName = venue.name;
     }
 
     // ── 2. GET LOCATION ──
     let locationName = null;
     if (event.location_id) {
-      const location = await Location.findByPk(event.location_id, {
-        attributes: ['map_location']
-      });
+      const location = await Location.findByPk(event.location_id, { attributes: ['map_location'] });
       if (location) locationName = location.map_location;
     }
 
-    // ── 3. GET CREATOR PROFILE ──
+    // ── 3. GET CREATOR ──
     let creatorData = null;
     if (event.creator_id) {
-      const creatorUser = await User.findByPk(event.creator_id, {
-        attributes: ['id', 'username', 'email']
-      });
+      const creatorUser = await User.findByPk(event.creator_id, { attributes: ['id', 'username', 'email'] });
       if (creatorUser) {
-        const profile = await UserProfile.findOne({
-          where: { user_id: creatorUser.id }
-        });
-        let position = null, department = null, office = null;
+        const profile = await UserProfile.findOne({ where: { user_id: creatorUser.id } });
+        let position = null, department = null, office = null, fullName = null;
         if (profile) {
+          fullName = profile.full_name;
           if (profile.position_id) {
             const pos = await Position.findByPk(profile.position_id);
             if (pos) position = pos.name;
@@ -338,8 +330,9 @@ exports.getTodayEvent = async (req, res) => {
           }
         }
         creatorData = {
-          username: creatorUser.username || 'Unknown',
+          username: creatorUser.username || fullName || creatorUser.email || 'Unknown',
           email: creatorUser.email,
+          full_name: fullName || creatorUser.username || creatorUser.email,
           position,
           department,
           office
@@ -347,7 +340,7 @@ exports.getTodayEvent = async (req, res) => {
       }
     }
 
-    // ── 4. GET ALL ATTENDEES ──
+    // ── 4. GET ATTENDEES ──
     const attendees = await EventAttendee.findAll({
       where: { event_id: event.id }
     });
@@ -357,17 +350,10 @@ exports.getTodayEvent = async (req, res) => {
     const usersList = [];
 
     for (const attendee of attendees) {
-      // Get user
-      const user = await User.findByPk(attendee.user_id, {
-        attributes: ['id', 'username', 'email']
-      });
+      const user = await User.findByPk(attendee.user_id, { attributes: ['id', 'username', 'email'] });
       if (!user) continue;
 
-      // Get user profile
-      const profile = await UserProfile.findOne({
-        where: { user_id: user.id }
-      });
-
+      const profile = await UserProfile.findOne({ where: { user_id: user.id } });
       let deptName = null, officeName = null, positionName = null, fullName = null;
 
       if (profile) {
@@ -394,7 +380,7 @@ exports.getTodayEvent = async (req, res) => {
 
       usersList.push({
         id: user.id,
-        username: user.username || 'Unknown',
+        username: user.username || fullName || user.email || 'Unknown',
         email: user.email,
         full_name: fullName || user.username || user.email,
         department: deptName,
@@ -404,7 +390,6 @@ exports.getTodayEvent = async (req, res) => {
       });
     }
 
-    // ── BUILD RESPONSE ──
     const formatted = {
       id: event.id,
       title: event.title,
