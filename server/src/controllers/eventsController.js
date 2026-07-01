@@ -260,6 +260,7 @@ exports.getEventStats = async (req, res) => {
 };
 
 // ─── GET TODAY'S EVENT (WITH PARTICIPANTS) ─────────────
+// ─── GET TODAY'S EVENT (MANUAL FETCH – NO ASSOCIATIONS) ──
 exports.getTodayEvent = async (req, res) => {
   try {
     const userId = req.userId;
@@ -269,12 +270,14 @@ exports.getTodayEvent = async (req, res) => {
     const endOfDay = new Date(today);
     endOfDay.setHours(23, 59, 59, 999);
 
+    // Get events the user is invited to or created
     const attendeeEvents = await EventAttendee.findAll({
       where: { user_id: userId },
       attributes: ['event_id']
     });
     const eventIds = attendeeEvents.map(a => a.event_id);
 
+    // Find the event – using raw query to avoid association issues
     const event = await Event.findOne({
       where: {
         is_archived: false,
@@ -284,11 +287,6 @@ exports.getTodayEvent = async (req, res) => {
         ],
         start_datetime: { [Op.between]: [startOfDay, endOfDay] }
       },
-      include: [
-        { model: Venue, attributes: ['name'] },
-        { model: Location, attributes: ['map_location'] },
-        { model: User, as: 'user', attributes: ['id', 'username', 'email'] }
-      ],
       order: [['start_datetime', 'ASC']]
     });
 
@@ -296,42 +294,62 @@ exports.getTodayEvent = async (req, res) => {
       return res.json({ ok: true, event: null });
     }
 
-    // ── Creator profile ──
-    let creatorData = null;
-    if (event.user) {
-      const profile = await UserProfile.findOne({
-        where: { user_id: event.user.id }
+    // ── 1. GET VENUE ──
+    let venueName = null;
+    if (event.venue_id) {
+      const venue = await Venue.findByPk(event.venue_id, {
+        attributes: ['name']
       });
-      let position = null, department = null, office = null;
-      if (profile) {
-        if (profile.position_id) {
-          const pos = await Position.findByPk(profile.position_id);
-          if (pos) position = pos.name;
-        }
-        if (profile.department_id) {
-          const dept = await Department.findByPk(profile.department_id);
-          if (dept) department = dept.name;
-        }
-        if (profile.office_id) {
-          const off = await Office.findByPk(profile.office_id);
-          if (off) office = off.name;
-        }
-      }
-      creatorData = {
-        username: event.user.username || 'Unknown',
-        email: event.user.email,
-        position,
-        department,
-        office
-      };
+      if (venue) venueName = venue.name;
     }
 
-    // ── Attendees with profiles ──
+    // ── 2. GET LOCATION ──
+    let locationName = null;
+    if (event.location_id) {
+      const location = await Location.findByPk(event.location_id, {
+        attributes: ['map_location']
+      });
+      if (location) locationName = location.map_location;
+    }
+
+    // ── 3. GET CREATOR PROFILE ──
+    let creatorData = null;
+    if (event.creator_id) {
+      const creatorUser = await User.findByPk(event.creator_id, {
+        attributes: ['id', 'username', 'email']
+      });
+      if (creatorUser) {
+        const profile = await UserProfile.findOne({
+          where: { user_id: creatorUser.id }
+        });
+        let position = null, department = null, office = null;
+        if (profile) {
+          if (profile.position_id) {
+            const pos = await Position.findByPk(profile.position_id);
+            if (pos) position = pos.name;
+          }
+          if (profile.department_id) {
+            const dept = await Department.findByPk(profile.department_id);
+            if (dept) department = dept.name;
+          }
+          if (profile.office_id) {
+            const off = await Office.findByPk(profile.office_id);
+            if (off) office = off.name;
+          }
+        }
+        creatorData = {
+          username: creatorUser.username || 'Unknown',
+          email: creatorUser.email,
+          position,
+          department,
+          office
+        };
+      }
+    }
+
+    // ── 4. GET ALL ATTENDEES ──
     const attendees = await EventAttendee.findAll({
-      where: { event_id: event.id },
-      include: [
-        { model: User, attributes: ['id', 'username', 'email'] }
-      ]
+      where: { event_id: event.id }
     });
 
     const departmentSet = new Set();
@@ -339,9 +357,13 @@ exports.getTodayEvent = async (req, res) => {
     const usersList = [];
 
     for (const attendee of attendees) {
-      const user = attendee.User;
+      // Get user
+      const user = await User.findByPk(attendee.user_id, {
+        attributes: ['id', 'username', 'email']
+      });
       if (!user) continue;
 
+      // Get user profile
       const profile = await UserProfile.findOne({
         where: { user_id: user.id }
       });
@@ -382,6 +404,7 @@ exports.getTodayEvent = async (req, res) => {
       });
     }
 
+    // ── BUILD RESPONSE ──
     const formatted = {
       id: event.id,
       title: event.title,
@@ -391,8 +414,8 @@ exports.getTodayEvent = async (req, res) => {
       method: event.method,
       hierarchy: event.hierarchy,
       event_type: event.event_type,
-      venue: event.Venue ? event.Venue.name : null,
-      location: event.Location ? event.Location.map_location : null,
+      venue: venueName,
+      location: locationName,
       creator: creatorData,
       participants: {
         departments: Array.from(departmentSet),
