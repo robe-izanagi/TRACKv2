@@ -1,0 +1,399 @@
+/* Home.module.css – shared styles for all home screens */
+
+.mainContainer {
+  padding: 1.5rem 1rem;
+  background: var(--page-background-color, #f8f9fa);
+  min-height: 100vh;
+  padding-bottom: 5rem;
+}
+
+.introContent {
+  margin-bottom: 2rem;
+}
+
+.introContent h1 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--text-color, #1a1a1a);
+}
+
+.introContent p {
+  color: var(--fifth-color, #6c757d);
+  font-size: 0.95rem;
+  margin-top: 0.25rem;
+}
+
+/* Quick Stats */
+.quickStat {
+  background: #fff;
+  border-radius: 16px;
+  padding: 1.25rem 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  margin-bottom: 2rem;
+}
+
+.quickTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.quickTop h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-color, #1a1a1a);
+}
+
+.btnContainer {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.circleArrowButton {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid #ddd;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1rem;
+  color: #333;
+  transition: 0.2s;
+}
+
+.circleArrowButton:hover {
+  background: #f0f0f0;
+}
+
+.quickNav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.filterButtons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.filterButtons button {
+  background: none;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  padding: 0.25rem 1rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.filterButtons button:hover,
+.filterButtons button.active {
+  background: var(--primary-color, #800000);
+  color: #fff;
+  border-color: var(--primary-color, #800000);
+}
+
+.quickNav>button {
+  background: none;
+  border: none;
+  color: var(--primary-color, #800000);
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 0.5rem 0;
+}
+
+.statNumber {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text-color, #1a1a1a);
+}
+
+.statLabel {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--fifth-color, #6c757d);
+}
+
+/* Today's Event */
+.todaysEvent {
+  background: #fff;
+  border-radius: 16px;
+  padding: 1.25rem 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  margin-bottom: 2rem;
+}
+
+.titleContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.titleContent {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.titleContent h1 {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.subTitle {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.subTitle h2 {
+  font-size: 1rem;
+  font-weight: 400;
+  color: var(--fifth-color, #6c757d);
+}
+
+.subTitle button {
+  background: none;
+  border: none;
+  color: var(--primary-color, #800000);
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.todayContent {
+  margin-top: 0.5rem;
+}
+
+.todayCard {
+  border-left: 4px solid var(--primary-color, #800000);
+  padding-left: 1rem;
+}
+
+.todayCard h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 0.25rem 0;
+}
+
+.todayDesc {
+  color: #555;
+  font-size: 0.95rem;
+  margin: 0.25rem 0 0.5rem 0;
+}
+
+.todayMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+  color: #555;
+  margin-bottom: 0.5rem;
+}
+
+.todayTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.tag {
+  background: #e9ecef;
+  padding: 0.15rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  color: #495057;
+}
+
+.todayCreator {
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.todayParticipants {
+  font-size: 0.85rem;
+  color: #555;
+  margin-top: 0.25rem;
+}
+
+/* Upcoming Events & Tasks */
+.upcomingEvent,
+.upcomingTask {
+  background: #fff;
+  border-radius: 16px;
+  padding: 1.25rem 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  margin-bottom: 2rem;
+}
+
+.upcomingHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.upcomingHeader h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.upcomingHeader button {
+  background: none;
+  border: none;
+  color: var(--primary-color, #800000);
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.upcomingFilters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.upcomingFilters button {
+  background: none;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  padding: 0.2rem 1rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.upcomingFilters button:hover,
+.upcomingFilters button.active {
+  background: var(--primary-color, #800000);
+  color: #fff;
+  border-color: var(--primary-color, #800000);
+}
+
+.upcomingList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.upcomingItem {
+  display: flex;
+  gap: 1rem;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 0.75rem;
+}
+
+.upcomingDate {
+  min-width: 60px;
+  text-align: center;
+}
+
+.monthDay {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--primary-color, #800000);
+}
+
+.upcomingInfo {
+  flex: 1;
+}
+
+.upcomingInfo h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 0.1rem 0;
+}
+
+.upcomingInfo p {
+  font-size: 0.9rem;
+  color: #555;
+  margin: 0.1rem 0 0.25rem 0;
+}
+
+.upcomingMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  font-size: 0.8rem;
+  color: #6c757d;
+}
+
+.priority {
+  font-weight: 600;
+  padding: 0 0.5rem;
+  border-radius: 4px;
+}
+
+.priority.high {
+  color: #d32f2f;
+}
+
+.priority.medium {
+  color: #f57c00;
+}
+
+.priority.low {
+  color: #388e3c;
+}
+
+.taskProgress {
+  font-size: 0.8rem;
+  color: #555;
+  margin-top: 0.1rem;
+}
+
+.showMoreBtn {
+  background: none;
+  border: none;
+  color: var(--primary-color, #800000);
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.5rem 0;
+  width: 100%;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.showMoreBtn:disabled {
+  color: #aaa;
+  cursor: not-allowed;
+}
+
+/* Responsive tweaks */
+@media (max-width: 480px) {
+  .statsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .quickTop h2 {
+    font-size: 1rem;
+  }
+}
