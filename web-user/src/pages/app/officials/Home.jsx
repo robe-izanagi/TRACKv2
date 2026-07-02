@@ -137,10 +137,19 @@ function Home() {
   const [upcomingEventsLoading, setUpcomingEventsLoading] = useState(false);
   const [upcomingEventsOffset, setUpcomingEventsOffset] = useState(0);
   const [upcomingEventsHasMore, setUpcomingEventsHasMore] = useState(true);
+
+  // Upcoming Events filters
+  const [eventTypeFilter, setEventTypeFilter] = useState("all");
+  const [eventDurationFilter, setEventDurationFilter] = useState("all");
+
   const [upcomingTasks, setUpcomingTasks] = useState([]);
   const [upcomingTasksLoading, setUpcomingTasksLoading] = useState(false);
   const [upcomingTasksOffset, setUpcomingTasksOffset] = useState(0);
   const [upcomingTasksHasMore, setUpcomingTasksHasMore] = useState(true);
+
+  // Upcoming Tasks filters
+  const [taskTypeFilter, setTaskTypeFilter] = useState("all");
+  const [taskDurationFilter, setTaskDurationFilter] = useState("all");
 
   // ── Quick Stats ──
   const fetchQuickStats = useCallback(async (type, range = "week") => {
@@ -288,6 +297,33 @@ function Home() {
   // ── Determine display user ──
   const displayUser = fullUser || user || {};
 
+  // ── Filtering helpers ──
+  const filterEventsByDuration = (events, duration) => {
+    if (duration === "all") return events;
+    const now = new Date();
+    const days = duration === "week" ? 7 : 30;
+    const cutoff = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
+    return events.filter((ev) => new Date(ev.start_datetime) <= cutoff);
+  };
+
+  const filterEventsByType = (events, type) => {
+    if (type === "all") return events;
+    return events.filter((ev) => ev.type === type || ev.visibility === type);
+  };
+
+  const filterTasksByDuration = (tasks, duration) => {
+    if (duration === "all") return tasks;
+    const now = new Date();
+    const days = duration === "week" ? 7 : 30;
+    const cutoff = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
+    return tasks.filter((task) => new Date(task.start_datetime) <= cutoff);
+  };
+
+  const filterTasksByType = (tasks, type) => {
+    if (type === "all") return tasks;
+    return tasks.filter((task) => task.type === type);
+  };
+
   // ── Render stats numbers ──
   const renderStats = () => {
     if (!quickStats) return <p>No data</p>;
@@ -343,14 +379,15 @@ function Home() {
     );
   };
 
-  // ── Render today's event (FIXED: use flattened creator properties) ──
+  // ── Render today's event ──
   const renderTodayEvent = () => {
     if (todayLoading) return <p>Loading today's event...</p>;
     if (!todayEvent) return <p>No events today</p>;
 
     const creator = todayEvent.creator || {};
+    const creatorName = creator.full_name || creator.username || "Unknown";
     const parts = [
-      creator.username,
+      creatorName,
       creator.position,
       creator.department,
       creator.office,
@@ -360,6 +397,7 @@ function Home() {
     const participants = todayEvent.participants || {};
     const depts = participants.departments || [];
     const offices = participants.offices || [];
+    const users = participants.users || [];
 
     return (
       <div className={styles.todayCard}>
@@ -384,10 +422,40 @@ function Home() {
         <div className={styles.todayCreator}>
           <strong>{creatorDisplay}</strong>
         </div>
-        {(depts.length > 0 || offices.length > 0) && (
+
+        {/* ── Participants Section ── */}
+        {(depts.length > 0 || offices.length > 0 || users.length > 0) && (
           <div className={styles.todayParticipants}>
-            {depts.length > 0 && <div>Colleges: {depts.join(", ")}</div>}
-            {offices.length > 0 && <div>Offices: {offices.join(", ")}</div>}
+            {depts.length > 0 && (
+              <div className={styles.participantGroup}>
+                <span className={styles.participantLabel}>Colleges:</span>
+                <span>{depts.join(", ")}</span>
+              </div>
+            )}
+            {offices.length > 0 && (
+              <div className={styles.participantGroup}>
+                <span className={styles.participantLabel}>Offices:</span>
+                <span>{offices.join(", ")}</span>
+              </div>
+            )}
+            {users.length > 0 && (
+              <div className={styles.participantGroup}>
+                <span className={styles.participantLabel}>Attendees:</span>
+                <div className={styles.userList}>
+                  {users.slice(0, 5).map((u) => (
+                    <span key={u.id} className={styles.userTag}>
+                      {u.full_name || u.username || u.email || "Unknown"}
+                      {u.department && ` (${u.department})`}
+                    </span>
+                  ))}
+                  {users.length > 5 && (
+                    <span className={styles.moreTag}>
+                      +{users.length - 5} more
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -396,12 +464,15 @@ function Home() {
 
   // ── Render upcoming events list ──
   const renderUpcomingEvents = () => {
-    if (upcomingEvents.length === 0 && !upcomingEventsLoading) {
+    let filtered = filterEventsByType(upcomingEvents, eventTypeFilter);
+    filtered = filterEventsByDuration(filtered, eventDurationFilter);
+
+    if (filtered.length === 0 && !upcomingEventsLoading) {
       return <p className={styles.noData}>No upcoming events</p>;
     }
     return (
       <div className={styles.upcomingList}>
-        {upcomingEvents.map((ev) => (
+        {filtered.map((ev) => (
           <div key={ev.id} className={styles.upcomingItem}>
             <div className={styles.upcomingDate}>
               <span className={styles.monthDay}>
@@ -434,12 +505,15 @@ function Home() {
 
   // ── Render upcoming tasks list ──
   const renderUpcomingTasks = () => {
-    if (upcomingTasks.length === 0 && !upcomingTasksLoading) {
+    let filtered = filterTasksByType(upcomingTasks, taskTypeFilter);
+    filtered = filterTasksByDuration(filtered, taskDurationFilter);
+
+    if (filtered.length === 0 && !upcomingTasksLoading) {
       return <p className={styles.noData}>No upcoming tasks</p>;
     }
     return (
       <div className={styles.upcomingList}>
-        {upcomingTasks.map((task) => (
+        {filtered.map((task) => (
           <div key={task.id} className={styles.upcomingItem}>
             <div className={styles.upcomingInfo}>
               <h4>{task.title}</h4>
@@ -562,12 +636,34 @@ function Home() {
             View Calendar
           </button>
         </div>
-        <div className={styles.upcomingFilters}>
-          <button>This Week</button>
-          <button>Next Week</button>
-          <button>This Month</button>
-          <button>Next Month</button>
+
+        {/* ─── Dropdown Filters for Events ─── */}
+        <div className={styles.filterRow}>
+          <select
+            className={styles.filterSelect}
+            value={eventTypeFilter}
+            onChange={(e) => {
+              setEventTypeFilter(e.target.value);
+              // Optionally reset pagination if needed
+            }}
+          >
+            <option value="all">All Types</option>
+            <option value="campus">Campus</option>
+            <option value="department">Department</option>
+            <option value="private">Private</option>
+          </select>
+
+          <select
+            className={styles.filterSelect}
+            value={eventDurationFilter}
+            onChange={(e) => setEventDurationFilter(e.target.value)}
+          >
+            <option value="all">All Time</option>
+            <option value="week">This Week</option>
+            <option value="month">This Month</option>
+          </select>
         </div>
+
         <div className={styles.upcomingContent}>
           {upcomingEventsLoading && upcomingEvents.length === 0 ? (
             <p>Loading...</p>
@@ -585,12 +681,31 @@ function Home() {
             View Task Lists
           </button>
         </div>
-        <div className={styles.upcomingFilters}>
-          <button>All Task</button>
-          <button>Personal Task</button>
-          <button>Campus Task</button>
-          <button>Department Task</button>
+
+        {/* ─── Dropdown Filters for Tasks ─── */}
+        <div className={styles.filterRow}>
+          <select
+            className={styles.filterSelect}
+            value={taskTypeFilter}
+            onChange={(e) => setTaskTypeFilter(e.target.value)}
+          >
+            <option value="all">All Types</option>
+            <option value="personal">Personal</option>
+            <option value="campus">Campus</option>
+            <option value="department">Department</option>
+          </select>
+
+          <select
+            className={styles.filterSelect}
+            value={taskDurationFilter}
+            onChange={(e) => setTaskDurationFilter(e.target.value)}
+          >
+            <option value="all">All Time</option>
+            <option value="week">This Week</option>
+            <option value="month">This Month</option>
+          </select>
         </div>
+
         <div className={styles.upcomingContent}>
           {upcomingTasksLoading && upcomingTasks.length === 0 ? (
             <p>Loading...</p>

@@ -236,10 +236,51 @@
   color: #333;
 }
 
+/* ─── Participants ─── */
 .todayParticipants {
-  font-size: 0.85rem;
-  color: #555;
+  margin-top: 0.75rem;
+  border-top: 1px solid #eee;
+  padding-top: 0.75rem;
+}
+
+.participantGroup {
+  margin-bottom: 0.4rem;
+  font-size: 0.9rem;
+}
+
+.participantLabel {
+  font-weight: 600;
+  color: var(--text-color, #1a1a1a);
+  margin-right: 0.5rem;
+}
+
+.userList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
   margin-top: 0.25rem;
+}
+
+.userTag {
+  background: #e9ecef;
+  padding: 0.15rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  color: #333;
+}
+
+.moreTag {
+  background: #dee2e6;
+  padding: 0.15rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.noData {
+  color: #6c757d;
+  font-size: 0.9rem;
+  padding: 0.5rem 0;
 }
 
 /* Upcoming Events & Tasks */
@@ -385,6 +426,29 @@
 .showMoreBtn:disabled {
   color: #aaa;
   cursor: not-allowed;
+}
+
+/* ─── Filter Dropdowns ─── */
+.filterRow {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.filterSelect {
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+  border: 1px solid #ddd;
+  background: #fff;
+  font-size: 0.85rem;
+  cursor: pointer;
+  outline: none;
+  min-width: 120px;
+}
+
+.filterSelect:focus {
+  border-color: var(--primary-color, #800000);
 }
 
 /* Responsive tweaks */
