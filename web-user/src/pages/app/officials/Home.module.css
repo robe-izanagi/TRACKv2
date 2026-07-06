@@ -117,11 +117,19 @@
 
 .statItem {
   display: flex;
-  flex-direction: column;
   align-items: center;
+  justify-content: space-between;
   background: #f8f9fa;
   border-radius: 12px;
-  padding: 0.5rem 0;
+  padding: 0.7rem;
+}
+
+.statIcon * {
+  font-size: 2.5rem;
+  background: var(--primary-color);
+  border-radius: 5px;
+  color: var(--background-color);
+  padding: .2rem;
 }
 
 .statNumber {
@@ -131,10 +139,18 @@
 }
 
 .statLabel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.statCard {
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: var(--fifth-color, #6c757d);
+  display: flex;
+  flex-direction: column;
 }
 
 /* Today's Event */

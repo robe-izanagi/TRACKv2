@@ -4,6 +4,7 @@ import { IoIosArrowForward, IoIosArrowBack } from "react-icons/io";
 import apiClient from "../../../api/client";
 import { useAuth } from "../../../context/AuthContext";
 import styles from "./Home.module.css";
+import { FaCalendarAlt } from "react-icons/fa";
 
 // Helper to format date
 const formatDate = (dateStr) => {
@@ -350,8 +351,15 @@ function Home() {
     return (
       <div className={styles.statsGrid}>
         <div className={styles.statItem}>
-          <span className={styles.statNumber}>{quickStats.total || 0}</span>
-          <span className={styles.statLabel}>Events</span>
+          <span className={styles.statLabel}>
+            <span className={styles.statIcon}>
+              <FaCalendarAlt />
+            </span>
+            <div className={styles.statCard}>
+              Events
+              <span className={styles.statNumber}>{quickStats.total || 0}</span>
+            </div>
+          </span>
         </div>
         <div className={styles.statItem}>
           <span className={styles.statNumber}>{quickStats.accepted || 0}</span>
