@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const bcrypt = require('bcryptjs'); // ✅ import for password hashing
+const bcrypt = require('bcryptjs'); 
 const { login, register } = require('../controllers/authController');
 const {
   googleLoginUrl,
@@ -36,10 +36,12 @@ router.get('/me', authenticate, async (req, res) => {
       fullName = null,
       departmentId = null,
       officeId = null,
-      roleId = null;
+      roleId = null,
+      displayPicture = null; 
 
     if (profile) {
       fullName = profile.full_name;
+      displayPicture = profile.display_picture; 
       departmentId = profile.department_id;
       officeId = profile.office_id;
       roleId = profile.role_id;
@@ -68,6 +70,7 @@ router.get('/me', authenticate, async (req, res) => {
         department,
         office,
         full_name: fullName,
+        display_picture: displayPicture,
         department_id: departmentId,
         office_id: officeId,
         role_id: roleId
