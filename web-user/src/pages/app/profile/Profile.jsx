@@ -12,6 +12,7 @@ import {
   FiLink,
   FiChevronRight,
   FiCamera,
+  FiX,
 } from "react-icons/fi";
 import styles from "./Profile.module.css";
 
@@ -224,8 +225,8 @@ export default function Profile() {
           {displayUser.full_name || displayUser.username || "User"}
         </h1>
         <p className={styles.userRole}>
-          {displayUser.role || "No role"} ·{" "}
-          {displayUser.department || "No department"}
+          {displayUser.role || "Member"}
+          {displayUser.department && ` · ${displayUser.department}`}
         </p>
       </div>
 
