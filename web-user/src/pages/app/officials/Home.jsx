@@ -4,9 +4,19 @@ import { IoIosArrowForward, IoIosArrowBack } from "react-icons/io";
 import apiClient from "../../../api/client";
 import { useAuth } from "../../../context/AuthContext";
 import styles from "./Home.module.css";
-import { FaCalendarAlt } from "react-icons/fa";
+import { FaCalendarAlt, FaClipboard, FaRegCalendar } from "react-icons/fa";
+import CalendarTodayOutlinedIcon from "@mui/icons-material/CalendarTodayOutlined";
+import AccessTimeOutlinedIcon from "@mui/icons-material/AccessTimeOutlined";
+import LocationOnOutlinedIcon from "@mui/icons-material/LocationOnOutlined";
+import GroupOutlinedIcon from "@mui/icons-material/GroupOutlined";
+import EventOutlinedIcon from "@mui/icons-material/EventOutlined";
+import LocationCityOutlinedIcon from "@mui/icons-material/LocationCityOutlined";
+import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
+import KeyboardArrowDownOutlinedIcon from "@mui/icons-material/KeyboardArrowDownOutlined";
+import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
+import ChecklistOutlinedIcon from "@mui/icons-material/ChecklistOutlined";
 
-// Helper to format date
+// Helper to format datea
 const formatDate = (dateStr) => {
   const d = new Date(dateStr);
   return d.toLocaleDateString("en-US", {
@@ -15,10 +25,74 @@ const formatDate = (dateStr) => {
     year: "numeric",
   });
 };
+
+// Helper returning month and day separately (no year)
+const formatMonthDay = (dateStr) => {
+  const d = new Date(dateStr);
+  const month = d.toLocaleString("en-US", { month: "short" });
+  const day = d.getDate();
+  return { month, day };
+};
+
 const formatTime = (dateStr) => {
   const d = new Date(dateStr);
   return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
 };
+
+// ── Small display helpers (UI only, no data/logic changes) ──
+const getInitials = (name) => {
+  if (!name) return "?";
+  const parts = name.trim().split(" ").filter(Boolean);
+  if (parts.length > 1) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return parts[0]?.slice(0, 2).toUpperCase() || "?";
+};
+
+const AVATAR_COLORS = [
+  "#f9a825",
+  "#43a047",
+  "#1e88e5",
+  "#8e24aa",
+  "#fb8c00",
+  "#00897b",
+  "#5e35b1",
+];
+const getAvatarColor = (str) => {
+  if (!str) return AVATAR_COLORS[0];
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+};
+
+const getPriorityClass = (priority) => {
+  switch ((priority || "").toLowerCase()) {
+    case "high":
+      return styles.priorityHigh;
+    case "medium":
+      return styles.priorityMedium;
+    case "low":
+      return styles.priorityLow;
+    default:
+      return styles.priorityDefault;
+  }
+};
+
+// Config for quick-stat cards so the icon/label/color live in one place
+const EVENT_STAT_CONFIG = [
+  { key: "total", label: "Events", color: styles.statGreen },
+  { key: "accepted", label: "Accepted", color: styles.statGreen },
+  { key: "declined", label: "Declined", color: styles.statMaroon },
+  { key: "missed", label: "Missed", color: styles.statDarkred },
+  { key: "pending", label: "Pending", color: styles.statGold },
+  { key: "conflicted", label: "Conflicted", color: styles.statMaroon },
+];
+
+const TASK_STAT_CONFIG = [
+  { key: "completed", label: "Completed", color: styles.statGreen },
+  { key: "missed", label: "Missed", color: styles.statDarkred },
+  { key: "pending", label: "Pending", color: styles.statGold },
+];
 
 // ─── Dummy Tasks Data ──────────────────────────────────
 const DUMMY_TASKS = [
@@ -132,6 +206,7 @@ function Home() {
   const [quickStatType, setQuickStatType] = useState("campus");
   const [quickStats, setQuickStats] = useState(null);
   const [statsLoading, setStatsLoading] = useState(false);
+  const [statsRange, setStatsRange] = useState("week");
   const [todayEvent, setTodayEvent] = useState(null);
   const [todayLoading, setTodayLoading] = useState(false);
   const [upcomingEvents, setUpcomingEvents] = useState([]);
@@ -266,10 +341,11 @@ function Home() {
 
   // ── Initial loads ──
   useEffect(() => {
-    fetchQuickStats(quickStatType);
+    fetchQuickStats(quickStatType, statsRange);
     fetchTodayEvent();
     fetchUpcomingEvents(true);
     fetchUpcomingTasks(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     quickStatType,
     fetchQuickStats,
@@ -286,6 +362,11 @@ function Home() {
     if (newIndex < 0) newIndex = types.length - 1;
     if (newIndex >= types.length) newIndex = 0;
     setQuickStatType(types[newIndex]);
+  };
+
+  const handleStatsRangeChange = (range) => {
+    setStatsRange(range);
+    fetchQuickStats(quickStatType, range);
   };
 
   const handleShowMoreEvents = () => fetchUpcomingEvents(false);
@@ -327,80 +408,46 @@ function Home() {
 
   // ── Render stats numbers ──
   const renderStats = () => {
-    if (!quickStats) return <p>No data</p>;
-    if (quickStatType === "task") {
-      return (
-        <div className={styles.statsGrid}>
-          <div className={styles.statItem}>
-            <span className={styles.statNumber}>
-              {quickStats.completed || 0}
-            </span>
-            <span className={styles.statLabel}>Completed</span>
-          </div>
-          <div className={styles.statItem}>
-            <span className={styles.statNumber}>{quickStats.missed || 0}</span>
-            <span className={styles.statLabel}>Missed</span>
-          </div>
-          <div className={styles.statItem}>
-            <span className={styles.statNumber}>{quickStats.pending || 0}</span>
-            <span className={styles.statLabel}>Pending</span>
-          </div>
-        </div>
-      );
-    }
+    if (!quickStats) return <p className={styles.noData}>No data</p>;
+
+    const config =
+      quickStatType === "task" ? TASK_STAT_CONFIG : EVENT_STAT_CONFIG;
+    const Icon = quickStatType === "task" ? FaClipboard : FaCalendarAlt;
+
     return (
       <div className={styles.statsGrid}>
-        <div className={styles.statItem}>
-          <span className={styles.statLabel}>
-            <span className={styles.statIcon}>
+        {config.map(({ key, label, color }) => (
+          <div className={styles.statItem} key={key}>
+            <span className={styles.statIconBox}>
               <FaCalendarAlt />
             </span>
-            <div className={styles.statCard}>
-              Events
-              <span className={styles.statNumber}>{quickStats.total || 0}</span>
+            <div className={styles.statTextWrap}>
+              <span className={styles.statCardLabel}>{label}</span>
+              <span className={`${styles.statNumber} ${color}`}>
+                {quickStats[key] || 0}
+              </span>
             </div>
-          </span>
-        </div>
-        <div className={styles.statItem}>
-          <span className={styles.statNumber}>{quickStats.accepted || 0}</span>
-          <span className={styles.statLabel}>Accepted</span>
-        </div>
-        <div className={styles.statItem}>
-          <span className={styles.statNumber}>{quickStats.declined || 0}</span>
-          <span className={styles.statLabel}>Declined</span>
-        </div>
-        <div className={styles.statItem}>
-          <span className={styles.statNumber}>{quickStats.missed || 0}</span>
-          <span className={styles.statLabel}>Missed</span>
-        </div>
-        <div className={styles.statItem}>
-          <span className={styles.statNumber}>{quickStats.pending || 0}</span>
-          <span className={styles.statLabel}>Pending</span>
-        </div>
-        <div className={styles.statItem}>
-          <span className={styles.statNumber}>
-            {quickStats.conflicted || 0}
-          </span>
-          <span className={styles.statLabel}>Conflicted</span>
-        </div>
+          </div>
+        ))}
       </div>
     );
   };
 
   // ── Render today's event ──
   const renderTodayEvent = () => {
-    if (todayLoading) return <p>Loading today's event...</p>;
-    if (!todayEvent) return <p>No events today</p>;
+    if (todayLoading)
+      return <p className={styles.noData}>Loading today's event...</p>;
+    if (!todayEvent) return <p className={styles.noData}>No events today</p>;
 
     const creator = todayEvent.creator || {};
     const creatorName = creator.full_name || creator.username || "Unknown";
-    const parts = [
-      creatorName,
-      creator.position,
-      creator.department,
-      creator.office,
-    ].filter(Boolean);
-    const creatorDisplay = parts.join(" | ");
+    const creatorPosition = creator.position || "";
+    const creatorAffiliation = [creator.department, creator.office]
+      .filter(Boolean)
+      .join(" | ");
+    const creatorSub = [creatorPosition, creatorAffiliation]
+      .filter(Boolean)
+      .join(" | ");
 
     const participants = todayEvent.participants || {};
     const depts = participants.departments || [];
@@ -412,23 +459,59 @@ function Home() {
         <h3>{todayEvent.title}</h3>
         <p className={styles.todayDesc}>{todayEvent.description}</p>
         <div className={styles.todayMeta}>
-          <span>
-            📅 {formatDate(todayEvent.start_datetime)} -{" "}
+          <span className={styles.metaContent}>
+            <span className={styles.icon}>
+              <CalendarTodayOutlinedIcon fontSize="small" />
+            </span>
+            {formatDate(todayEvent.start_datetime)} -{" "}
             {formatDate(todayEvent.end_datetime)}
           </span>
-          <span>
-            ⏰ {formatTime(todayEvent.start_datetime)} -{" "}
-            {formatTime(todayEvent.end_datetime)}
+          <span className={styles.metaContent}>
+            <span className={styles.icon}>
+              <AccessTimeOutlinedIcon fontSize="small" />
+            </span>
+            <strong>
+              {formatTime(todayEvent.start_datetime)} -{" "}
+              {formatTime(todayEvent.end_datetime)}
+            </strong>
           </span>
-          <span>📍 {todayEvent.venue || todayEvent.location || "Online"}</span>
-        </div>
-        <div className={styles.todayTags}>
-          <span className={styles.tag}>{todayEvent.method}</span>
-          <span className={styles.tag}>{todayEvent.hierarchy}</span>
-          <span className={styles.tag}>{todayEvent.event_type}</span>
-        </div>
-        <div className={styles.todayCreator}>
-          <strong>{creatorDisplay}</strong>
+          <span className={styles.metaContent}>
+            <span className={styles.icon}>
+              <GroupOutlinedIcon fontSize="small" />
+            </span>
+            {todayEvent.method}
+          </span>
+          <span className={styles.metaContent}>
+            <span className={styles.icon}>
+              <LocationCityOutlinedIcon fontSize="small" />
+            </span>
+            {todayEvent.hierarchy}
+          </span>
+          <span className={styles.metaContent}>
+            <span className={styles.icon}>
+              <EventOutlinedIcon fontSize="small" />
+            </span>
+            {todayEvent.event_type}
+          </span>
+          <span className={styles.metaContent}>
+            <span className={styles.icon}>
+              <LocationOnOutlinedIcon fontSize="small" />
+            </span>
+            {todayEvent.venue || todayEvent.location || "Online"}
+          </span>
+          <span className={styles.metaContent}>
+            <span className={styles.icon}>
+              <PersonOutlinedIcon fontSize="small" />
+            </span>
+            <span className={styles.creatorLabel}>
+              <strong>{creatorName}</strong>
+              {creatorSub && (
+                <span className={styles.creatorContent}>
+                  <span className={styles.creatorSub}>{creatorSub}</span>
+                </span>
+              )}
+            </span>
+          </span>
         </div>
 
         {/* ── Participants Section ── */}
@@ -436,29 +519,53 @@ function Home() {
           <div className={styles.todayParticipants}>
             {depts.length > 0 && (
               <div className={styles.participantGroup}>
-                <span className={styles.participantLabel}>Colleges:</span>
-                <span>{depts.join(", ")}</span>
+                <span className={styles.participantLabel}>
+                  Colleges Represented:
+                </span>
+                <div className={styles.tagRow}>
+                  {depts.map((d, i) => (
+                    <span key={i} className={styles.tagPill}>
+                      {d}
+                    </span>
+                  ))}
+                </div>
               </div>
             )}
             {offices.length > 0 && (
               <div className={styles.participantGroup}>
-                <span className={styles.participantLabel}>Offices:</span>
-                <span>{offices.join(", ")}</span>
+                <span className={styles.participantLabel}>
+                  Offices Represented:
+                </span>
+                <div className={styles.tagRow}>
+                  {offices.map((o, i) => (
+                    <span key={i} className={styles.tagPill}>
+                      {o}
+                    </span>
+                  ))}
+                </div>
               </div>
             )}
             {users.length > 0 && (
               <div className={styles.participantGroup}>
                 <span className={styles.participantLabel}>Attendees:</span>
-                <div className={styles.userList}>
-                  {users.slice(0, 5).map((u) => (
-                    <span key={u.id} className={styles.userTag}>
-                      {u.full_name || u.username || u.email || "Unknown"}
-                      {u.department && ` (${u.department})`}
-                    </span>
-                  ))}
+                <div className={styles.avatarRow}>
+                  {users.slice(0, 5).map((u) => {
+                    const name =
+                      u.full_name || u.username || u.email || "Unknown";
+                    return (
+                      <span
+                        key={u.id}
+                        className={styles.avatarCircle}
+                        style={{ background: getAvatarColor(name) }}
+                        title={`${name}${u.department ? ` (${u.department})` : ""}`}
+                      >
+                        {getInitials(name)}
+                      </span>
+                    );
+                  })}
                   {users.length > 5 && (
-                    <span className={styles.moreTag}>
-                      +{users.length - 5} more
+                    <span className={styles.avatarMore}>
+                      +{users.length - 5}
                     </span>
                   )}
                 </div>
@@ -483,19 +590,42 @@ function Home() {
         {filtered.map((ev) => (
           <div key={ev.id} className={styles.upcomingItem}>
             <div className={styles.upcomingDate}>
-              <span className={styles.monthDay}>
-                {formatDate(ev.start_datetime)}
-              </span>
+              <div className={styles.dateCard}>
+                <span className={styles.dateMonth}>
+                  {formatMonthDay(ev.start_datetime).month}
+                </span>
+                <span className={styles.dateDay}>
+                  {formatMonthDay(ev.start_datetime).day}
+                </span>
+              </div>
             </div>
             <div className={styles.upcomingInfo}>
               <h4>{ev.title}</h4>
               <p>{ev.description?.substring(0, 60)}...</p>
               <div className={styles.upcomingMeta}>
-                <span>{formatTime(ev.start_datetime)}</span>
-                <span>{ev.venue || ev.location || "Online"}</span>
-                <span>{ev.event_type}</span>
+                <span className={styles.upcomingMetaContent}>
+                  <span className={styles.icon}>
+                    <AccessTimeOutlinedIcon fontSize="small" />
+                  </span>
+                  <span>{formatTime(ev.start_datetime)}</span>
+                </span>
+                <span className={styles.upcomingMetaContent}>
+                  <span className={styles.icon}>
+                    <LocationOnOutlinedIcon fontSize="small" />
+                  </span>
+                  <span>{ev.venue || ev.location || "Online"}</span>
+                </span>
+                <span className={styles.upcomingMetaContent}>
+                  <span className={styles.icon}>
+                    <GroupOutlinedIcon fontSize="small" />
+                  </span>
+                  <span>{ev.event_type}</span>
+                </span>
               </div>
             </div>
+            <span className={styles.chevron}>
+              <IoIosArrowForward />
+            </span>
           </div>
         ))}
         {upcomingEventsHasMore && (
@@ -521,35 +651,79 @@ function Home() {
     }
     return (
       <div className={styles.upcomingList}>
-        {filtered.map((task) => (
-          <div key={task.id} className={styles.upcomingItem}>
-            <div className={styles.upcomingInfo}>
-              <h4>{task.title}</h4>
-              <p>{task.description?.substring(0, 60)}...</p>
-              <div className={styles.upcomingMeta}>
-                <span>{formatTime(task.start_datetime)}</span>
-                <span>{task.type}</span>
-                <span
-                  className={`${styles.priority} ${styles[task.priority?.toLowerCase()]}`}
-                >
-                  {task.priority}
+        {filtered.map((task) => {
+          const pct =
+            task.total_items > 0
+              ? Math.round((task.completed_items / task.total_items) * 100)
+              : 0;
+          return (
+            <div
+              key={task.id}
+              className={`${styles.taskCard} ${getPriorityClass(task.priority)}`}
+            >
+              <div className={styles.taskCardTop}>
+                <span className={styles.taskCheckbox} />
+                {task.priority && (
+                  <span className={styles.priorityBadge}>
+                    {task.priority} priority
+                  </span>
+                )}
+              </div>
+
+              <h4 className={styles.taskTitle}>{task.title}</h4>
+
+              <div className={styles.taskMetaRow}>
+                <span className={styles.taskMetaItem}>
+                  <AccessTimeOutlinedIcon fontSize="small" />
+                  {formatTime(task.start_datetime)} —{" "}
+                  {formatTime(task.end_datetime)}
                 </span>
               </div>
-              <div className={styles.taskProgress}>
-                <span>
-                  Checklist: {task.completed_items}/{task.total_items}
+              <div className={styles.taskMetaRow}>
+                <span className={styles.taskMetaItem}>
+                  <VisibilityOutlinedIcon fontSize="small" />
+                  {task.type}
                 </span>
+              </div>
+
+              <p className={styles.taskDesc}>
+                {task.description?.substring(0, 60)}...
+              </p>
+
+              <div className={styles.checklistRow}>
+                <span className={styles.checklistLabel}>
+                  <ChecklistOutlinedIcon fontSize="small" />
+                  Checklist Progress
+                </span>
+                <span className={styles.checklistFraction}>
+                  {task.completed_items}/{task.total_items}
+                </span>
+              </div>
+              <div className={styles.progressBarTrack}>
+                <div
+                  className={styles.progressBarFill}
+                  style={{ width: `${pct}%` }}
+                />
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
         {upcomingTasksHasMore && (
           <button
             className={styles.showMoreBtn}
             onClick={handleShowMoreTasks}
             disabled={upcomingTasksLoading}
           >
-            {upcomingTasksLoading ? "Loading..." : "Show More ▼"}
+            {upcomingTasksLoading ? (
+              "Loading..."
+            ) : (
+              <span>
+                Show More
+                <span>
+                  <KeyboardArrowDownOutlinedIcon />
+                </span>
+              </span>
+            )}
           </button>
         )}
       </div>
@@ -561,7 +735,10 @@ function Home() {
       {/* Welcome Header */}
       <div className={styles.introContent}>
         <h1>
-          Welcome, {displayUser?.full_name || displayUser?.username || "User"}
+          Welcome,{" "}
+          <span className={styles.introName}>
+            {displayUser?.full_name || displayUser?.username || "User"}
+          </span>
         </h1>
         {displayUser && (
           <p>
@@ -575,49 +752,66 @@ function Home() {
       {/* Quick Stats */}
       <div className={styles.quickStat}>
         <div className={styles.quickTop}>
-          <h2>
-            Quick Stats,{" "}
-            {quickStatType === "task"
-              ? "Tasks"
-              : quickStatType.charAt(0).toUpperCase() +
-                quickStatType.slice(1) +
-                " Events"}
-          </h2>
-          <div className={styles.btnContainer}>
+          <div className={styles.quickTopLeft}>
+            <h2>
+              Quick Stats,{" "}
+              <span className={styles.quickStatType}>
+                {quickStatType === "task"
+                  ? "Tasks"
+                  : quickStatType.charAt(0).toUpperCase() +
+                    quickStatType.slice(1) +
+                    " Events"}
+              </span>
+            </h2>
+            <div className={styles.quickNav}>
+              <div className={styles.filterButtons}>
+                <button
+                  type="button"
+                  className={`${styles.pillBtn} ${statsRange === "week" ? styles.pillBtnActive : ""}`}
+                  onClick={() => handleStatsRangeChange("week")}
+                >
+                  This Week
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.pillBtn} ${statsRange === "month" ? styles.pillBtnActive : ""}`}
+                  onClick={() => handleStatsRangeChange("month")}
+                >
+                  This Month
+                </button>
+              </div>
+            </div>
+          </div>
+          <div className={styles.quickTopRight}>
+            <div className={styles.btnContainer}>
+              <button
+                className={styles.circleArrowButton}
+                onClick={() => handleQuickStatArrow(-1)}
+              >
+                <IoIosArrowBack />
+              </button>
+              <button
+                className={styles.circleArrowButton}
+                onClick={() => handleQuickStatArrow(1)}
+              >
+                <IoIosArrowForward />
+              </button>
+            </div>
             <button
-              className={styles.circleArrowButton}
-              onClick={() => handleQuickStatArrow(-1)}
+              type="button"
+              className={styles.viewLink}
+              onClick={gotoAnalytics}
             >
-              <IoIosArrowBack />
-            </button>
-            <button
-              className={styles.circleArrowButton}
-              onClick={() => handleQuickStatArrow(1)}
-            >
-              <IoIosArrowForward />
+              View Analytics
             </button>
           </div>
         </div>
-        <div className={styles.quickNav}>
-          <div className={styles.filterButtons}>
-            <button
-              type="button"
-              onClick={() => fetchQuickStats(quickStatType, "week")}
-            >
-              This Week
-            </button>
-            <button
-              type="button"
-              onClick={() => fetchQuickStats(quickStatType, "month")}
-            >
-              This Month
-            </button>
-          </div>
-          <button type="button" onClick={gotoAnalytics}>
-            View Analytics
-          </button>
-        </div>
-        {statsLoading ? <p>Loading stats...</p> : renderStats()}
+
+        {statsLoading ? (
+          <p className={styles.noData}>Loading stats...</p>
+        ) : (
+          renderStats()
+        )}
       </div>
 
       {/* Today's Event */}
@@ -625,14 +819,19 @@ function Home() {
         <div className={styles.titleContainer}>
           <div className={styles.titleContent}>
             <h1>Today's Event</h1>
-          </div>
-          <div className={styles.subTitle}>
-            <h2>{formatDate(new Date())}</h2>
-            <button type="button" onClick={gotoCalendar}>
+            <button
+              type="button"
+              className={styles.viewLink}
+              onClick={gotoCalendar}
+            >
               View Calendar
             </button>
           </div>
+          <div className={styles.subTitle}>
+            <h2>{formatDate(new Date())}</h2>
+          </div>
         </div>
+
         <div className={styles.todayContent}>{renderTodayEvent()}</div>
       </div>
 
@@ -640,41 +839,53 @@ function Home() {
       <div className={styles.upcomingEvent}>
         <div className={styles.upcomingHeader}>
           <h2>Upcoming Events</h2>
-          <button type="button" onClick={gotoCalendar}>
+          <button
+            type="button"
+            className={styles.viewLink}
+            onClick={gotoCalendar}
+          >
             View Calendar
           </button>
         </div>
 
-        {/* ─── Dropdown Filters for Events ─── */}
+        {/* ─── Pill Filters for Events ─── */}
         <div className={styles.filterRow}>
-          <select
-            className={styles.filterSelect}
-            value={eventTypeFilter}
-            onChange={(e) => {
-              setEventTypeFilter(e.target.value);
-              // Optionally reset pagination if needed
-            }}
-          >
-            <option value="all">All Types</option>
-            <option value="campus">Campus</option>
-            <option value="department">Department</option>
-            <option value="private">Private</option>
-          </select>
-
-          <select
-            className={styles.filterSelect}
-            value={eventDurationFilter}
-            onChange={(e) => setEventDurationFilter(e.target.value)}
-          >
-            <option value="all">All Time</option>
-            <option value="week">This Week</option>
-            <option value="month">This Month</option>
-          </select>
+          {[
+            { value: "all", label: "All Types" },
+            { value: "campus", label: "Campus" },
+            { value: "department", label: "Department" },
+            { value: "private", label: "Private" },
+          ].map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              className={`${styles.pillBtn} ${eventTypeFilter === opt.value ? styles.pillBtnActive : ""}`}
+              onClick={() => setEventTypeFilter(opt.value)}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+        <div className={styles.filterRow}>
+          {[
+            { value: "all", label: "All Time" },
+            { value: "week", label: "This Week" },
+            { value: "month", label: "This Month" },
+          ].map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              className={`${styles.pillBtn} ${eventDurationFilter === opt.value ? styles.pillBtnActive : ""}`}
+              onClick={() => setEventDurationFilter(opt.value)}
+            >
+              {opt.label}
+            </button>
+          ))}
         </div>
 
         <div className={styles.upcomingContent}>
           {upcomingEventsLoading && upcomingEvents.length === 0 ? (
-            <p>Loading...</p>
+            <p className={styles.noData}>Loading...</p>
           ) : (
             renderUpcomingEvents()
           )}
@@ -685,38 +896,53 @@ function Home() {
       <div className={styles.upcomingTask}>
         <div className={styles.upcomingHeader}>
           <h2>Upcoming Tasks</h2>
-          <button type="button" onClick={gotoTaskLists}>
+          <button
+            type="button"
+            className={styles.viewLink}
+            onClick={gotoTaskLists}
+          >
             View Task Lists
           </button>
         </div>
 
-        {/* ─── Dropdown Filters for Tasks ─── */}
+        {/* ─── Pill Filters for Tasks ─── */}
         <div className={styles.filterRow}>
-          <select
-            className={styles.filterSelect}
-            value={taskTypeFilter}
-            onChange={(e) => setTaskTypeFilter(e.target.value)}
-          >
-            <option value="all">All Types</option>
-            <option value="personal">Personal</option>
-            <option value="campus">Campus</option>
-            <option value="department">Department</option>
-          </select>
-
-          <select
-            className={styles.filterSelect}
-            value={taskDurationFilter}
-            onChange={(e) => setTaskDurationFilter(e.target.value)}
-          >
-            <option value="all">All Time</option>
-            <option value="week">This Week</option>
-            <option value="month">This Month</option>
-          </select>
+          {[
+            { value: "all", label: "All Task" },
+            { value: "personal", label: "Personal Task" },
+            { value: "campus", label: "Campus Task" },
+            { value: "department", label: "Department Task" },
+          ].map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              className={`${styles.pillBtn} ${taskTypeFilter === opt.value ? styles.pillBtnActive : ""}`}
+              onClick={() => setTaskTypeFilter(opt.value)}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+        <div className={styles.filterRow}>
+          {[
+            { value: "all", label: "All Time" },
+            { value: "week", label: "This Week" },
+            { value: "month", label: "This Month" },
+          ].map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              className={`${styles.pillBtn} ${taskDurationFilter === opt.value ? styles.pillBtnActive : ""}`}
+              onClick={() => setTaskDurationFilter(opt.value)}
+            >
+              {opt.label}
+            </button>
+          ))}
         </div>
 
         <div className={styles.upcomingContent}>
           {upcomingTasksLoading && upcomingTasks.length === 0 ? (
-            <p>Loading...</p>
+            <p className={styles.noData}>Loading...</p>
           ) : (
             renderUpcomingTasks()
           )}
