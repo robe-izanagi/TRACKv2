@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { debounce } from "lodash"; // npm install lodash
+import { debounce } from "lodash";
 import InputField from "../../../components/common/InputField";
 import Button from "../../../components/common/Button";
 import SelectDropdown from "../../../components/common/SelectDropdown";
@@ -9,9 +9,10 @@ import EventColor from "../../../components/events/EventColor";
 import InviteAttendeesModal from "../../../components/events/InviteAttendeesModal";
 import MapPicker from "../../../components/common/MapPicker";
 import FileAttachment from "../../../components/common/FileAttachment";
-import ConflictCard from "../../../components/events/ConflictCard"; // new component
+import ConflictCard from "../../../components/events/ConflictCard";
 import apiClient from "../../../api/client";
 import { useAuth } from "../../../context/AuthContext";
+import { FiAlertCircle, FiCheckCircle, FiClock } from "react-icons/fi";
 import styles from "./CreateEvent.module.css";
 
 export default function CreateEvent() {
@@ -194,7 +195,7 @@ export default function CreateEvent() {
     // If there's a venue conflict, ask for confirmation
     if (conflictData?.conflicts?.venue?.has) {
       const confirmProceed = window.confirm(
-        "⚠️ The selected venue is already booked for this time. Are you sure you want to proceed?",
+        "The selected venue is already booked for this time. Are you sure you want to proceed?",
       );
       if (!confirmProceed) return;
     }
@@ -437,20 +438,26 @@ export default function CreateEvent() {
 
             {/* ── Conflict Notice Card ── */}
             {checkingConflicts && (
-              <div className={styles.checkingNotice}>Checking conflicts...</div>
+              <div className={styles.checkingNotice}>
+                <FiClock size={18} />
+                <span>Checking conflicts...</span>
+              </div>
             )}
             {!checkingConflicts && hasAnyConflict && (
               <div
                 className={styles.conflictNotice}
                 onClick={() => setShowConflictSheet(true)}
               >
-                <span>
-                  ⚠️ {conflictData.conflicts.venue.has && "Venue conflict "}
-                  {conflictData.conflicts.attendees.has &&
-                    "· Attendee conflicts "}
-                  {conflictData.conflicts.creator.has &&
-                    "· You have a conflict "}
-                </span>
+                <div className={styles.conflictNoticeLeft}>
+                  <FiAlertCircle size={20} className={styles.conflictIcon} />
+                  <span>
+                    {conflictData.conflicts.venue.has && "Venue conflict "}
+                    {conflictData.conflicts.attendees.has &&
+                      "· Attendee conflicts "}
+                    {conflictData.conflicts.creator.has &&
+                      "· You have a conflict "}
+                  </span>
+                </div>
                 <span className={styles.viewDetails}>Tap to view details</span>
               </div>
             )}
@@ -459,7 +466,8 @@ export default function CreateEvent() {
               form.start_date &&
               form.start_time && (
                 <div className={styles.noConflictNotice}>
-                  ✅ No conflicts detected
+                  <FiCheckCircle size={18} className={styles.noConflictIcon} />
+                  <span>No conflicts detected</span>
                 </div>
               )}
 

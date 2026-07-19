@@ -167,15 +167,28 @@
   margin-top: 8px;
   transition: 0.2s;
   font-weight: 500;
+  gap: 12px;
 }
 
 .conflictNotice:hover {
   background: #ffe69b;
 }
 
+.conflictNoticeLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.conflictIcon {
+  color: #856404;
+  flex-shrink: 0;
+}
+
 .viewDetails {
   font-weight: 600;
   color: #856404;
+  font-size: 0.9rem;
 }
 
 .noConflictNotice {
@@ -186,6 +199,14 @@
   margin-top: 8px;
   color: #155724;
   font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.noConflictIcon {
+  color: #28a745;
+  flex-shrink: 0;
 }
 
 .checkingNotice {
@@ -196,5 +217,7 @@
   margin-top: 8px;
   color: #383d41;
   font-weight: 500;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }

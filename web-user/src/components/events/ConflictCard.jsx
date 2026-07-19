@@ -7,6 +7,10 @@ import {
   FiClock,
   FiMapPin,
   FiUsers,
+  FiAlertCircle,
+  FiCheckCircle,
+  FiArrowRight,
+  FiInfo,
 } from "react-icons/fi";
 import styles from "./ConflictCard.module.css";
 
@@ -71,31 +75,40 @@ const ConflictCard = ({
           <FiX size={24} />
         </button>
 
-        <h2 className={styles.title}>⏰ Schedule Conflicts</h2>
+        <h2 className={styles.title}>
+          <FiAlertCircle size={24} className={styles.titleIcon} />
+          Schedule Conflicts
+        </h2>
 
         <div className={styles.tabs}>
           {conflicts.venue.has && (
             <button
-              className={`${styles.tab} ${activeTab === "venue" ? styles.activeTab : ""}`}
+              className={`${styles.tab} ${
+                activeTab === "venue" ? styles.activeTab : ""
+              }`}
               onClick={() => setActiveTab("venue")}
             >
-              Venue
+              <FiMapPin size={16} /> Venue
             </button>
           )}
           {conflicts.attendees.has && (
             <button
-              className={`${styles.tab} ${activeTab === "attendees" ? styles.activeTab : ""}`}
+              className={`${styles.tab} ${
+                activeTab === "attendees" ? styles.activeTab : ""
+              }`}
               onClick={() => setActiveTab("attendees")}
             >
-              Attendees
+              <FiUsers size={16} /> Attendees
             </button>
           )}
           {conflicts.creator.has && (
             <button
-              className={`${styles.tab} ${activeTab === "creator" ? styles.activeTab : ""}`}
+              className={`${styles.tab} ${
+                activeTab === "creator" ? styles.activeTab : ""
+              }`}
               onClick={() => setActiveTab("creator")}
             >
-              You
+              <FiUser size={16} /> You
             </button>
           )}
         </div>
@@ -103,7 +116,9 @@ const ConflictCard = ({
         <div className={styles.tabContent}>
           {activeTab === "venue" && conflicts.venue.has && (
             <div>
-              <h3>Venue Conflict</h3>
+              <h3 className={styles.sectionSubtitle}>
+                <FiMapPin size={18} /> Venue Conflict
+              </h3>
               {conflicts.venue.events.map((ev) => (
                 <div key={ev.id} className={styles.conflictItem}>
                   <div className={styles.itemHeader}>
@@ -114,13 +129,16 @@ const ConflictCard = ({
                       {ev.title}
                     </span>
                     <span className={styles.itemDate}>
-                      {formatDateTime(ev.start_datetime)} –{" "}
+                      <FiCalendar size={14} />{" "}
+                      {formatDateTime(ev.start_datetime)}
+                      <FiArrowRight size={14} className={styles.arrowIcon} />
                       {formatDateTime(ev.end_datetime)}
                     </span>
                   </div>
                   <div className={styles.itemDetails}>
                     <p>
-                      <strong>Type:</strong> {ev.visibility} · {ev.hierarchy}
+                      <FiInfo size={14} /> <strong>Type:</strong>{" "}
+                      {ev.visibility} · {ev.hierarchy}
                     </p>
                     <p>
                       <strong>Description:</strong>{" "}
@@ -138,11 +156,13 @@ const ConflictCard = ({
 
           {activeTab === "attendees" && conflicts.attendees.has && (
             <div>
-              <h3>Attendee Conflicts</h3>
+              <h3 className={styles.sectionSubtitle}>
+                <FiUsers size={18} /> Attendee Conflicts
+              </h3>
               {conflicts.attendees.users.map((u) => (
                 <div key={u.user.id} className={styles.attendeeConflict}>
                   <div className={styles.attendeeHeader}>
-                    <FiUser /> <strong>{u.user.username}</strong> (
+                    <FiUser size={16} /> <strong>{u.user.username}</strong> (
                     {u.user.email})
                     <span className={styles.badge}>
                       {u.events.length} conflicting event(s)
@@ -158,7 +178,12 @@ const ConflictCard = ({
                           {ev.title}
                         </span>
                         <span className={styles.itemDate}>
-                          {formatDateTime(ev.start_datetime)} –{" "}
+                          <FiCalendar size={14} />{" "}
+                          {formatDateTime(ev.start_datetime)}
+                          <FiArrowRight
+                            size={14}
+                            className={styles.arrowIcon}
+                          />
                           {formatDateTime(ev.end_datetime)}
                         </span>
                       </div>
@@ -180,7 +205,9 @@ const ConflictCard = ({
 
           {activeTab === "creator" && conflicts.creator.has && (
             <div>
-              <h3>You have a conflict</h3>
+              <h3 className={styles.sectionSubtitle}>
+                <FiUser size={18} /> You have a conflict
+              </h3>
               {conflicts.creator.events.map((ev) => (
                 <div key={ev.id} className={styles.conflictItem}>
                   <div className={styles.itemHeader}>
@@ -191,7 +218,9 @@ const ConflictCard = ({
                       {ev.title}
                     </span>
                     <span className={styles.itemDate}>
-                      {formatDateTime(ev.start_datetime)} –{" "}
+                      <FiCalendar size={14} />{" "}
+                      {formatDateTime(ev.start_datetime)}
+                      <FiArrowRight size={14} className={styles.arrowIcon} />
                       {formatDateTime(ev.end_datetime)}
                     </span>
                   </div>
@@ -211,28 +240,42 @@ const ConflictCard = ({
 
         {recommendations && recommendations.length > 0 && (
           <div className={styles.recommendations}>
-            <h3>💡 Recommended Schedules</h3>
+            <h3 className={styles.sectionSubtitle}>
+              <FiCheckCircle size={18} /> Recommended Schedules
+            </h3>
             <div className={styles.filterButtons}>
               <button
-                className={`${styles.filterBtn} ${recommendationFilter === "all" ? styles.activeFilter : ""}`}
+                className={`${styles.filterBtn} ${
+                  recommendationFilter === "all" ? styles.activeFilter : ""
+                }`}
                 onClick={() => setRecommendationFilter("all")}
               >
                 All
               </button>
               <button
-                className={`${styles.filterBtn} ${recommendationFilter === "all-free" ? styles.activeFilter : ""}`}
+                className={`${styles.filterBtn} ${
+                  recommendationFilter === "all-free" ? styles.activeFilter : ""
+                }`}
                 onClick={() => setRecommendationFilter("all-free")}
               >
                 All Free
               </button>
               <button
-                className={`${styles.filterBtn} ${recommendationFilter === "creator-venue-free" ? styles.activeFilter : ""}`}
+                className={`${styles.filterBtn} ${
+                  recommendationFilter === "creator-venue-free"
+                    ? styles.activeFilter
+                    : ""
+                }`}
                 onClick={() => setRecommendationFilter("creator-venue-free")}
               >
                 Venue+You Free
               </button>
               <button
-                className={`${styles.filterBtn} ${recommendationFilter === "creator-free" ? styles.activeFilter : ""}`}
+                className={`${styles.filterBtn} ${
+                  recommendationFilter === "creator-free"
+                    ? styles.activeFilter
+                    : ""
+                }`}
                 onClick={() => setRecommendationFilter("creator-free")}
               >
                 You Free
@@ -250,7 +293,7 @@ const ConflictCard = ({
                     <span className={styles.slotStart}>
                       {formatDateTime(slot.start_datetime)}
                     </span>
-                    <span className={styles.slotArrow}>→</span>
+                    <FiArrowRight size={16} className={styles.slotArrow} />
                     <span className={styles.slotEnd}>
                       {formatDateTime(slot.end_datetime)}
                     </span>
