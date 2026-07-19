@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Outlet, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import apiClient from "../../api/client";
 import {
   FiMenu,
   FiBell,
@@ -12,11 +13,10 @@ import {
   FiCalendar,
   FiCheckSquare,
   FiBarChart2,
-  FiMapPin, // ← new icons
+  FiMapPin,
 } from "react-icons/fi";
 import styles from "./AppLayout.module.css";
 
-// Routes that should display the focused layout (back button, no bottom nav/FAB)
 const FOCUSED_ROUTES = [
   "/notifications",
   "/profile",
@@ -31,13 +31,27 @@ export default function AppLayout() {
 
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [fabOpen, setFabOpen] = useState(false);
+  const [profilePicture, setProfilePicture] = useState(null);
 
-  // Determine if we're on a focused screen
+  // Fetch profile picture
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const { data } = await apiClient.get("/auth/me");
+        if (data.ok && data.user.display_picture) {
+          setProfilePicture(data.user.display_picture);
+        }
+      } catch (err) {
+        // silent fail – fallback to icon
+      }
+    };
+    fetchProfile();
+  }, []);
+
   const isFocused = FOCUSED_ROUTES.some((route) =>
     location.pathname.startsWith(route),
   );
 
-  // Role‑based bottom nav items (always shown when not focused)
   const role = user?.role || "faculty";
   const bottomItems = [];
   if (!isFocused) {
@@ -58,7 +72,6 @@ export default function AppLayout() {
         },
       );
     } else {
-      // officials & faculty
       bottomItems.push(
         { label: "Home", path: `/${role}/home`, icon: <FiHome size={20} /> },
         { label: "Tasks", path: "/tasks", icon: <FiCheckSquare size={20} /> },
@@ -76,7 +89,6 @@ export default function AppLayout() {
     }
   }
 
-  // Derive a friendly title from the path
   const pathToTitle = (path) => {
     const parts = path.split("/").filter(Boolean);
     if (parts.length === 0) return "Home";
@@ -88,7 +100,7 @@ export default function AppLayout() {
 
   return (
     <div className={styles.mobileContainer}>
-      {/* ===== Side Drawer (only on non‑focused screens) ===== */}
+      {/* Side Drawer */}
       {!isFocused && (
         <>
           <div
@@ -104,7 +116,7 @@ export default function AppLayout() {
               </button>
             </div>
             <div className={styles.drawerContent}>
-              <p>Navigation options will go here.</p>
+              <p>Navigation options still on development</p>
             </div>
           </div>
           {drawerOpen && (
@@ -116,7 +128,7 @@ export default function AppLayout() {
         </>
       )}
 
-      {/* ===== Top Bar ===== */}
+      {/* Top Bar */}
       <header className={styles.topBar}>
         {isFocused ? (
           <>
@@ -126,7 +138,7 @@ export default function AppLayout() {
             <span className={styles.title}>
               {pathToTitle(location.pathname)}
             </span>
-            <div className={styles.topActions} /> {/* empty spacer */}
+            <div className={styles.topActions} />
           </>
         ) : (
           <>
@@ -148,21 +160,29 @@ export default function AppLayout() {
               </button>
               <button
                 onClick={() => navigate("/profile")}
-                className={styles.iconBtn}
+                className={`${styles.iconBtn} ${styles.profileBtn}`}
               >
-                <FiUser size={22} />
+                {profilePicture ? (
+                  <img
+                    src={profilePicture}
+                    alt="Profile"
+                    className={styles.profileImg}
+                  />
+                ) : (
+                  <FiUser size={22} />
+                )}
               </button>
             </div>
           </>
         )}
       </header>
 
-      {/* ===== Main Content ===== */}
+      {/* Main Content */}
       <main className={styles.mainContent}>
         <Outlet />
       </main>
 
-      {/* ===== FAB (only on non‑focused screens) ===== */}
+      {/* FAB */}
       {!isFocused && (
         <div className={styles.fabContainer}>
           {fabOpen && (
@@ -181,7 +201,7 @@ export default function AppLayout() {
         </div>
       )}
 
-      {/* ===== Bottom Navigation (only on non‑focused screens) ===== */}
+      {/* Bottom Navigation */}
       {!isFocused && bottomItems.length > 0 && (
         <nav className={styles.bottomNav}>
           {bottomItems.map((item) => (
