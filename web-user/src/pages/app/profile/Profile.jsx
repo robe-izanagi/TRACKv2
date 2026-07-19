@@ -7,7 +7,6 @@ import {
   FiMapPin,
   FiBriefcase,
   FiEdit,
-  FiLock,
   FiLogOut,
   FiLink,
   FiChevronRight,
@@ -25,20 +24,12 @@ export default function Profile() {
 
   // Modals
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
   const [googleModalOpen, setGoogleModalOpen] = useState(false);
 
   // Edit form
   const [editName, setEditName] = useState("");
   const [editSubmitting, setEditSubmitting] = useState(false);
   const [editMessage, setEditMessage] = useState("");
-
-  // Password form
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [passwordSubmitting, setPasswordSubmitting] = useState(false);
-  const [passwordMessage, setPasswordMessage] = useState("");
 
   // Profile picture
   const fileInputRef = useRef(null);
@@ -65,7 +56,7 @@ export default function Profile() {
     }
   };
 
-  // Edit Profile
+  // ─── Edit Profile ───
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     setEditSubmitting(true);
@@ -87,41 +78,7 @@ export default function Profile() {
     }
   };
 
-  // Change Password
-  const handlePasswordSubmit = async (e) => {
-    e.preventDefault();
-    if (newPassword !== confirmPassword) {
-      setPasswordMessage("Passwords do not match.");
-      return;
-    }
-    if (newPassword.length < 6) {
-      setPasswordMessage("Password must be at least 6 characters.");
-      return;
-    }
-    setPasswordSubmitting(true);
-    setPasswordMessage("");
-    try {
-      const { data } = await apiClient.put("/auth/password", {
-        current_password: currentPassword,
-        new_password: newPassword,
-      });
-      if (data.ok) {
-        setPasswordModalOpen(false);
-        setCurrentPassword("");
-        setNewPassword("");
-        setConfirmPassword("");
-        alert("Password changed successfully.");
-      } else {
-        setPasswordMessage(data.message || "Update failed.");
-      }
-    } catch (err) {
-      setPasswordMessage(err.response?.data?.message || "Server error.");
-    } finally {
-      setPasswordSubmitting(false);
-    }
-  };
-
-  // Upload Profile Picture
+  // ─── Upload Profile Picture ───
   const handlePhotoChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -157,7 +114,23 @@ export default function Profile() {
     e.target.value = "";
   };
 
-  // Logout
+  // ─── Link Google Account (same as login flow) ───
+  const handleLinkGoogle = async () => {
+    setGoogleModalOpen(false);
+    try {
+      const { data } = await apiClient.get("/auth/google");
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert("Failed to get Google auth URL.");
+      }
+    } catch (err) {
+      console.error("Google link error:", err);
+      alert("Unable to connect to Google. Please try again.");
+    }
+  };
+
+  // ─── Logout ───
   const handleLogout = () => {
     if (window.confirm("Are you sure you want to logout?")) {
       if (logout) logout();
@@ -280,21 +253,7 @@ export default function Profile() {
           <div className={styles.settingsText}>
             <span className={styles.settingsLabel}>Link Google Account</span>
             <span className={styles.settingsDesc}>
-              Link Your Google Account
-            </span>
-          </div>
-          <FiChevronRight className={styles.settingsArrow} />
-        </button>
-
-        <button
-          className={styles.settingsItem}
-          onClick={() => setPasswordModalOpen(true)}
-        >
-          <FiLock className={styles.settingsIcon} />
-          <div className={styles.settingsText}>
-            <span className={styles.settingsLabel}>Change Password</span>
-            <span className={styles.settingsDesc}>
-              Update your security credentials
+              Connect your Google account for SSO
             </span>
           </div>
           <FiChevronRight className={styles.settingsArrow} />
@@ -307,8 +266,7 @@ export default function Profile() {
         <span>Log Out</span>
       </button>
 
-      {/* ─── Modals ─── */}
-      {/* Edit Profile Modal */}
+      {/* ─── Edit Profile Modal ─── */}
       {editModalOpen && (
         <div
           className={styles.modalOverlay}
@@ -358,76 +316,7 @@ export default function Profile() {
         </div>
       )}
 
-      {/* Change Password Modal */}
-      {passwordModalOpen && (
-        <div
-          className={styles.modalOverlay}
-          onClick={() => setPasswordModalOpen(false)}
-        >
-          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <h3>Change Password</h3>
-              <button
-                className={styles.modalClose}
-                onClick={() => setPasswordModalOpen(false)}
-              >
-                <FiX size={20} />
-              </button>
-            </div>
-            <form onSubmit={handlePasswordSubmit}>
-              <div className={styles.formGroup}>
-                <label>Current Password</label>
-                <input
-                  type="password"
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  required
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label>New Password</label>
-                <input
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  required
-                  minLength="6"
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label>Confirm New Password</label>
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                />
-              </div>
-              {passwordMessage && (
-                <p className={styles.modalError}>{passwordMessage}</p>
-              )}
-              <div className={styles.modalActions}>
-                <button
-                  type="button"
-                  className={styles.cancelBtn}
-                  onClick={() => setPasswordModalOpen(false)}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className={styles.saveBtn}
-                  disabled={passwordSubmitting}
-                >
-                  {passwordSubmitting ? "Updating..." : "Update Password"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Google Account Modal (placeholder) */}
+      {/* ─── Google Account Modal ─── */}
       {googleModalOpen && (
         <div
           className={styles.modalOverlay}
@@ -443,24 +332,33 @@ export default function Profile() {
                 <FiX size={20} />
               </button>
             </div>
-            <div style={{ padding: "16px 0", textAlign: "center" }}>
-              <p>
-                This feature will allow you to connect your Google account for
-                SSO.
+            <div className={styles.googleModalContent}>
+              <FiLink size={48} className={styles.googleModalIcon} />
+              <p className={styles.googleModalTitle}>
+                Connect your Google account
               </p>
-              <p
-                style={{ fontSize: "14px", color: "#6b7280", marginTop: "8px" }}
-              >
-                (Backend integration needed)
+              <p className={styles.googleModalDesc}>
+                This will allow you to sign in to TRACK using your Google
+                credentials. You'll be redirected to Google to authorize the
+                connection.
               </p>
-            </div>
-            <div className={styles.modalActions}>
-              <button
-                className={styles.saveBtn}
-                onClick={() => setGoogleModalOpen(false)}
-              >
-                Close
-              </button>
+              <div className={styles.googleModalActions}>
+                <button
+                  type="button"
+                  className={styles.cancelBtn}
+                  onClick={() => setGoogleModalOpen(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className={styles.googleLinkBtn}
+                  onClick={handleLinkGoogle}
+                >
+                  <FiLink size={18} />
+                  Continue to Google
+                </button>
+              </div>
             </div>
           </div>
         </div>

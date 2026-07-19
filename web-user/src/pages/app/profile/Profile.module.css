@@ -379,3 +379,60 @@
   text-align: center;
   margin-top: 20px;
 }
+
+/* ─── Google Modal Styles ─── */
+.googleModalContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 0 8px;
+  text-align: center;
+}
+
+.googleModalIcon {
+  color: #4285f4;
+  margin-bottom: 16px;
+}
+
+.googleModalTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 8px;
+}
+
+.googleModalDesc {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0 0 20px;
+  line-height: 1.5;
+  max-width: 340px;
+}
+
+.googleLinkBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex: 1;
+  padding: 12px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  background: #4285f4;
+  color: #fff;
+  transition: background 0.2s;
+}
+
+.googleLinkBtn:hover {
+  background: #3367d6;
+}
+
+.googleModalActions {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  margin-top: 4px;
+}
