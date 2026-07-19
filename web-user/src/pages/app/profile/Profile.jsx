@@ -251,9 +251,9 @@ export default function Profile() {
         >
           <FiLink className={styles.settingsIcon} />
           <div className={styles.settingsText}>
-            <span className={styles.settingsLabel}>Link Google Account</span>
+            <span className={styles.settingsLabel}>Change Google Account</span>
             <span className={styles.settingsDesc}>
-              Connect your Google account for SSO
+              Needed to change Google account
             </span>
           </div>
           <FiChevronRight className={styles.settingsArrow} />
@@ -324,7 +324,7 @@ export default function Profile() {
         >
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <h3>Link Google Account</h3>
+              <h3>Change Google Account</h3>
               <button
                 className={styles.modalClose}
                 onClick={() => setGoogleModalOpen(false)}
@@ -335,12 +335,12 @@ export default function Profile() {
             <div className={styles.googleModalContent}>
               <FiLink size={48} className={styles.googleModalIcon} />
               <p className={styles.googleModalTitle}>
-                Connect your Google account
+                Update your Google account
               </p>
               <p className={styles.googleModalDesc}>
-                This will allow you to sign in to TRACK using your Google
-                credentials. You'll be redirected to Google to authorize the
-                connection.
+                We recommend to not change your Google account frequently. Only
+                update your Google account if necessary. You'll be redirected to
+                Google to authorize the connection.
               </p>
               <div className={styles.googleModalActions}>
                 <button
