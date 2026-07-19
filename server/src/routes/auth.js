@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const bcrypt = require('bcryptjs'); // ✅ import for password hashing
 const { login, register } = require('../controllers/authController');
 const {
   googleLoginUrl,
@@ -11,16 +12,16 @@ const { authenticate } = require('../middleware/auth');
 const { User, UserProfile, Department, Office, Role, Admin, Position } = require('../models');
 const { Op } = require('sequelize');
 
-// Local admin login
+// ─── Local auth ───
 router.post('/login', login);
 router.post('/register', register);
 
-// Google SSO
+// ─── Google SSO ───
 router.get('/google', googleLoginUrl);
 router.get('/google/callback', googleCallback);
 router.post('/complete-google-registration', completeGoogleRegistration);
 
-// Get current authenticated user
+// ─── Get current authenticated user ───
 router.get('/me', authenticate, async (req, res) => {
   try {
     const user = await User.findByPk(req.userId, {
@@ -30,12 +31,12 @@ router.get('/me', authenticate, async (req, res) => {
 
     const profile = await UserProfile.findByPk(req.userId);
     let role = null,
-        department = null,
-        office = null,
-        fullName = null,
-        departmentId = null,
-        officeId = null,
-        roleId = null;
+      department = null,
+      office = null,
+      fullName = null,
+      departmentId = null,
+      officeId = null,
+      roleId = null;
 
     if (profile) {
       fullName = profile.full_name;
@@ -67,7 +68,7 @@ router.get('/me', authenticate, async (req, res) => {
         department,
         office,
         full_name: fullName,
-        department_id: departmentId,   // ← new
+        department_id: departmentId,
         office_id: officeId,
         role_id: roleId
       }
@@ -78,12 +79,11 @@ router.get('/me', authenticate, async (req, res) => {
   }
 });
 
-// List users (for Invite Attendees modal) – uses manual fetching
+// ─── List users ───
 router.get('/users', authenticate, async (req, res) => {
   try {
     const { department_id, exclude_admins } = req.query;
 
-    // Get all non‑admin user IDs if needed
     let userIds = null;
     if (exclude_admins === 'true') {
       const adminUsers = await Admin.findAll({ attributes: ['user_id'] });
@@ -94,7 +94,6 @@ router.get('/users', authenticate, async (req, res) => {
         .filter(id => !adminIds.includes(id));
     }
 
-    // If a department_id is given, filter further
     if (department_id) {
       const deptProfiles = await UserProfile.findAll({
         where: { department_id },
@@ -108,14 +107,12 @@ router.get('/users', authenticate, async (req, res) => {
       }
     }
 
-    // Fetch users (either filtered or all)
     const where = userIds ? { id: userIds } : {};
     const users = await User.findAll({
       where,
       attributes: ['id', 'email', 'username']
     });
 
-    // Manually build the response with profile data
     const result = [];
     for (const user of users) {
       const profile = await UserProfile.findByPk(user.id);
@@ -160,6 +157,88 @@ router.get('/users', authenticate, async (req, res) => {
     res.json({ ok: true, users: result });
   } catch (error) {
     console.error('List users error:', error);
+    res.status(500).json({ ok: false, message: 'Server error.' });
+  }
+});
+
+// ─── NEW: Update Profile (Full Name) ───
+router.put('/profile', authenticate, async (req, res) => {
+  try {
+    const { full_name } = req.body;
+    if (!full_name || !full_name.trim()) {
+      return res.status(400).json({ ok: false, message: 'Full name is required.' });
+    }
+
+    const [updated] = await UserProfile.update(
+      { full_name: full_name.trim() },
+      { where: { user_id: req.userId } }
+    );
+
+    if (updated === 0) {
+      return res.status(404).json({ ok: false, message: 'User profile not found.' });
+    }
+
+    res.json({ ok: true, message: 'Profile updated successfully.' });
+  } catch (error) {
+    console.error('Update profile error:', error);
+    res.status(500).json({ ok: false, message: 'Server error.' });
+  }
+});
+
+// ─── NEW: Change Password ───
+router.put('/password', authenticate, async (req, res) => {
+  try {
+    const { current_password, new_password } = req.body;
+    if (!current_password || !new_password) {
+      return res.status(400).json({ ok: false, message: 'Current and new password are required.' });
+    }
+    if (new_password.length < 6) {
+      return res.status(400).json({ ok: false, message: 'New password must be at least 6 characters.' });
+    }
+
+    const user = await User.findByPk(req.userId);
+    if (!user) {
+      return res.status(404).json({ ok: false, message: 'User not found.' });
+    }
+
+    // Verify current password
+    const valid = await bcrypt.compare(current_password, user.password_hash);
+    if (!valid) {
+      return res.status(401).json({ ok: false, message: 'Current password is incorrect.' });
+    }
+
+    // Hash new password
+    const hashed = await bcrypt.hash(new_password, 10);
+    user.password_hash = hashed;
+    await user.save();
+
+    res.json({ ok: true, message: 'Password changed successfully.' });
+  } catch (error) {
+    console.error('Change password error:', error);
+    res.status(500).json({ ok: false, message: 'Server error.' });
+  }
+});
+
+// ─── NEW: Update Profile Picture ───
+router.put('/profile-picture', authenticate, async (req, res) => {
+  try {
+    const { picture_url } = req.body;
+    if (!picture_url) {
+      return res.status(400).json({ ok: false, message: 'Picture URL is required.' });
+    }
+
+    const [updated] = await UserProfile.update(
+      { display_picture: picture_url },
+      { where: { user_id: req.userId } }
+    );
+
+    if (updated === 0) {
+      return res.status(404).json({ ok: false, message: 'User profile not found.' });
+    }
+
+    res.json({ ok: true, message: 'Profile picture updated successfully.' });
+  } catch (error) {
+    console.error('Update profile picture error:', error);
     res.status(500).json({ ok: false, message: 'Server error.' });
   }
 });
