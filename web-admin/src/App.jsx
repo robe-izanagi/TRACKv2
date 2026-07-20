@@ -22,7 +22,7 @@ export default function App() {
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/account-codes" element={<AccountCodes />} />
                     <Route path="/declaration" element={<Declaration />} />
-                    <Route path="*" element={<Navigate to="/dashboard" />} />
+                    <Route path="*" element={<Navigate to="/login" />} />
                   </Routes>
                 </Layout>
               </RequireAuth>

@@ -6,6 +6,40 @@
   background: #f1f5f9;
 }
 
+.loginPage {
+  min-height: 100vh;
+  padding: 1.5rem 1rem 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  /* background: var(--page-background-color); */
+  box-shadow: 0 0 10px 5px rgb(238, 238, 238);
+  width: 30%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.pageContent {
+  width: min(100%, 420px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.loginCard {
+  width: 100%;
+  background: var(--background-color);
+  border-radius: 32px;
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.08);
+  padding: 1.75rem 1.5rem 2rem;
+}
+
+
 .card {
   background: white;
   padding: 32px;
@@ -15,10 +49,29 @@
   max-width: 400px;
 }
 
-.card h1 {
-  margin-bottom: 24px;
-  text-align: center;
+.title {
+  /* padding: 10px 0; */
+  font-family: sans-serif;
+  font-size: 35px;
 }
+
+.subTitle {
+  margin-bottom: 30px;
+  font-size: large;
+  font-family: sans-serif;
+  opacity: .8;
+}
+
+.inputContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.inputContainer label {
+  font-family: sans-serif;
+}
+
 
 .input {
   width: 100%;
@@ -31,13 +84,16 @@
 
 .button {
   width: 100%;
-  padding: 10px;
-  background: #3b82f6;
-  color: white;
+  padding: 1rem;
+  border-radius: 10px;
   border: none;
-  border-radius: 8px;
-  font-size: 16px;
+  font-weight: 700;
   cursor: pointer;
+  background: #a80202;
+  color: white;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
 }
 
 .button:disabled {

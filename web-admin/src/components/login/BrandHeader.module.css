@@ -1,0 +1,54 @@
+.brandHeader {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.logoImage {
+  width: 84px;
+  height: auto;
+}
+
+.campusBadge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--primary-color);
+  text-transform: uppercase;
+}
+
+.logoSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  text-align: center;
+}
+
+.trackLogo {
+  font-size: 3rem;
+  font-weight: 800;
+  color: var(--primary-color);
+  margin: 0;
+  position: relative;
+}
+
+.trackLogo::after {
+  content: "";
+  display: block;
+  width: 96px;
+  height: 4px;
+  background: #fed65b;
+  border-radius: 999px;
+  margin: 0.65rem auto 0;
+}
+
+.tagline {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #333333;
+  line-height: 1.4;
+}
