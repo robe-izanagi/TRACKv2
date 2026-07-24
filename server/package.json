@@ -1,11 +1,10 @@
 {
   "name": "server",
   "version": "1.0.0",
-  "main": "server.ts",
+  "main": "server.js",
   "scripts": {
-    "build": "tsc",
-    "start": "node dist/server.ts",
-    "dev": "nodemon --exec ts-node server.ts"
+    "start": "tsx server.js",
+    "dev": "tsx server.js"
   },
   "keywords": [],
   "author": "",
@@ -29,7 +28,6 @@
     "@types/express": "^5.0.6",
     "@types/morgan": "^1.9.10",
     "nodemon": "^3.1.14",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
+    "tsx": "^4.23.1"
   }
 }
