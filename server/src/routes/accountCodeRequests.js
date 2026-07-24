@@ -4,14 +4,21 @@ const {
   createRequest,
   listRequests,
   getRequest,
-  reviewRequest
+  approveRequest,
+  rejectRequest,
+  sendCodeEmail
 } = require('../controllers/accountCodeRequestsController');
 
 const { requireAdmin } = require('../middleware/auth');
 
+// ─── Public ─────────────────────────────────────────────
 router.post('/', createRequest);
+
+// ─── Admin ──────────────────────────────────────────────
 router.get('/', requireAdmin, listRequests);
 router.get('/:id', requireAdmin, getRequest);
-router.post('/:id/review', requireAdmin, reviewRequest);
+router.post('/:id/approve', requireAdmin, approveRequest);
+router.post('/:id/reject', requireAdmin, rejectRequest);
+router.post('/:id/send-code', requireAdmin, sendCodeEmail);
 
 module.exports = router;
