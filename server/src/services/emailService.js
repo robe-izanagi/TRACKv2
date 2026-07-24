@@ -1,10 +1,10 @@
 const nodemailer = require('nodemailer');
 
-// Configure transporter (use your email provider)
+// Configure transporter
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || 'smtp.gmail.com',
   port: parseInt(process.env.SMTP_PORT) || 587,
-  secure: false,
+  secure: process.env.SMTP_SECURE === 'true' || false,
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS
@@ -26,10 +26,15 @@ exports.sendAccountCodeEmail = async ({ email, full_name, code }) => {
     <p>Thank you,<br/>TRACK Team</p>
   `;
 
-  await transporter.sendMail({
-    from: process.env.SMTP_FROM || 'noreply@trackv2.com',
-    to: email,
-    subject,
-    html
-  });
+  try {
+    await transporter.sendMail({
+      from: process.env.SMTP_FROM || 'noreply@trackv2.com',
+      to: email,
+      subject,
+      html
+    });
+  } catch (error) {
+    console.error('Email send error:', error);
+    throw error;
+  }
 };
