@@ -6,6 +6,8 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import AccountCodes from './pages/AccountCodes';
 import Declaration from './pages/Declaration';
+import "./App.css"
+import ManageUsers from './pages/ManageUser';
 
 export default function App() {
   return (
@@ -16,16 +18,17 @@ export default function App() {
           <Route
             path="/*"
             element={
-              <RequireAuth>
+              // <RequireAuth>
                 <Layout>
                   <Routes>
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/account-codes" element={<AccountCodes />} />
                     <Route path="/declaration" element={<Declaration />} />
+                    <Route path="/users" element={<ManageUsers />} />
                     <Route path="*" element={<Navigate to="/login" />} />
                   </Routes>
                 </Layout>
-              </RequireAuth>
+              // </RequireAuth>
             }
           />
         </Routes>

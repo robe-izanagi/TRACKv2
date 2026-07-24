@@ -1,65 +1,271 @@
+/* layout.module.css */
+
+:root {
+  --bg-dark: #1a1a2e;
+  --bg-light: #2d2d44;
+  --text-1: #f0f0f0;
+  --primary: #a80202;
+  --secondary: #500000;
+  --sidebar-width: 220px;
+  --sidebar-mini-width: 70px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
 .mainContainer {
   display: flex;
-  min-height: 100vh;
+  flex-direction: column;
+  height: 100vh;
 }
 
-.aside {
-  width: 220px;
-  background: rgb(64,64,64);
-  color: white;
-  position: relative;
-}
-
-.sideTitle {
-  font-family: sans-serif;
-  margin-bottom: 20px;
+/* ===== HEADER ===== */
+.screenTop {
+  background: var(--bg-dark);
+  padding: 8px 16px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 20px;
-  border-bottom: 2px solid #500000;
+  justify-content: space-between;
+  flex-shrink: 0;
+  height: 60px;
 }
 
+.menuContainer {
+  font-size: 28px;
+  color: var(--text-1);
+  width: var(--sidebar-width);
+  display: flex;
+  align-items: center;
+  padding-left: 5px;
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-1);
+  font-family: sans-serif;
+}
+
+.title h1 {
+  font-size: 1.5rem;
+  margin: 0;
+}
+
+.topContent {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 20px;
+  color: var(--text-1);
+  font-size: 28px;
+  margin-left: 10px;
+}
+
+.menuIcon,
+.userIcon {
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.menuIcon:hover,
+.userIcon:hover {
+  opacity: 0.7;
+}
+
+/* ===== MAIN ===== */
+.main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+/* ===== SIDEBAR ===== */
+.aside {
+  width: var(--sidebar-width);
+  background: var(--bg-dark);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  position: relative;
+  padding: 16px 8px 8px 8px;
+  transition: all 0.3s ease;
+}
+
+.aside.mini {
+  width: var(--sidebar-mini-width);
+  /* width: fit-content; */
+}
+
+/* Filler for top-right curve */
+.aside .filler {
+  position: absolute;
+  top: 0;
+  right: -30px;
+  width: 30px;
+  height: 30px;
+  background: var(--bg-dark);
+  z-index: 2;
+  transition: all 0.3s ease;
+}
+
+.aside .filler::after {
+  content: "";
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--bg-light);
+  border-radius: 50% 0 0 0;
+  transition: all 0.3s ease;
+}
+
+/* ===== WELCOME ===== */
+.welcome {
+  padding: 10px 12px 20px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 16px;
+  transition: all 0.3s ease;
+}
+
+.aside.mini .welcome {
+  text-align: center;
+}
+
+.aside.mini .welcomeText {
+  opacity: 0.7;
+}
+
+/* ===== NAVIGATION ===== */
 .nav {
   display: flex;
   flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  transition: all 0.3s ease;
+  overflow: hidden;
 }
 
 .navLink {
-  color: rgb(182, 110, 248);
-  text-decoration: none;
-  padding: 10px;
-  margin: 5px 8px;
-  font-size: 18px;
   display: flex;
-  /* align-it ems: center; */
-  gap: 5px;
-  background: #500000;
-  border-radius: 5px;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  text-decoration: none;
+  color: #b0b0c0;
+  font-size: 16px;
+  border-radius: 20px;
+  position: relative;
+  height: 50px;
+  white-space: nowrap;
+  font-weight: 550;
+  transition: all 0.3s ease;
 }
+
+.navLink .icon {
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.navLink span {
+  opacity: 1;
+}
+
+.aside.mini .navLink span {
+  opacity: 0;
+  width: 0;
+  overflow: hidden;
+  display: none;
+  transition: all 0.3s ease;
+}
+
+/* Active state */
+.navLink.active {
+  background: var(--bg-light);
+  color: var(--text);
+  border-radius: 20px;
+  transition: all 0.3s ease;
+}
+
+/* .navLink .curveTop {
+  top: -20px;
+  border-radius: 0 0 50% 0;
+  box-shadow: 10px 10px 0 0 var(--bg-light);
+}
+
+.navLink .curveBot {
+  bottom: -20px;
+  border-radius: 0 50% 0 0;
+  box-shadow: 10px -10px 0 0 var(--bg-light);
+} */
+
+/* Hide curves in mini mode */
+/* .aside.mini .navLink .curveTop,
+.aside.mini .navLink .curveBot {
+  display: none !important;
+} */
 
 .navLink:hover {
-  background: #a80202;
+  background: rgba(255, 255, 255, 0.05);
 }
 
+.navLink.active:hover {
+  background: var(--bg-light);
+}
+
+
+/* ===== LOGOUT ===== */
 .btnLogout {
-  width: calc(100% - 16px);
-  margin: 0 8px;
-  padding: 10px;
-  position: absolute;
-  bottom: 1%; 
-  background: #500000;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  margin-top: auto;
+  background: var(--secondary);
   color: white;
-  /* border: 1px solid black; */
   border: none;
+  border-radius: 8px;
+  font-size: 16px;
   cursor: pointer;
-  border-radius: 5px;
-  box-shadow: 0 10px 10px -5px #494949;
+  transition: background 0.2s;
+  white-space: nowrap;
+  overflow: hidden;
+  font-family: 'Times New Roman', Times, serif;
+   transition: all 0.3s ease;
+  
 }
 
 .btnLogout:hover {
-  background: #a80202;
+  background: var(--primary);
 }
 
-/* --primary-color: #a80202;
-  --secondary-color: #500000; */
+.btnLogout .icon {
+  font-size: 22px;
+}
+
+.aside.mini .btnLogout {
+  justify-content: center;
+  padding: 10px 0;
+}
+
+.aside.mini .btnLogout span {
+  display: none;
+}
+
+/* ===== CONTENT ===== */
+.content {
+  flex: 1;
+  padding: 24px;
+  background: var(--bg-light);
+  overflow-y: auto;
+}
+
+/* Utility */
+.hide {
+  display: none !important;
+}
