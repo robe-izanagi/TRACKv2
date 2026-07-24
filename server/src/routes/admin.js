@@ -28,6 +28,9 @@ const {
   removeAssignment
 } = require('../controllers/positionAssignmentsController');
 
+// ─── User Management (NEW) ────────────────────────────
+const { getAllUsers } = require('../controllers/adminUserController');
+
 // --- Test ---
 router.get('/me', requireAdmin, (req, res) => {
   res.json({ ok: true, message: 'You are an admin', adminId: req.adminId, userId: req.userId });
@@ -63,5 +66,8 @@ router.get('/positions/available', requireAdmin, availablePositions);
 // --- Position Assignments ---
 router.get('/position-assignments', requireAdmin, listAssignments);
 router.put('/position-assignments/:id/remove', requireAdmin, removeAssignment);
+
+// ─── User Management Routes (NEW) ─────────────────────
+router.get('/users', requireAdmin, getAllUsers);
 
 module.exports = router;
