@@ -73,7 +73,7 @@
   color: var(--primary-color, #800000);
 }
 
-.cardHeaderIcon {
+.cardHeaderIcon * {
   color: var(--primary-color, #800000);
   flex-shrink: 0;
 }
@@ -96,18 +96,41 @@
 
 .checkRow {
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-top: 0.25rem;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+  flex-direction: column;
 }
 
-.checkRow label {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
+.reminderLabel {
   font-size: 0.9rem;
   color: var(--text-color);
+  font-weight: 600;
+}
+
+.reminderToggleGroup {
+  border: 1px solid var(--primary-color, #800000);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.reminderToggleButton {
+  border: none;
+  background: white;
+  color: var(--text-color);
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
   cursor: pointer;
+  width:50%;
+
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.reminderToggleButton.active {
+  background: var(--primary-color, #800000);
+  color: white;
 }
 
 .error {
@@ -133,6 +156,14 @@
   color: var(--fifth-color);
   margin-bottom: 4px;
   display: block;
+}
+
+.row label{
+      font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #2d2d2d;
 }
 
 .hint {

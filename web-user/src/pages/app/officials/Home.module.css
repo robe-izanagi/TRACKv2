@@ -34,7 +34,7 @@
   font-weight: 600;
   cursor: pointer;
   font-size: 0.9rem;
-  padding: 0;
+  margin: 1rem 0;
   white-space: nowrap;
 }
 
@@ -437,8 +437,9 @@
 
 .badgesStatus {
   display: flex;
+  flex-direction: column;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: 1rem;
   flex-wrap: wrap;
   padding: 1rem;
@@ -635,7 +636,7 @@
   margin-left: -12px;
 }
 
-.attendeeStack> :first-child {
+.attendeeStack > :first-child {
   margin-left: 0;
 }
 
@@ -1055,7 +1056,10 @@
   border-radius: 50%;
   background: #d1d5db;
   cursor: pointer;
-  transition: background 0.2s, transform 0.2s, width 0.2s;
+  transition:
+    background 0.2s,
+    transform 0.2s,
+    width 0.2s;
 }
 
 .todayDot:hover {

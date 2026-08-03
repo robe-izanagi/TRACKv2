@@ -26,6 +26,7 @@ import {
   FiUserPlus,
 } from "react-icons/fi";
 import styles from "./CreateEvent.module.css";
+import { IoCreateOutline } from "react-icons/io5";
 
 export default function CreateEvent() {
   const { user } = useAuth();
@@ -296,7 +297,7 @@ export default function CreateEvent() {
   return (
     <div className={styles.pageWrapper}>
       <form onSubmit={handleSubmit} className={styles.form}>
-        <div className={styles.titleSection}>
+        <div className={styles.titleSection} style={{backgroundColor: form.color, transition:"background-color 0.15s ease"}}>
           <InputField
             className={styles.titleInput}
             value={form.title}
@@ -527,16 +528,27 @@ export default function CreateEvent() {
                 }
               />
               <div className={styles.checkRow}>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={form.is_email_reminder}
-                    onChange={(e) =>
-                      updateField("is_email_reminder", e.target.checked)
-                    }
-                  />
-                  Email Reminder
-                </label>
+                <span className={styles.reminderLabel}>Email Reminder</span>
+                <div className={styles.reminderToggleGroup}>
+                  <button
+                    type="button"
+                    className={`${styles.reminderToggleButton} ${
+                      form.is_email_reminder === true ? styles.active : ""
+                    }`}
+                    onClick={() => updateField("is_email_reminder", true)}
+                  >
+                    Yes
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.reminderToggleButton} ${
+                      form.is_email_reminder === false ? styles.active : ""
+                    }`}
+                    onClick={() => updateField("is_email_reminder", false)}
+                  >
+                    No
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -587,7 +599,15 @@ export default function CreateEvent() {
             </button>
           </div>
 
-          <div className={styles.submitBar}>
+          <div className={styles.card}>
+            <div className={styles.cardHeader}>
+              <IoCreateOutline size={16} className={styles.cardHeaderIcon} />
+              <span>Submit Event</span>
+            </div>
+            <p className={styles.submitInfo}>
+              Once you submit, the event will be created and visible to the
+              selected attendees and collaborators.
+            </p>
             <Button type="submit" disabled={loading}>
               {loading ? "Creating..." : "Create Event"}
             </Button>

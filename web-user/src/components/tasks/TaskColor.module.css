@@ -5,11 +5,11 @@
 }
 
 .label {
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-        color: #2d2d2d;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color:#2d2d2d;
 }
 
 .swatchGroup {
@@ -23,40 +23,40 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  border: 2px solid #e5e7eb;
+  border: 2px solid #e0e0e0;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .swatch:hover {
-  transform: scale(1.06);
+  transform: scale(1.05);
   border-color: #aaa;
 }
 
 .selected {
-  border-color: var(--primary-color, #800000);
-  box-shadow: 0 0 0 3px rgba(128, 0, 0, 0.15);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(128, 0, 0, 0.2);
 }
 
 .checkmark {
   color: white;
   font-size: 1rem;
   font-weight: bold;
-  text-shadow: 0 0 1px rgba(0, 0, 0, 0.4);
+  text-shadow: 0 0 1px black;
 }
 
 .customBtn {
   background: var(--input-background-color);
-  color: var(--primary-color, #800000);
-  border: 2px solid #ddd;
+  font-size: 1.2rem;
+  border: 2px solid #ccc;
 }
 
 .colorPicker {
-  margin-top: 0.25rem;
+  margin-top: 0.5rem;
   width: 100%;
   padding: 0.5rem;
   border: 1px solid #ddd;
