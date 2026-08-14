@@ -127,7 +127,13 @@ const getDayRecommendations = ({
   const { h: wsH, m: wsM } = parseTimeStr(windowStart);
   const { h: weH, m: weM } = parseTimeStr(windowEnd);
   const wStart = buildLocalDate(dateStr, wsH, wsM);
-  const wEnd = buildLocalDate(dateStr, weH, weM);
+  let wEnd = buildLocalDate(dateStr, weH, weM);
+  if (wEnd <= wStart) {
+    // Preferred window crosses midnight (e.g. 6 PM – 7 AM) — the "until"
+    // time belongs to the next calendar day, not the same one.
+    wEnd = new Date(wEnd.getTime());
+    wEnd.setDate(wEnd.getDate() + 1);
+  }
 
   const effectiveStart = minStart && minStart > wStart ? minStart : wStart;
   if (wEnd <= effectiveStart) return [];
@@ -247,8 +253,8 @@ const checkConflictFreeFlags = (
 
 const generateRecommendations = ({
   originalStart,
-  originalEnd,
   durationHours,
+  perDayDurationMs,
   conflicts,
   dateStart,
   dateEnd,
@@ -275,8 +281,11 @@ const generateRecommendations = ({
   let guard = 0;
 
   // ── Multi-day event: same daily time slot, repeated across N consecutive
-  // days, shifted to a new starting date. ──
-  if (isMultiDay && numDays > 1 && originalEnd) {
+  // days, shifted to a new starting date. `perDayDurationMs` is supplied by
+  // the caller — either derived from the original event's own multi-day
+  // span, or from the "Duration of Event (days)" + "Preferred Duration
+  // (hours)" fields when the user explicitly asks for a multi-day search. ──
+  if (isMultiDay && numDays > 1 && perDayDurationMs) {
     const originalDateStr = toDateInputStr(
       new Date(
         originalStart.getFullYear(),
@@ -284,12 +293,6 @@ const generateRecommendations = ({
         originalStart.getDate(),
       ),
     );
-    let perDayMinutes =
-      originalEnd.getHours() * 60 +
-      originalEnd.getMinutes() -
-      (originalStart.getHours() * 60 + originalStart.getMinutes());
-    if (perDayMinutes <= 0) perDayMinutes += 24 * 60;
-    const perDayDurationMs = perDayMinutes * 60000;
 
     while (cursor <= dateEnd && results.length < MAX_RESULTS && guard < 400) {
       guard++;
@@ -383,6 +386,7 @@ const ConflictCard = ({
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   const [advDuration, setAdvDuration] = useState(1);
+  const [advDurationDays, setAdvDurationDays] = useState(1);
   const [advWindowStart, setAdvWindowStart] = useState(DEFAULT_WINDOW_START);
   const [advWindowEnd, setAdvWindowEnd] = useState(DEFAULT_WINDOW_END);
   const [advDateStart, setAdvDateStart] = useState(toDateInputStr(new Date()));
@@ -436,12 +440,14 @@ const ConflictCard = ({
     }
 
     setAdvDuration(perDayHours);
+    setAdvDurationDays(numDays);
     setAdvWindowStart(DEFAULT_WINDOW_START);
     setAdvDateStart(toDateInputStr(dStart));
     setAdvDateEnd(toDateInputStr(dEnd));
 
     setActiveParams({
       durationHours: perDayHours,
+      perDayDurationMs: isMultiDay ? perDayHours * 3600000 : null,
       dateStart: dStart,
       dateEnd: dEnd,
       windowStart: DEFAULT_WINDOW_START,
@@ -464,8 +470,8 @@ const ConflictCard = ({
     if (!conflictData || !originalStart || !activeParams) return [];
     return generateRecommendations({
       originalStart,
-      originalEnd,
       durationHours: activeParams.durationHours,
+      perDayDurationMs: activeParams.perDayDurationMs,
       conflicts: conflictData.conflicts,
       dateStart: activeParams.dateStart,
       dateEnd: activeParams.dateEnd,
@@ -484,17 +490,21 @@ const ConflictCard = ({
     if (dStart < today) dStart = new Date(today); // never search before today
     const dEnd = new Date(`${advDateEnd}T00:00:00`);
 
+    const days = Math.max(1, Math.round(Number(advDurationDays) || 1));
+    const hours = Number(advDuration) || 1;
+    const isMultiDay = days > 1;
+
     setActiveParams({
-      durationHours: Number(advDuration) || 1,
+      durationHours: hours,
+      perDayDurationMs: isMultiDay ? hours * 3600000 : null,
       dateStart: dStart,
       dateEnd: dEnd,
       windowStart: advWindowStart,
       windowEnd: advWindowEnd,
-      // Advanced search always targets a single-day time window — the
-      // "same time every day" multi-day search only kicks in automatically
-      // when the original event itself spans multiple calendar days.
-      isMultiDay: false,
-      numDays: 1,
+      // "Duration of Event (days)" > 1 switches to the same-time-every-day
+      // multi-day search; otherwise it's a normal single-day window search.
+      isMultiDay,
+      numDays: days,
     });
     setShowAllRecommendations(false);
   };
@@ -660,6 +670,17 @@ const ConflictCard = ({
                   step="0.5"
                   value={advDuration}
                   onChange={(e) => setAdvDuration(e.target.value)}
+                />
+              </div>
+              <div className={styles.advField}>
+                <label>Duration of Event (days)</label>
+                <input
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={advDurationDays}
+                  onChange={(e) => setAdvDurationDays(e.target.value)}
+                  title="More than 1 day searches for the same daily time slot repeated across that many consecutive days (e.g. Aug 14 to Aug 17)"
                 />
               </div>
               <div className={styles.advRow}>
