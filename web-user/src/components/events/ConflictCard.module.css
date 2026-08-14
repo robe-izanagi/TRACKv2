@@ -56,7 +56,7 @@
 .tabs {
   display: flex;
   gap: 8px;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   flex-wrap: wrap;
 }
 
@@ -79,11 +79,132 @@
   color: #fff;
 }
 
+.advancedToggleBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  justify-content: center;
+  padding: 8px;
+  margin-bottom: 8px;
+  border-radius: 10px;
+  border: 1px dashed #d1d5db;
+  background: #f9fafb;
+  color: #374151;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.advancedToggleBtn:hover {
+  background: #f3f4f6;
+}
+
 .scrollArea {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
   padding: 12px 20px 20px;
+}
+
+/* ── Advanced Options panel ── */
+.advancedPanel {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.advRow {
+  display: flex;
+  gap: 10px;
+}
+
+.advField {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.advField label {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #6b7280;
+}
+
+.advField input {
+  padding: 8px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: inherit;
+}
+
+.advSearchBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px;
+  border: none;
+  border-radius: 10px;
+  background: var(--primary-color, #800000);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.advSearchBtn:hover {
+  background: #660000;
+}
+
+/* ── Switch to Online suggestion ── */
+.onlineSuggestion {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.onlineSuggestionHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #1d4ed8;
+}
+
+.onlineSuggestionDesc {
+  font-size: 12.5px;
+  color: #374151;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.onlineSuggestionBtn {
+  padding: 10px;
+  border: none;
+  border-radius: 10px;
+  background: #1d4ed8;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.onlineSuggestionBtn:hover {
+  background: #1e3a8a;
 }
 
 .sectionSubtitle {
@@ -202,6 +323,19 @@
   border-color: var(--primary-color, #800000);
 }
 
+.emptyRecsNotice {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 12px;
+  padding: 12px;
+  color: #92400e;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
 .slotList {
   display: flex;
   flex-direction: column;
@@ -255,6 +389,15 @@
 .tagConflict {
   background: #fee2e2;
   color: #991b1b;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.tagAdjusted {
+  background: #fef3c7;
+  color: #92400e;
   font-size: 10.5px;
   font-weight: 700;
   padding: 2px 8px;
