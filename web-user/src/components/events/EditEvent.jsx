@@ -732,11 +732,24 @@ export default function EditEvent() {
           checking={checkingConflicts}
           isOpen={showConflictSheet}
           onClose={() => setShowConflictSheet(false)}
+          originalStartISO={buildLocalDateTimeISO(
+            form.start_date,
+            form.start_time,
+          )}
+          originalEndISO={buildLocalDateTimeISO(form.end_date, form.end_time)}
+          method={form.method}
           onApplyRecommendation={(slot) => {
-            const startDate = slot.start_datetime.split("T")[0];
-            const startTime = slot.start_datetime.split("T")[1].slice(0, 5);
-            const endDate = slot.end_datetime.split("T")[0];
-            const endTime = slot.end_datetime.split("T")[1].slice(0, 5);
+            if (slot.type === "method_switch") {
+              updateField("method", slot.method);
+              setShowConflictSheet(false);
+              return;
+            }
+            const { date: startDate, time: startTime } = splitISOToLocalParts(
+              slot.start_datetime,
+            );
+            const { date: endDate, time: endTime } = splitISOToLocalParts(
+              slot.end_datetime,
+            );
             updateField("start_date", startDate);
             updateField("start_time", startTime);
             updateField("end_date", endDate);
