@@ -14,7 +14,8 @@ const Notification = sequelize.define('notifications', {
   type: {
     type: DataTypes.ENUM(
       'event_invite', 'event_update', 'event_collaborator', 'event_response', 'event_reminder',
-      'task_invite', 'task_update', 'task_collaborator', 'task_response', 'task_reminder', 'system'
+      'task_invite', 'task_update', 'task_collaborator', 'task_response', 'task_reminder',
+      'profile_change_approved', 'profile_change_rejected', 'system'
     ),
     allowNull: false
   },
