@@ -167,7 +167,7 @@ exports.approveChangeRequest = async (req, res) => {
         user_id: request.user_id,
         type: 'profile_change_approved',
         title: 'Profile Change Approved',
-        message: 'Your profile change request has been approved and applied to your account.',
+        message: 'Your profile change request has been approved. Click this notification to apply it to your account.',
         is_read: false,
       });
     } catch (notifErr) {
