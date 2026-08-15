@@ -46,20 +46,22 @@ const getAvatarColor = (str) => {
   return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
 };
 
-const hexToRgba = (hex, alpha = 0.15) => {
-  if (!hex) return `rgba(255, 2, 0, ${alpha})`;
-  let c = hex.replace("#", "");
-  if (c.length === 3)
-    c = c
+const getContrastTextColor = (hexColor) => {
+  if (!hexColor || !/^#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(hexColor)) {
+    return "#ffffff";
+  }
+  let hex = hexColor.replace("#", "");
+  if (hex.length === 3) {
+    hex = hex
       .split("")
-      .map((x) => x + x)
+      .map((c) => c + c)
       .join("");
-  const num = parseInt(c, 16);
-  if (isNaN(num)) return `rgba(255, 2, 0, ${alpha})`;
-  const r = (num >> 16) & 255,
-    g = (num >> 8) & 255,
-    b = num & 255;
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.55 ? "#1f2937" : "#ffffff";
 };
 
 export default function EventInvitation({
@@ -113,13 +115,16 @@ export default function EventInvitation({
   const modalTitle =
     mode === "revert" ? "Revert Declined Invitation" : "Event Invitation";
 
+  const headerColor = event.color || "#800000";
+  const headerTextColor = getContrastTextColor(headerColor);
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={modalTitle}>
       <div className={styles.mainContent}>
         <div className={styles.featuredCard}>
           <div
             className={styles.badgesStatus}
-            style={{ background: hexToRgba(event.color) }}
+            style={{ background: headerColor, color: headerTextColor }}
           >
             <div className={styles.badgeRow}>
               <div className={styles.badgePill}>
@@ -136,7 +141,12 @@ export default function EventInvitation({
               </div>
             </div>
             <div className={styles.heading2}>
-              <div className={styles.featuredTitle}>{event.title}</div>
+              <div
+                className={styles.featuredTitle}
+                style={{ color: headerTextColor }}
+              >
+                {event.title}
+              </div>
             </div>
           </div>
 
