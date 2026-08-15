@@ -44,6 +44,8 @@
   flex-direction: column;
   height: 98.5%;
   min-height: 0;
+  overflow: visible;
+  width: 100%;
 }
 
 /* ─── Page Title ──────────────────────────────────────── */
@@ -918,7 +920,139 @@
 }
 
 /* ─── Responsive ──────────────────────────────────────── */
-@media (max-width: 1024px) {
+@media (min-width: 1025px) and (max-width: 1300px) {
+  .parent {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .titleSection {
+    grid-column: 1 / -1;
+  }
+
+  .generateSection {
+    grid-column: 1 / -1;
+  }
+
+  .codesSection {
+    grid-column: 1 / -1;
+  }
+
+  .requestsSection {
+    grid-column: 1 / -1;
+    grid-row: auto;
+    height: 400px;
+  }
+
+  .requestsSection .card {
+    height: 100%;
+    padding: 16px;
+  }
+
+  .summaryGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .summaryCard {
+    padding: 12px 16px;
+  }
+
+  .summaryValue {
+    font-size: 18px;
+  }
+
+  .summaryLabel {
+    font-size: 11px;
+  }
+
+  .cardTitle {
+    font-size: 16px;
+  }
+
+  .requestFilters {
+    gap: 8px;
+  }
+
+  .searchBar {
+    min-width: 120px;
+  }
+
+  .statusFilter {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+
+  .requestDetails {
+    grid-template-columns: 1fr;
+    gap: 2px 12px;
+  }
+
+  .tableWrapper {
+    max-height: 320px;
+  }
+
+  .table {
+    font-size: 12px;
+  }
+
+  .table th,
+  .table td {
+    padding: 8px 10px;
+  }
+
+  .hiddenCode {
+    font-size: 12px;
+    letter-spacing: 1px;
+  }
+}
+
+@media (min-width: 1301px) and (max-width: 1600px) {
+  .parent {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 16px;
+  }
+
+  .titleSection {
+    grid-column: 1 / -1;
+  }
+
+  .generateSection {
+    grid-column: 1 / -1;
+  }
+
+  .codesSection {
+    grid-column: 1 / -1;
+  }
+
+  .requestsSection {
+    grid-column: 1 / -1;
+    grid-row: auto;
+    height: 450px;
+  }
+  
+  .requestsSection .card {
+    height: 100%;
+  }
+
+  .summaryGrid {
+    grid-template-columns: repeat(2, 1fr);
+    margin-bottom: 16px;
+  }
+
+  .requestDetails {
+    grid-template-columns: 1fr;
+  }
+
+  .tableWrapper {
+    max-height: 380px;
+  }
+}
+
+@media (max-width: 1300px) {
   .parent {
     grid-template-columns: 1fr 1fr;
   }
@@ -940,6 +1074,11 @@
   .requestsSection {
     grid-column: 1 / -1;
     grid-row: 4;
+    height: 450px;
+  }
+
+  .requestsSection .card {
+    height: 100%;
   }
 
   .requestDetails {
@@ -947,66 +1086,29 @@
   }
 }
 
-@media (max-width: 640px) {
-  .parent {
-    grid-template-columns: 1fr;
-    padding: 12px;
-    gap: 12px;
-  }
-
-  .titleSection,
-  .generateSection,
-  .codesSection,
-  .requestsSection {
-    grid-column: 1 / -1;
-    grid-row: auto;
-  }
-
+@media (max-width: 950px) {
   .summaryGrid {
     grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
   }
 
-  .requestFilters {
-    flex-direction: column;
+  .summaryCard {
+    gap: 10px;
+    padding: 12px 14px;
   }
 
-  .requestGrid {
-    max-height: 400px;
+  .summaryIcon {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
   }
 
-  .requestDetails {
-    grid-template-columns: 1fr;
+  .summaryValue {
+    font-size: 18px;
   }
 
-  .requestHeader {
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .requestCard {
-    padding: 12px;
-  }
-
-  .table {
-    font-size: 13px;
-  }
-
-  .table th,
-  .table td {
-    padding: 6px 8px;
-  }
-
-  .hiddenCode {
-    font-size: 12px;
-    letter-spacing: 1px;
-  }
-
-  .tableControls {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .sortWrapper {
-    min-width: auto;
+  .summaryLabel {
+    font-size: 11px;
   }
 }
