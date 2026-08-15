@@ -1,15 +1,18 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import { useCalendar } from "../../context/CalendarContext";
 import { useEventsFilter } from "../../context/EventsFilterContext";
 import { useTasksFilter } from "../../context/TasksFilterContext";
 import apiClient from "../../api/client";
+import { getVenues } from "../../api/venues";
 import {
   FiHome,
   FiCalendar as FiCalendarIcon,
   FiList,
   FiBarChart2,
   FiPlus,
+  FiMapPin,
 } from "react-icons/fi";
 import styles from "./Menu.module.css";
 
@@ -28,34 +31,6 @@ const MONTH_NAMES = [
   "December",
 ];
 const DAY_NAMES = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
-
-const MENU_CONTENT = {
-  home: {
-    title: "Home",
-    description: "You are currently on the Home screen",
-    icon: "🏠",
-  },
-  venues: {
-    title: "Venues",
-    description: "You are currently on the Venues screen",
-    icon: "📍",
-  },
-  calendar: {
-    title: "Calendar",
-    description: "You are currently on the Calendar screen",
-    icon: "📅",
-  },
-  events: {
-    title: "Events",
-    description: "You are currently on the Events screen",
-    icon: "📋",
-  },
-  tasks: {
-    title: "Tasks",
-    description: "You are currently on the Tasks screen",
-    icon: "✅",
-  },
-};
 
 /* --- Simple line icons --- */
 const IconDay = () => (
@@ -184,6 +159,8 @@ const generateMonthGrid = (year, month) => {
 
 export default function Menu({ activePath, onCloseDrawer }) {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isStaff = user?.role === "staff";
 
   const {
     currentDate,
@@ -257,6 +234,45 @@ export default function Menu({ activePath, onCloseDrawer }) {
     setCurrentDate(newDate);
     setCalendarSearchTerm("");
     onCloseDrawer();
+  };
+
+  // ─── Venues search ───
+  const [venueSearchTerm, setVenueSearchTerm] = useState("");
+  const [allVenuesForSearch, setAllVenuesForSearch] = useState([]);
+
+  useEffect(() => {
+    const fetchAllVenues = async () => {
+      try {
+        const data = await getVenues();
+        setAllVenuesForSearch(data.venues || []);
+      } catch (err) {
+        console.error("Failed to fetch venues for search:", err);
+      }
+    };
+    fetchAllVenues();
+  }, []);
+
+  const venueSearchResults = useMemo(() => {
+    if (!venueSearchTerm.trim()) return [];
+    const lower = venueSearchTerm.toLowerCase();
+    return allVenuesForSearch
+      .filter(
+        (v) =>
+          v.name.toLowerCase().includes(lower) ||
+          v.code.toLowerCase().includes(lower),
+      )
+      .slice(0, 10);
+  }, [venueSearchTerm, allVenuesForSearch]);
+
+  const handleVenueSelectResult = () => {
+    setVenueSearchTerm("");
+    onCloseDrawer();
+    navigate("/venues");
+  };
+
+  const handleAddVenue = () => {
+    onCloseDrawer();
+    navigate("/venues");
   };
 
   let activeKey = "home";
@@ -651,11 +667,57 @@ export default function Menu({ activePath, onCloseDrawer }) {
       )}
 
       {activeKey === "venues" && (
-        <div className={styles.menuPlaceholder}>
-          <p>
-            Menu content for <strong>{MENU_CONTENT.venues.title}</strong> will
-            be placed here.
-          </p>
+        <div className={styles.eventsMenuContent}>
+          <div className={styles.searchWrapper}>
+            <input
+              type="text"
+              className={styles.searchInput}
+              placeholder="Search venues..."
+              value={venueSearchTerm}
+              onChange={(e) => setVenueSearchTerm(e.target.value)}
+            />
+            {venueSearchTerm && venueSearchResults.length > 0 && (
+              <div className={styles.searchResults}>
+                {venueSearchResults.map((v) => (
+                  <div
+                    key={v.id}
+                    className={styles.searchResultItem}
+                    onClick={() => handleVenueSelectResult(v)}
+                  >
+                    <div className={styles.resultTitle}>{v.name}</div>
+                    <div className={styles.resultDate}>
+                      {v.code}
+                      {v.building_location ? ` · ${v.building_location}` : ""}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {venueSearchTerm && venueSearchResults.length === 0 && (
+              <div className={styles.searchNoResults}>No venues found</div>
+            )}
+          </div>
+
+          {isStaff && (
+            <button className={styles.createEventBtn} onClick={handleAddVenue}>
+              + Add Venue
+            </button>
+          )}
+
+          <div className={styles.listGroup}>
+            <button
+              className={styles.listBtn}
+              onClick={() => {
+                onCloseDrawer();
+                navigate("/venues");
+              }}
+            >
+              <span className={styles.listIcon}>
+                <FiMapPin size={20} />
+              </span>
+              <span className={styles.listLabel}>View All Venues</span>
+            </button>
+          </div>
         </div>
       )}
     </div>
