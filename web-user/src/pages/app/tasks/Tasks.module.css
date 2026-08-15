@@ -35,6 +35,11 @@
   font-size: 14px;
 }
 
+.createBtn svg * {
+  color: #fff;
+}
+
+
 /* ─── Search Bar ───────────────────────────────────────── */
 .searchBar {
   position: relative;
@@ -98,6 +103,9 @@
 }
 
 .tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   padding: 8px 16px;
   border: none;
   background: transparent;

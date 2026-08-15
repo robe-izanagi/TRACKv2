@@ -10,6 +10,7 @@ import {
   FiCalendar,
   FiUser,
   FiUsers,
+  FiEye,
 } from "react-icons/fi";
 import styles from "./Tasks.module.css";
 import FeedbackModal from "../../../components/common/FeedbackModal";
@@ -21,6 +22,11 @@ import {
   isMissedTaskInvitation,
   TASK_STATUS_SORT_ORDER,
 } from "../../../utils/taskStatus";
+
+import eventsPageStyles from "../events/Events.module.css";
+
+import { FaRegClipboard } from "react-icons/fa";
+import { LuClipboardPlus } from "react-icons/lu";
 
 const formatDate = (dateStr) => {
   if (!dateStr) return "";
@@ -384,8 +390,8 @@ export default function Tasks() {
           </div>
           <div className={styles.taskList}>
             {filteredTasks.length === 0 ? (
-              <div className={styles.emptyState}>
-                <FiPlus size={40} />
+              <div className={eventsPageStyles.emptyStateBox}>
+                <LuClipboardPlus size={40} />
                 <p>No {invitedSubTab} task invitations.</p>
               </div>
             ) : (
@@ -424,14 +430,14 @@ export default function Tasks() {
         )}
 
         {filteredTasks.length === 0 ? (
-          <div className={styles.emptyState}>
-            <FiPlus size={40} />
+          <div className={eventsPageStyles.emptyStateBox}>
+            <FaRegClipboard size={40} />
             <p>No tasks found.</p>
             <button
               className={styles.createBtn}
               onClick={() => navigate("/create-task")}
             >
-              Create Task
+              <FiPlus size={18} /> Create Task
             </button>
           </div>
         ) : (
@@ -450,24 +456,25 @@ export default function Tasks() {
           className={`${styles.tab} ${activeTab === "all" ? styles.activeTab : ""}`}
           onClick={() => setActiveTab("all")}
         >
-          All
+          <FiEye size={16} /> All
         </button>
         <button
           className={`${styles.tab} ${activeTab === "invited" ? styles.activeTab : ""}`}
           onClick={() => setActiveTab("invited")}
         >
-          Invited
+          <FiCalendar size={16} /> Invited
         </button>
         <button
           className={`${styles.tab} ${activeTab === "created" ? styles.activeTab : ""}`}
           onClick={() => setActiveTab("created")}
         >
-          Created
+          <FiEdit size={16} /> Created
         </button>
         <button
           className={`${styles.tab} ${activeTab === "collaboration" ? styles.activeTab : ""}`}
           onClick={() => setActiveTab("collaboration")}
         >
+          <FiUsers size={16} />
           Collaboration
         </button>
       </div>
