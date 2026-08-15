@@ -9,6 +9,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
   margin-bottom: 12px;
 }
 
@@ -109,27 +110,28 @@
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  background: white;
+  background: #ffffff;
   border: 1px solid #e5e7eb;
-  border-radius: 14px;
-  padding: 14px;
+  border-radius: 16px;
+  padding: 14px 14px 12px;
   cursor: pointer;
-  transition: box-shadow 0.2s, background 0.2s;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .notifCard:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 6px 18px rgba(17, 24, 39, 0.06);
+  transform: translateY(-1px);
 }
 
 .notifUnread {
-  background: #fef9f9;
-  border-color: #fde2e2;
+  background: #fffaf9;
+  border-color: #f3d5d4;
 }
 
 .notifIcon {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -174,7 +176,7 @@
 }
 
 .notifTitle {
-  font-weight: 700;
+  font-weight: 800;
   font-size: 14px;
   color: #111827;
 }
@@ -189,8 +191,27 @@
 .notifMessage {
   font-size: 13px;
   color: #4b5563;
-  margin: 3px 0 0;
-  line-height: 1.4;
+  margin: 8px 0 0;
+  line-height: 1.45;
+}
+
+.notifActionRow {
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.refreshActionBtn {
+  background: linear-gradient(180deg, #8f1d1d, #7b0d0d);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 9px 16px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(128, 0, 0, 0.18);
 }
 
 .unreadDot {

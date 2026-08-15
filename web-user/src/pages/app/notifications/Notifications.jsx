@@ -28,6 +28,8 @@ const TYPE_CONFIG = {
   task_collaborator: { icon: FiUserPlus, className: "iconTask" },
   task_response: { icon: FiCheckCircle, className: "iconResponse" },
   task_reminder: { icon: FiClock, className: "iconReminder" },
+  profile_change_approved: { icon: FiCheckCircle, className: "iconResponse" },
+  profile_change_rejected: { icon: FiXCircle, className: "iconSystem" },
   system: { icon: FiBell, className: "iconSystem" },
 };
 
@@ -114,6 +116,13 @@ export default function Notifications() {
     }
   };
 
+  const handleRefreshPage = () => {
+    window.location.reload();
+  };
+
+  const isProfileDecisionNotification = (notif) =>
+    ["profile_change_approved", "profile_change_rejected"].includes(notif.type);
+
   const handleNotificationClick = async (notif) => {
     if (!notif.is_read) {
       try {
@@ -185,6 +194,14 @@ export default function Notifications() {
             {notifications.map((notif) => {
               const cfg = TYPE_CONFIG[notif.type] || TYPE_CONFIG.system;
               const Icon = cfg.icon;
+              const isProfileDecision = isProfileDecisionNotification(notif);
+              const isApprovedProfileDecision =
+                notif.type === "profile_change_approved";
+              const profileDecisionText =
+                notif.type === "profile_change_approved"
+                  ? "Your profile change request has been approved. Click refresh to activate changes."
+                  : "Your profile change request has been rejected.";
+
               return (
                 <div
                   key={notif.id}
@@ -204,7 +221,26 @@ export default function Notifications() {
                       </span>
                     </div>
                     {notif.message && (
-                      <p className={styles.notifMessage}>{notif.message}</p>
+                      <p className={styles.notifMessage}>
+                        {isProfileDecision
+                          ? profileDecisionText
+                          : notif.message}
+                      </p>
+                    )}
+
+                    {isApprovedProfileDecision && (
+                      <div className={styles.notifActionRow}>
+                        <button
+                          type="button"
+                          className={styles.refreshActionBtn}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRefreshPage();
+                          }}
+                        >
+                          Refresh
+                        </button>
+                      </div>
                     )}
                   </div>
                   {!notif.is_read && <span className={styles.unreadDot} />}
