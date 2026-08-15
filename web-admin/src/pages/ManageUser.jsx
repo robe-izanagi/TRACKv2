@@ -16,8 +16,6 @@ const STATUS_TABS = [
 ];
 
 export default function ManageUsers() {
-  const [activeTab, setActiveTab] = useState("users");
-
   const [users, setUsers] = useState([]);
   const [usersLoading, setUsersLoading] = useState(true);
   const [usersError, setUsersError] = useState("");
@@ -52,9 +50,12 @@ export default function ManageUsers() {
   }, []);
 
   useEffect(() => {
-    if (activeTab === "users") fetchUsers(search);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, fetchUsers]);
+    const timer = setTimeout(() => {
+      void fetchUsers(search);
+    }, 0);
+
+    return () => clearTimeout(timer);
+  }, [search, fetchUsers]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -125,8 +126,12 @@ export default function ManageUsers() {
   }, []);
 
   useEffect(() => {
-    if (activeTab === "requests") fetchRequests(reqStatus);
-  }, [activeTab, reqStatus, fetchRequests]);
+    const timer = setTimeout(() => {
+      void fetchRequests(reqStatus);
+    }, 0);
+
+    return () => clearTimeout(timer);
+  }, [reqStatus, fetchRequests]);
 
   const handleApprove = async (id) => {
     if (
@@ -192,27 +197,12 @@ export default function ManageUsers() {
 
   return (
     <div className={styles.container}>
-      <div className={styles.headerRow}>
-        <h1 className={styles.title}>User Management</h1>
-      </div>
+      <div className={styles.pageGrid}>
+        <div className={styles.sectionBlock}>
+          <div className={styles.sectionHeaderRow}>
+            <h1 className={styles.title}>User Management</h1>
+          </div>
 
-      <div className={styles.mainTabs}>
-        <button
-          className={`${styles.mainTab} ${activeTab === "users" ? styles.activeMainTab : ""}`}
-          onClick={() => setActiveTab("users")}
-        >
-          Users
-        </button>
-        <button
-          className={`${styles.mainTab} ${activeTab === "requests" ? styles.activeMainTab : ""}`}
-          onClick={() => setActiveTab("requests")}
-        >
-          Profile Change Requests
-        </button>
-      </div>
-
-      {activeTab === "users" && (
-        <>
           <form onSubmit={handleSearchSubmit} className={styles.searchForm}>
             <input
               type="text"
@@ -225,6 +215,10 @@ export default function ManageUsers() {
               Search
             </button>
           </form>
+
+          <div className={styles.sectionHeaderRow}>
+            <h2 className={styles.sectionTitle}>Users</h2>
+          </div>
 
           {usersLoading ? (
             <p className={styles.loadingText}>Loading users...</p>
@@ -324,11 +318,13 @@ export default function ManageUsers() {
               </table>
             </div>
           )}
-        </>
-      )}
+        </div>
 
-      {activeTab === "requests" && (
-        <>
+        <div className={styles.sectionBlock}>
+          <div className={styles.sectionHeaderRow}>
+            <h2 className={styles.sectionTitle}>Profile Change Requests</h2>
+          </div>
+
           <div className={styles.subTabs}>
             {STATUS_TABS.map((tab) => (
               <button
@@ -469,8 +465,8 @@ export default function ManageUsers() {
               ))}
             </div>
           )}
-        </>
-      )}
+        </div>
+      </div>
 
       <FeedbackModal
         message={feedback.message}
