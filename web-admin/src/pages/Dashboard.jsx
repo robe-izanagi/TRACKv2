@@ -445,9 +445,13 @@ export default function Dashboard() {
                             u.username?.charAt(0) ||
                             "?"}
                         </span>
-                        {u.full_name || u.username || "—"}
+                        <span className={styles.nameCell}>
+                          {u.full_name || u.username || "—"}
+                        </span>
                       </td>
-                      <td>{u.email}</td>
+                      <td>
+                        <span className={styles.emailCell}>{u.email}</span>
+                      </td>
                       <td>{getStatusBadge(u.status)}</td>
                     </tr>
                   ))
@@ -487,8 +491,14 @@ export default function Dashboard() {
                 ) : (
                   recentRequests.map((r) => (
                     <tr key={r.id}>
-                      <td>{r.full_name || "—"}</td>
-                      <td>{r.email}</td>
+                      <td>
+                        <span className={styles.nameCell}>
+                          {r.full_name || "—"}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={styles.emailCell}>{r.email}</span>
+                      </td>
                       <td>{getRequestBadge(r.status)}</td>
                     </tr>
                   ))
