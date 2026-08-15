@@ -130,6 +130,9 @@
 
 /* Create Event Button */
 .createEventBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   background: var(--primary-color, #800000);
   color: white;
   border: none;
@@ -141,6 +144,10 @@
   transition: background 0.2s, transform 0.1s;
   box-shadow: 0 2px 8px rgba(128, 0, 0, 0.2);
   width: 100%;
+}
+
+.createEventBtn svg * {
+  color: white;
 }
 
 .createEventBtn:hover {
@@ -325,6 +332,16 @@
   font-weight: 600;
   cursor: pointer;
   transition: opacity 0.2s;
+}
+
+.homeLinkBtn span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.homeLinkBtn svg * {
+  color: #fff;
 }
 
 .homeLinkBtn:hover {
