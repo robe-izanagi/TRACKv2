@@ -7,6 +7,7 @@ import {
 } from "../api/profileRequests";
 import FeedbackModal from "../components/common/FeedbackModal";
 import styles from "./ManageUser.module.css";
+import { FiRefreshCw } from "react-icons/fi";
 
 const STATUS_TABS = [
   { value: "pending", label: "Pending" },
@@ -197,12 +198,22 @@ export default function ManageUsers() {
 
   return (
     <div className={styles.container}>
+      <div className={styles.header}>
+        <div>
+          <h1 className={styles.title}>Manage Users</h1>
+          <p className={styles.subtitle}>
+            Manage Users, block, delete, and review profile change requests.
+          </p>
+        </div>
+      </div>
       <div className={styles.pageGrid}>
         <div className={styles.sectionBlock}>
           <div className={styles.sectionHeaderRow}>
-            <h1 className={styles.title}>User Management</h1>
+            <h2 className={styles.sectionTitle}>User Records</h2>
+            <button className={styles.refreshBtn}>
+              <FiRefreshCw size={16} /> Refresh
+            </button>
           </div>
-
           <form onSubmit={handleSearchSubmit} className={styles.searchForm}>
             <input
               type="text"
@@ -215,10 +226,6 @@ export default function ManageUsers() {
               Search
             </button>
           </form>
-
-          <div className={styles.sectionHeaderRow}>
-            <h2 className={styles.sectionTitle}>Users</h2>
-          </div>
 
           {usersLoading ? (
             <p className={styles.loadingText}>Loading users...</p>
@@ -323,6 +330,9 @@ export default function ManageUsers() {
         <div className={styles.sectionBlock}>
           <div className={styles.sectionHeaderRow}>
             <h2 className={styles.sectionTitle}>Profile Change Requests</h2>
+            <button className={styles.refreshBtn}>
+              <FiRefreshCw size={16} /> Refresh
+            </button>
           </div>
 
           <div className={styles.subTabs}>
