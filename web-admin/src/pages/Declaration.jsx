@@ -443,11 +443,6 @@ export default function Declaration() {
     );
   };
 
-  const getUserDisplay = (user) => {
-    if (!user) return "—";
-    return user.username || user.UserProfile?.full_name || user.email || "—";
-  };
-
   // ─── Main render ──────────────────────────────────────
   return (
     <div className={styles.container}>

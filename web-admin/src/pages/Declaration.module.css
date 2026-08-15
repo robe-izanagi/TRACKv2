@@ -100,16 +100,19 @@
 .addForm {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 12px;
   align-items: center;
+  width: 100%;
 }
 
 .addForm .input {
-  flex: 1 1 200px;
+  flex: 1 1 auto;
+  min-width: 150px;
   padding: 8px 12px;
   border: 1px solid #d1d5db;
   border-radius: 8px;
   font-size: 14px;
+  box-sizing: border-box;
 }
 
 .addForm .btn {
@@ -124,6 +127,8 @@
   cursor: pointer;
   font-weight: 500;
   transition: background 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .addForm .btn:hover {
@@ -911,70 +916,19 @@
   .leftPanelPositions {
     flex: 1;
   }
-}
-
-@media (max-width: 640px) {
-  .container {
-    padding: 12px;
-  }
-
-  .controls {
-    flex-direction: column;
-    align-items: stretch;
-  }
 
   .addForm {
-    flex-direction: column;
-    align-items: stretch;
+    gap: 10px;
   }
 
-  .tabs {
-    overflow-x: auto;
-    flex-wrap: nowrap;
+  .addForm .input {
+    min-width: 120px;
+    flex: 1 1 100px;
   }
 
-  .tabs button {
+  .addForm .btn {
     padding: 8px 14px;
     font-size: 13px;
-    white-space: nowrap;
-  }
-
-  .statsGrid {
-    grid-template-columns: 1fr 1fr 1fr;
-  }
-
-  .table td,
-  .table th {
-    padding: 6px 8px;
-    font-size: 13px;
-  }
-
-  .positionCard {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .cardActions {
-    justify-content: flex-start;
-  }
-
-  .editForm {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .feedbackModal {
-    padding: 12px 16px;
-    font-size: 13px;
-  }
-
-  .inlineEdit {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .inlineInput {
-    width: 100%;
   }
 }
 
@@ -997,6 +951,352 @@
   border-radius: 12px;
   font-size: 11px;
   font-weight: 600;
+}
+
+/* ─── Mobile 360px Responsive ───────────────────────── */
+@media (max-width: 690px) {
+  .container {
+    padding: 8px;
+  }
+
+  .header {
+    margin-bottom: 12px;
+    gap: 8px;
+  }
+
+  .title {
+    font-size: 18px;
+  }
+
+  .subtitle {
+    font-size: 12px;
+  }
+
+  .refreshBtn {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .tabs {
+    gap: 4px;
+    margin-bottom: 12px;
+    overflow-x: auto;
+  }
+
+  .tabs button {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  .card {
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+
+  .card h3 {
+    font-size: 14px;
+    margin-bottom: 8px;
+  }
+
+  .controls {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .searchBar {
+    width: 100%;
+    flex: 1 1 auto;
+  }
+
+  .searchBar input {
+    font-size: 12px;
+    padding: 6px 10px 6px 30px;
+  }
+
+
+
+  .summaryGrid {
+    gap: 10px;
+  }
+
+  .summaryCard {
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 10px;
+  }
+
+  .summaryIcon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .summaryValue {
+    font-size: 16px;
+  }
+
+  .summaryLabel {
+    font-size: 10px;
+  }
+
+  .topRow {
+    gap: 12px;
+  }
+
+  .tabContent {
+    gap: 12px;
+  }
+
+  .tabContent .leftPanel,
+  .tabContent .rightPanel {
+    flex: 1 1 100%;
+  }
+
+  .rightPanel {
+    flex: 1 1 100%;
+    min-width: auto;
+  }
+
+  .tabContentPositions {
+    gap: 12px;
+  }
+
+  .leftPanelPositions,
+  .rightPanelPositions {
+    flex: 1 1 100%;
+    min-width: auto;
+  }
+
+  .positionCard {
+    gap: 8px;
+    padding: 8px 10px;
+    flex-direction: column;
+  }
+
+  .positionName {
+    font-size: 13px;
+  }
+
+  .positionBadge {
+    font-size: 10px;
+  }
+
+  .cardContent {
+    gap: 8px;
+  }
+
+  .cardActions {
+    gap: 4px;
+    width: 100%;
+  }
+
+  .toggleBtn,
+  .editBtn,
+  .dangerBtn,
+  .combineBtn {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+
+  .editForm {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .editInput {
+    width: 100%;
+    font-size: 12px;
+    padding: 6px 8px;
+  }
+
+  .searchBarSmall {
+    width: 100%;
+    flex: 1 1 auto;
+  }
+
+  .searchBarSmall input {
+    font-size: 11px;
+    padding: 6px 8px 6px 28px;
+  }
+
+  .checkboxRow {
+    font-size: 12px;
+  }
+
+  .modal {
+    border-radius: 12px;
+    padding: 16px;
+    max-width: 95vw;
+  }
+
+  .modalHeader {
+    margin-bottom: 12px;
+  }
+
+  .modalHeader h3 {
+    font-size: 16px;
+  }
+
+  .modalClose {
+    font-size: 18px;
+  }
+
+  .modalBody {
+    font-size: 13px;
+  }
+
+  .modalSelect {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+
+  .modalActions {
+    gap: 8px;
+  }
+
+  .cancelBtn,
+  .combineConfirmBtn {
+    padding: 8px;
+    font-size: 12px;
+  }
+
+  .feedbackModal {
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+
+  .feedbackIcon {
+    font-size: 16px;
+  }
+
+  .badgeActive,
+  .badgeInactive {
+    font-size: 11px;
+    padding: 1px 8px;
+  }
+
+  .departmentStatsGrid {
+    gap: 10px;
+    flex-direction: column;
+  }
+}
+
+/* ─── Ultra-Mobile 360px Responsive ────────────────────── */
+@media (min-width: 260px) and (max-width: 960px) {
+  .container {
+    padding: 8px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .checkboxRow {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    margin-top: 4px;
+  }
+
+  /* Position Tab - Content Layout */
+  .tabContentPositions {
+    gap: 12px;
+    flex-direction: column;
+  }
+
+  .leftPanelPositions,
+  .rightPanelPositions {
+    flex: 1 1 100%;
+    min-width: auto;
+    max-width: 100%;
+  }
+
+  /* Position Cards */
+  .positionCard {
+    gap: 8px;
+    padding: 10px 8px;
+    flex-wrap: wrap;
+  }
+
+  .positionOrder {
+    font-size: 11px;
+    min-width: 24px;
+  }
+
+  .dragIcon {
+    font-size: 16px;
+  }
+
+  .cardContent {
+    gap: 8px;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .positionName {
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .positionBadge {
+    font-size: 9px;
+    padding: 1px 8px;
+  }
+
+  .cardActions {
+    width: 100%;
+    gap: 4px;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .toggleBtn,
+  .editBtn,
+  .dangerBtn {
+    padding: 4px 6px;
+    font-size: 10px;
+    border-radius: 4px;
+  }
+
+  /* Position List - Horizontal Scroll for All Positions */
+  .card h3 {
+    font-size: 14px;
+    margin-bottom: 10px;
+  }
+
+  /* Make table horizontally scrollable */
+
+
+  /* Position assignments - make scrollable */
+  .card:last-child {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Edit Form */
+  .editForm {
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+  }
+
+  .editInput {
+    width: 100%;
+    min-width: auto;
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+
+  /* Checkbox styling */
+  .checkboxRow {
+    font-size: 12px;
+  }
+
+  .checkboxRow input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+  }
 }
 
 /* Disabled buttons for taken positions */
