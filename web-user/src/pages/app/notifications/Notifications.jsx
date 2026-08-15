@@ -116,13 +116,6 @@ export default function Notifications() {
     }
   };
 
-  const handleRefreshPage = () => {
-    window.location.reload();
-  };
-
-  const isProfileDecisionNotification = (notif) =>
-    ["profile_change_approved", "profile_change_rejected"].includes(notif.type);
-
   const handleNotificationClick = async (notif) => {
     if (!notif.is_read) {
       try {
@@ -134,6 +127,16 @@ export default function Notifications() {
       } catch (err) {
         console.error("Failed to mark notification read:", err);
       }
+    }
+
+    const isProfileChangeNotification =
+      notif.type === "profile_change_approved" ||
+      notif.type === "profile_change_rejected";
+
+    if (isProfileChangeNotification) {
+      navigate("/profile");
+      window.location.reload();
+      return;
     }
 
     if (notif.entity_type === "event") navigate("/events");
@@ -194,14 +197,6 @@ export default function Notifications() {
             {notifications.map((notif) => {
               const cfg = TYPE_CONFIG[notif.type] || TYPE_CONFIG.system;
               const Icon = cfg.icon;
-              const isProfileDecision = isProfileDecisionNotification(notif);
-              const isApprovedProfileDecision =
-                notif.type === "profile_change_approved";
-              const profileDecisionText =
-                notif.type === "profile_change_approved"
-                  ? "Your profile change request has been approved. Click refresh to activate changes."
-                  : "Your profile change request has been rejected.";
-
               return (
                 <div
                   key={notif.id}
@@ -221,26 +216,7 @@ export default function Notifications() {
                       </span>
                     </div>
                     {notif.message && (
-                      <p className={styles.notifMessage}>
-                        {isProfileDecision
-                          ? profileDecisionText
-                          : notif.message}
-                      </p>
-                    )}
-
-                    {isApprovedProfileDecision && (
-                      <div className={styles.notifActionRow}>
-                        <button
-                          type="button"
-                          className={styles.refreshActionBtn}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleRefreshPage();
-                          }}
-                        >
-                          Refresh
-                        </button>
-                      </div>
+                      <p className={styles.notifMessage}>{notif.message}</p>
                     )}
                   </div>
                   {!notif.is_read && <span className={styles.unreadDot} />}
