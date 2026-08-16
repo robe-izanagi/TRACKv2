@@ -1193,7 +1193,7 @@
   color: #065f46;
 }
 
-/* ─── Empty state box ─── */
+/* ─── Empty state box (legacy wrapper, kept for compatibility) ─── */
 .emptyStateBox {
   padding: 2rem;
   text-align: center;
@@ -1208,4 +1208,69 @@
 .upcomingItem:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   transform: translateY(-1px);
+}
+
+/* ═══════════════════════════════════════════════════════ */
+/* ─── Skeleton loading shimmer ─── */
+/* ═══════════════════════════════════════════════════════ */
+@keyframes skeletonShimmer {
+  0% {
+    background-position: -200px 0;
+  }
+
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #ececec 25%, #f6f6f6 37%, #ececec 63%);
+  background-size: 400% 100%;
+  animation: skeletonShimmer 1.4s ease infinite;
+}
+
+.skeletonRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: #fff;
+  border: 1px solid #f0f0f0;
+  border-radius: 12px;
+  padding: 0.85rem;
+}
+
+/* ─── Empty states (icon + title + subtitle) ─── */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2.25rem 1rem;
+  gap: 0.35rem;
+}
+
+.emptyStateIconWrap {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #f3f4f6;
+  color: #9ca3af;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+}
+
+.emptyStateTitle {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #374151;
+  margin: 0;
+}
+
+.emptyStateSubtitle {
+  font-size: 0.82rem;
+  color: #9ca3af;
+  margin: 0;
 }

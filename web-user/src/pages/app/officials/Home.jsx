@@ -30,6 +30,7 @@ import EventRepeatOutlinedIcon from "@mui/icons-material/EventRepeatOutlined";
 import ReportProblemOutlinedIcon from "@mui/icons-material/ReportProblemOutlined";
 import TrendingUpOutlinedIcon from "@mui/icons-material/TrendingUpOutlined";
 import GroupsOutlinedIcon from "@mui/icons-material/GroupsOutlined";
+import InsertChartOutlinedIcon from "@mui/icons-material/InsertChartOutlined";
 import SelectDropdown from "../../../components/common/SelectDropdown";
 
 import EventCardView from "../../../components/events/EventCardView";
@@ -152,6 +153,69 @@ const STAT_TYPE_OPTIONS = [
   { value: "private", label: "Private" },
   { value: "task", label: "Tasks" },
 ];
+
+// ── Reusable empty state (icon + title + subtitle) instead of a bare
+// "No data" text string. ──
+const EmptyState = ({ icon: Icon, title, subtitle }) => (
+  <div className={styles.emptyState}>
+    <div className={styles.emptyStateIconWrap}>
+      <Icon fontSize="medium" />
+    </div>
+    <p className={styles.emptyStateTitle}>{title}</p>
+    {subtitle && <p className={styles.emptyStateSubtitle}>{subtitle}</p>}
+  </div>
+);
+
+// ── Skeleton building blocks — shimmer placeholders shaped like the real
+// content, shown instead of the word "Loading...". ──
+const SkeletonBar = ({ w = "100%", h = 14, r = 8, style }) => (
+  <div
+    className={styles.skeleton}
+    style={{ width: w, height: h, borderRadius: r, ...style }}
+  />
+);
+
+const StatsSkeleton = () => (
+  <div className={styles.statsGridWrapper}>
+    <SkeletonBar h={72} r={12} />
+    <div className={styles.twoColGrid}>
+      <SkeletonBar h={64} r={12} />
+      <SkeletonBar h={64} r={12} />
+    </div>
+    <div className={styles.twoColGrid}>
+      <SkeletonBar h={64} r={12} />
+      <SkeletonBar h={64} r={12} />
+    </div>
+    <SkeletonBar h={64} r={12} />
+  </div>
+);
+
+const TodayEventSkeleton = () => (
+  <div className={styles.featuredCard}>
+    <div className={styles.badgesStatus}>
+      <SkeletonBar w={220} h={16} r={20} />
+    </div>
+    <div className={styles.featuredCardContent}>
+      <SkeletonBar w="65%" h={22} style={{ marginBottom: 12 }} />
+      <SkeletonBar w="100%" h={13} style={{ marginBottom: 6 }} />
+      <SkeletonBar w="80%" h={13} style={{ marginBottom: 18 }} />
+      <SkeletonBar h={110} r={14} style={{ marginBottom: 12 }} />
+      <SkeletonBar h={90} r={14} style={{ marginBottom: 12 }} />
+      <SkeletonBar h={90} r={14} />
+    </div>
+  </div>
+);
+
+const ListRowSkeleton = () => (
+  <div className={styles.skeletonRow}>
+    <SkeletonBar w={56} h={56} r={10} style={{ flexShrink: 0 }} />
+    <div style={{ flex: 1, minWidth: 0 }}>
+      <SkeletonBar w="55%" h={14} style={{ marginBottom: 8 }} />
+      <SkeletonBar w="90%" h={12} style={{ marginBottom: 8 }} />
+      <SkeletonBar w="40%" h={11} />
+    </div>
+  </div>
+);
 
 function Home() {
   const { user } = useAuth();
@@ -462,7 +526,14 @@ function Home() {
 
   // ── Render Quick Stats ──
   const renderStats = () => {
-    if (!quickStats) return <p className={styles.noData}>No data</p>;
+    if (!quickStats)
+      return (
+        <EmptyState
+          icon={InsertChartOutlinedIcon}
+          title="No data available"
+          subtitle="Stats will appear once there's activity to show"
+        />
+      );
     const config =
       statTypeFilter === "task" ? TASK_STAT_CONFIG : EVENT_STAT_CONFIG;
     const getCfg = (k) => config.find((c) => c.key === k) || {};
@@ -809,17 +880,14 @@ function Home() {
   };
 
   const renderTodayEventsCarousel = () => {
-    if (todayLoading)
-      return (
-        <div className={styles.emptyStateBox}>
-          <p className={styles.noData}>Loading today's event...</p>
-        </div>
-      );
+    if (todayLoading) return <TodayEventSkeleton />;
     if (todayEvents.length === 0)
       return (
-        <div className={styles.emptyStateBox}>
-          <p className={styles.noData}>No events today</p>
-        </div>
+        <EmptyState
+          icon={EventBusyOutlinedIcon}
+          title="No events today"
+          subtitle="Enjoy your free day!"
+        />
       );
 
     return (
@@ -870,11 +938,27 @@ function Home() {
   };
 
   const renderUpcomingEvents = () => {
+    if (upcomingEventsLoading && upcomingEvents.length === 0) {
+      return (
+        <div className={styles.upcomingList}>
+          <ListRowSkeleton />
+          <ListRowSkeleton />
+          <ListRowSkeleton />
+        </div>
+      );
+    }
+
     let filtered = filterEventsByType(upcomingEvents, eventTypeFilter);
     filtered = filterEventsByDuration(filtered, eventDurationFilter);
 
-    if (filtered.length === 0 && !upcomingEventsLoading)
-      return <p className={styles.noData}>No upcoming events</p>;
+    if (filtered.length === 0)
+      return (
+        <EmptyState
+          icon={EventBusyOutlinedIcon}
+          title="No upcoming events"
+          subtitle="New events will show up here once they're scheduled"
+        />
+      );
     return (
       <div className={styles.upcomingList}>
         {filtered.map((ev) => (
@@ -939,14 +1023,30 @@ function Home() {
   };
 
   const renderUpcomingTasks = () => {
+    if (upcomingTasksLoading && allOngoingTasks.length === 0) {
+      return (
+        <div className={styles.upcomingList}>
+          <ListRowSkeleton />
+          <ListRowSkeleton />
+          <ListRowSkeleton />
+        </div>
+      );
+    }
+
     let filtered = filterTasksByType(allOngoingTasks, taskTypeFilter);
     filtered = filterTasksByDuration(filtered, taskDurationFilter);
 
     const visible = filtered.slice(0, upcomingTasksLimit);
     const hasMore = filtered.length > upcomingTasksLimit;
 
-    if (visible.length === 0 && !upcomingTasksLoading)
-      return <p className={styles.noData}>No ongoing tasks</p>;
+    if (visible.length === 0)
+      return (
+        <EmptyState
+          icon={ChecklistOutlinedIcon}
+          title="No ongoing tasks"
+          subtitle="You're all caught up!"
+        />
+      );
 
     return (
       <div className={styles.upcomingList}>
@@ -1103,11 +1203,7 @@ function Home() {
           ))}
         </div>
 
-        {statsLoading ? (
-          <p className={styles.noData}>Loading stats...</p>
-        ) : (
-          renderStats()
-        )}
+        {statsLoading ? <StatsSkeleton /> : renderStats()}
       </div>
 
       {/* Today's Event */}
@@ -1164,13 +1260,7 @@ function Home() {
           />
         </div>
 
-        <div className={styles.upcomingContent}>
-          {upcomingEventsLoading && upcomingEvents.length === 0 ? (
-            <p className={styles.noData}>Loading...</p>
-          ) : (
-            renderUpcomingEvents()
-          )}
-        </div>
+        <div className={styles.upcomingContent}>{renderUpcomingEvents()}</div>
       </div>
 
       {/* Ongoing Tasks */}
@@ -1210,13 +1300,7 @@ function Home() {
           />
         </div>
 
-        <div className={styles.upcomingContent}>
-          {upcomingTasksLoading && allOngoingTasks.length === 0 ? (
-            <p className={styles.noData}>Loading...</p>
-          ) : (
-            renderUpcomingTasks()
-          )}
-        </div>
+        <div className={styles.upcomingContent}>{renderUpcomingTasks()}</div>
       </div>
 
       <EventCardView
