@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 import apiClient from "../../../api/client";
@@ -71,6 +71,77 @@ const FORECAST_DAY_OPTIONS = [
   { value: 30, label: "30 Days" },
 ];
 
+const PERF_VISIBLE_COUNT = 5;
+
+// ── Input limits ──
+// Names: letters (incl. common accented Latin letters) and spaces only —
+// no numbers, symbols, or emoji.
+const MAX_NAME_LENGTH = 50;
+const MAX_DESCRIPTION_LENGTH = 500;
+const NAME_DISALLOWED_CHARS = /[^a-zA-Z\u00C0-\u024F\s]/g;
+
+const sanitizeName = (value) =>
+  value.replace(NAME_DISALLOWED_CHARS, "").slice(0, MAX_NAME_LENGTH);
+
+// ── Merge a full lookup list (all departments/offices) with performance
+// counts, defaulting to 0 for anything with no recorded activity — so
+// zero-performing departments/offices still show up instead of being
+// silently dropped. ──
+const mergeWithZeroPerf = (lookupList, perfList) => {
+  const perfMap = new Map((perfList || []).map((p) => [String(p.id), p.count]));
+  return (lookupList || [])
+    .map((item) => ({
+      id: item.id,
+      name: item.name,
+      count: perfMap.get(String(item.id)) || 0,
+    }))
+    .sort((a, b) => b.count - a.count);
+};
+
+// ── Skeleton building blocks (shimmer placeholders, not the word "Loading") ──
+const SkeletonBar = ({ w = "100%", h = 14, r = 6, style }) => (
+  <div
+    className={styles.skeleton}
+    style={{ width: w, height: h, borderRadius: r, ...style }}
+  />
+);
+
+const KpiSkeleton = () => (
+  <div className={styles.kpiCard}>
+    <SkeletonBar w={130} h={11} />
+    <SkeletonBar w={170} h={22} style={{ marginTop: 8 }} />
+    <div className={styles.kpiGrid} style={{ marginTop: 6 }}>
+      {[0, 1, 2, 3].map((i) => (
+        <div key={i} className={styles.kpiStatBlock}>
+          <SkeletonBar w={50} h={9} />
+          <SkeletonBar w={40} h={20} style={{ marginTop: 4 }} />
+        </div>
+      ))}
+    </div>
+    <SkeletonBar h={140} r={14} style={{ marginTop: 4 }} />
+  </div>
+);
+
+const CardSkeleton = ({ chartHeight = 180 }) => (
+  <div className={styles.analyticsCard}>
+    <div className={styles.cardHeaderRow}>
+      <SkeletonBar w={16} h={16} r={4} />
+      <SkeletonBar w={150} h={13} />
+    </div>
+    <SkeletonBar h={chartHeight} r={12} />
+  </div>
+);
+
+const ListRowSkeleton = () => (
+  <div className={styles.perfRow}>
+    <div className={styles.perfRowTop}>
+      <SkeletonBar w="45%" h={12} />
+      <SkeletonBar w={24} h={12} />
+    </div>
+    <SkeletonBar h={8} r={8} />
+  </div>
+);
+
 export default function Profile() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -136,6 +207,7 @@ export default function Profile() {
   const [deptPerf, setDeptPerf] = useState(null);
   const [deptPerfLoading, setDeptPerfLoading] = useState(true);
   const [perfTab, setPerfTab] = useState("departments");
+  const [perfShowAll, setPerfShowAll] = useState(false);
 
   const [schedulingConflicts, setSchedulingConflicts] = useState(null);
   const [schedulingLoading, setSchedulingLoading] = useState(true);
@@ -311,6 +383,13 @@ export default function Profile() {
     }
     if (requestChanges.position_update && !selectedPosition) {
       const msg = "Please select a position.";
+      setRequestMessage(msg);
+      showFeedback(msg, "error");
+      setRequestSubmitting(false);
+      return;
+    }
+    if (!requestDetails.trim()) {
+      const msg = "Please provide details about your change request.";
       setRequestMessage(msg);
       showFeedback(msg, "error");
       setRequestSubmitting(false);
@@ -518,6 +597,22 @@ export default function Profile() {
   const selectedVenueName =
     venues.find((v) => v.id === selectedVenueId)?.name || "Venue";
 
+  // ── Department/Office performance, merged with the full lookup list so
+  // zero-performing entries still show, top 5 by default with Show More. ──
+  const perfFullList = useMemo(() => {
+    const lookupList = perfTab === "departments" ? departments : offices;
+    const rawPerfList =
+      (perfTab === "departments" ? deptPerf?.departments : deptPerf?.offices) ||
+      [];
+    if (lookupList.length === 0) return rawPerfList;
+    return mergeWithZeroPerf(lookupList, rawPerfList);
+  }, [perfTab, departments, offices, deptPerf]);
+
+  const handlePerfTabChange = (tab) => {
+    setPerfTab(tab);
+    setPerfShowAll(false);
+  };
+
   const renderKpiCard = (label, data) => {
     if (!data) return null;
     return (
@@ -570,7 +665,27 @@ export default function Profile() {
   if (loading) {
     return (
       <div className={styles.container}>
-        <p>Loading profile...</p>
+        <div className={styles.header}>
+          <SkeletonBar
+            w={96}
+            h={96}
+            r={999}
+            style={{ margin: "0 auto 12px" }}
+          />
+          <SkeletonBar w={170} h={22} style={{ margin: "0 auto 8px" }} />
+          <SkeletonBar w={210} h={14} style={{ margin: "0 auto" }} />
+        </div>
+        <div className={styles.infoGrid}>
+          {[0, 1].map((i) => (
+            <div key={i} className={styles.infoCard}>
+              <SkeletonBar w={40} h={40} r={12} />
+              <div style={{ flex: 1 }}>
+                <SkeletonBar w="55%" h={10} style={{ marginBottom: 6 }} />
+                <SkeletonBar w="80%" h={14} />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -584,6 +699,14 @@ export default function Profile() {
   }
 
   const displayUser = profile || user || {};
+  const roleLine = [
+    displayUser.role,
+    displayUser.department,
+    displayUser.office,
+    displayUser.position,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
     <div className={styles.container}>
@@ -623,10 +746,7 @@ export default function Profile() {
         <h1 className={styles.userName}>
           {displayUser.full_name || displayUser.username || "User"}
         </h1>
-        <p className={styles.userRole}>
-          {displayUser.role || "Member"}
-          {displayUser.department && ` · ${displayUser.department}`}
-        </p>
+        <p className={styles.userRole}>{roleLine || "Member"}</p>
       </div>
 
       {/* ─── Info Cards ─── */}
@@ -719,16 +839,7 @@ export default function Profile() {
           </select>
         </div>
 
-        {campusOfficeLoading ? (
-          <p className={styles.loadingText}>Loading institutional flow...</p>
-        ) : (
-          <>
-            {renderKpiCard("Campus Events", campusOfficeData?.campus)}
-            {renderKpiCard("Department Events", campusOfficeData?.department)}
-            {renderKpiCard("Office Events", campusOfficeData?.office)}
-          </>
-        )}
-
+        {/* ── Conflict Forecast ── */}
         <div className={styles.sectionHeaderBlock}>
           <h3 className={styles.analyticsSectionTitle}>Conflict Forecast</h3>
           <p className={styles.analyticsSectionSubtitle}>
@@ -737,7 +848,7 @@ export default function Profile() {
         </div>
 
         {venuesLoading ? (
-          <p className={styles.loadingText}>Loading venues...</p>
+          <SkeletonBar h={40} r={12} />
         ) : venues.length === 0 ? (
           <div className={styles.emptyNotice}>
             <FiInfo size={18} />
@@ -774,7 +885,10 @@ export default function Profile() {
             </div>
 
             {forecastLoading ? (
-              <p className={styles.loadingText}>Loading conflict forecast...</p>
+              <>
+                <CardSkeleton chartHeight={200} />
+                <CardSkeleton chartHeight={90} />
+              </>
             ) : !conflictForecast ? (
               <div className={styles.emptyNotice}>
                 <FiInfo size={18} />
@@ -913,142 +1027,141 @@ export default function Profile() {
           </>
         )}
 
-        <div className={styles.analyticsCard}>
-          <div className={styles.cardHeaderRow}>
-            <FiPieChart size={16} className={styles.cardHeaderIcon} />
-            <h4 className={styles.cardHeaderTitle}>Venue Pie Chart</h4>
-          </div>
-          {venuePieLoading ? (
-            <p className={styles.loadingText}>Loading venue distribution...</p>
-          ) : !venuePie || venuePie.venues.length === 0 ? (
-            <div className={styles.emptyNotice}>
-              <FiInfo size={18} />
-              <span>
-                No venue conflict data available for the selected time range.
-              </span>
+        {/* ── Venue Pie Chart ── */}
+        {venuePieLoading ? (
+          <CardSkeleton chartHeight={220} />
+        ) : (
+          <div className={styles.analyticsCard}>
+            <div className={styles.cardHeaderRow}>
+              <FiPieChart size={16} className={styles.cardHeaderIcon} />
+              <h4 className={styles.cardHeaderTitle}>Venue Pie Chart</h4>
             </div>
-          ) : (
-            <>
-              <div className={styles.pieWrapper}>
-                <ResponsiveContainer width="100%" height={220}>
-                  <PieChart>
-                    <Pie
-                      data={venuePie.venues}
-                      dataKey="count"
-                      nameKey="name"
-                      innerRadius={62}
-                      outerRadius={95}
-                      paddingAngle={2}
-                    >
-                      {venuePie.venues.map((entry, idx) => (
-                        <Cell
-                          key={entry.id}
-                          fill={PIE_COLORS[idx % PIE_COLORS.length]}
-                        />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className={styles.pieCenterLabel}>
-                  <span className={styles.pieCenterValue}>
-                    {venuePie.total}
-                  </span>
-                  <span className={styles.pieCenterSub}>Total Conflict</span>
-                </div>
+            {!venuePie || venuePie.venues.length === 0 ? (
+              <div className={styles.emptyNotice}>
+                <FiInfo size={18} />
+                <span>
+                  No venue conflict data available for the selected time range.
+                </span>
               </div>
-              <div className={styles.pieLegendList}>
-                {venuePie.venues.map((v, idx) => (
-                  <div key={v.id} className={styles.pieLegendRow}>
-                    <span className={styles.pieLegendLeft}>
-                      <span
-                        className={styles.legendDot}
-                        style={{
-                          background: PIE_COLORS[idx % PIE_COLORS.length],
-                        }}
-                      />
-                      {v.name}
+            ) : (
+              <>
+                <div className={styles.pieWrapper}>
+                  <ResponsiveContainer width="100%" height={220}>
+                    <PieChart>
+                      <Pie
+                        data={venuePie.venues}
+                        dataKey="count"
+                        nameKey="name"
+                        innerRadius={62}
+                        outerRadius={95}
+                        paddingAngle={2}
+                      >
+                        {venuePie.venues.map((entry, idx) => (
+                          <Cell
+                            key={entry.id}
+                            fill={PIE_COLORS[idx % PIE_COLORS.length]}
+                          />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className={styles.pieCenterLabel}>
+                    <span className={styles.pieCenterValue}>
+                      {venuePie.total}
                     </span>
-                    <span className={styles.pieLegendPercent}>
-                      {v.percent}%
-                    </span>
+                    <span className={styles.pieCenterSub}>Total Conflict</span>
                   </div>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-
-        <div className={styles.analyticsCard}>
-          <div className={styles.cardHeaderRow}>
-            <FiCheckSquare size={16} className={styles.cardHeaderIcon} />
-            <h4 className={styles.cardHeaderTitle}>Task Velocity</h4>
+                </div>
+                <div className={styles.pieLegendList}>
+                  {venuePie.venues.map((v, idx) => (
+                    <div key={v.id} className={styles.pieLegendRow}>
+                      <span className={styles.pieLegendLeft}>
+                        <span
+                          className={styles.legendDot}
+                          style={{
+                            background: PIE_COLORS[idx % PIE_COLORS.length],
+                          }}
+                        />
+                        {v.name}
+                      </span>
+                      <span className={styles.pieLegendPercent}>
+                        {v.percent}%
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
-          <p className={styles.cardHeaderSubtitle}>
-            Campus &amp; Personal completion rate
-          </p>
+        )}
 
-          {taskStatsLoading ? (
-            <p className={styles.loadingText}>Loading task velocity...</p>
-          ) : (
-            <>
-              <div className={styles.velocityStatsRow}>
-                <div>
-                  <span
-                    className={`${styles.velocityValue} ${styles.velocityGreen}`}
-                  >
-                    {taskStats?.completed ?? 0}
-                  </span>
-                  <span className={styles.velocityLabel}>COMPLETED</span>
-                </div>
-                <div>
-                  <span
-                    className={`${styles.velocityValue} ${styles.velocityRed}`}
-                  >
-                    {taskStats?.missed ?? 0}
-                  </span>
-                  <span className={styles.velocityLabel}>MISSED</span>
-                </div>
+        {/* ── Task Velocity ── */}
+        {taskStatsLoading ? (
+          <CardSkeleton chartHeight={140} />
+        ) : (
+          <div className={styles.analyticsCard}>
+            <div className={styles.cardHeaderRow}>
+              <FiCheckSquare size={16} className={styles.cardHeaderIcon} />
+              <h4 className={styles.cardHeaderTitle}>Task Velocity</h4>
+            </div>
+            <p className={styles.cardHeaderSubtitle}>
+              Campus &amp; Personal completion rate
+            </p>
+
+            <div className={styles.velocityStatsRow}>
+              <div>
+                <span
+                  className={`${styles.velocityValue} ${styles.velocityGreen}`}
+                >
+                  {taskStats?.completed ?? 0}
+                </span>
+                <span className={styles.velocityLabel}>COMPLETED</span>
               </div>
-              <ResponsiveContainer width="100%" height={140}>
-                <AreaChart data={taskStats?.chart || []}>
-                  <defs>
-                    <linearGradient
-                      id="taskVelocityGradient"
-                      x1="0"
-                      y1="0"
-                      x2="0"
-                      y2="1"
-                    >
-                      <stop
-                        offset="0%"
-                        stopColor="#22c55e"
-                        stopOpacity={0.35}
-                      />
-                      <stop offset="100%" stopColor="#22c55e" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <XAxis
-                    dataKey="label"
-                    tick={{ fontSize: 10 }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <YAxis hide />
-                  <Tooltip />
-                  <Area
-                    type="monotone"
-                    dataKey="count"
-                    stroke="#16a34a"
-                    strokeWidth={2}
-                    fill="url(#taskVelocityGradient)"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </>
-          )}
-        </div>
+              <div>
+                <span
+                  className={`${styles.velocityValue} ${styles.velocityRed}`}
+                >
+                  {taskStats?.missed ?? 0}
+                </span>
+                <span className={styles.velocityLabel}>MISSED</span>
+              </div>
+            </div>
+            <ResponsiveContainer width="100%" height={140}>
+              <AreaChart data={taskStats?.chart || []}>
+                <defs>
+                  <linearGradient
+                    id="taskVelocityGradient"
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                  >
+                    <stop offset="0%" stopColor="#22c55e" stopOpacity={0.35} />
+                    <stop offset="100%" stopColor="#22c55e" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <XAxis
+                  dataKey="label"
+                  tick={{ fontSize: 10 }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis hide />
+                <Tooltip />
+                <Area
+                  type="monotone"
+                  dataKey="count"
+                  stroke="#16a34a"
+                  strokeWidth={2}
+                  fill="url(#taskVelocityGradient)"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        )}
 
+        {/* ── Department / Office Performance ── */}
         <div className={styles.analyticsCard}>
           <div className={styles.cardHeaderRow}>
             <FiActivity size={16} className={styles.cardHeaderIcon} />
@@ -1064,71 +1177,88 @@ export default function Profile() {
             <button
               type="button"
               className={`${styles.perfTab} ${perfTab === "departments" ? styles.perfTabActive : ""}`}
-              onClick={() => setPerfTab("departments")}
+              onClick={() => handlePerfTabChange("departments")}
             >
               Departments
             </button>
             <button
               type="button"
               className={`${styles.perfTab} ${perfTab === "offices" ? styles.perfTabActive : ""}`}
-              onClick={() => setPerfTab("offices")}
+              onClick={() => handlePerfTabChange("offices")}
             >
               Offices
             </button>
           </div>
 
           {deptPerfLoading ? (
-            <p className={styles.loadingText}>Loading performance data...</p>
+            <div className={styles.perfList}>
+              <ListRowSkeleton />
+              <ListRowSkeleton />
+              <ListRowSkeleton />
+            </div>
+          ) : perfFullList.length === 0 ? (
+            <div className={styles.emptyNotice}>
+              <FiInfo size={18} />
+              <span>
+                No {perfTab === "departments" ? "departments" : "offices"} are
+                set up yet.
+              </span>
+            </div>
           ) : (
-            (() => {
-              const list =
-                perfTab === "departments"
-                  ? deptPerf?.departments
-                  : deptPerf?.offices;
-              if (!list || list.length === 0) {
+            <>
+              {(() => {
+                const maxCount = Math.max(
+                  1,
+                  ...perfFullList.map((l) => l.count),
+                );
+                const visible = perfShowAll
+                  ? perfFullList
+                  : perfFullList.slice(0, PERF_VISIBLE_COUNT);
                 return (
-                  <div className={styles.emptyNotice}>
-                    <FiInfo size={18} />
-                    <span>
-                      No participation data available for the selected time
-                      range.
-                    </span>
+                  <div className={styles.perfList}>
+                    {visible.map((item) => (
+                      <div key={item.id} className={styles.perfRow}>
+                        <div className={styles.perfRowTop}>
+                          <span className={styles.perfName}>{item.name}</span>
+                          <span className={styles.perfCount}>{item.count}</span>
+                        </div>
+                        <div className={styles.perfBarTrack}>
+                          <div
+                            className={styles.perfBarFill}
+                            style={{
+                              width: `${(item.count / maxCount) * 100}%`,
+                            }}
+                          />
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 );
-              }
-              const maxCount = Math.max(...list.map((l) => l.count));
-              return (
-                <div className={styles.perfList}>
-                  {list.map((item) => (
-                    <div key={item.id} className={styles.perfRow}>
-                      <div className={styles.perfRowTop}>
-                        <span className={styles.perfName}>{item.name}</span>
-                        <span className={styles.perfCount}>{item.count}</span>
-                      </div>
-                      <div className={styles.perfBarTrack}>
-                        <div
-                          className={styles.perfBarFill}
-                          style={{ width: `${(item.count / maxCount) * 100}%` }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              );
-            })()
+              })()}
+              {perfFullList.length > PERF_VISIBLE_COUNT && (
+                <button
+                  type="button"
+                  className={styles.perfShowMoreBtn}
+                  onClick={() => setPerfShowAll((prev) => !prev)}
+                >
+                  {perfShowAll
+                    ? "Show Less"
+                    : `Show More (${perfFullList.length - PERF_VISIBLE_COUNT})`}
+                </button>
+              )}
+            </>
           )}
         </div>
 
-        <div className={styles.analyticsCard}>
-          <div className={styles.cardHeaderRow}>
-            <FiAlertTriangle size={16} className={styles.cardHeaderIcon} />
-            <h4 className={styles.cardHeaderTitle}>Scheduling Conflicts</h4>
-          </div>
-          {schedulingLoading ? (
-            <p className={styles.loadingText}>
-              Loading scheduling conflicts...
-            </p>
-          ) : (
+        {/* ── Scheduling Conflicts ── */}
+        {schedulingLoading ? (
+          <CardSkeleton chartHeight={110} />
+        ) : (
+          <div className={styles.analyticsCard}>
+            <div className={styles.cardHeaderRow}>
+              <FiAlertTriangle size={16} className={styles.cardHeaderIcon} />
+              <h4 className={styles.cardHeaderTitle}>Scheduling Conflicts</h4>
+            </div>
             <div className={styles.overlapsList}>
               <div className={`${styles.overlapItem} ${styles.overlapCampus}`}>
                 <span className={styles.overlapLabel}>Campus Overlaps</span>
@@ -1151,73 +1281,83 @@ export default function Profile() {
                 </span>
               </div>
             </div>
-          )}
-        </div>
-
-        <div className={styles.analyticsCard}>
-          <div className={styles.cardHeaderRow}>
-            <FiUser size={16} className={styles.cardHeaderIcon} />
-            <h4 className={styles.cardHeaderTitle}>Personal Events</h4>
           </div>
-          {personalLoading ? (
-            <p className={styles.loadingText}>Loading personal events...</p>
-          ) : (
-            <>
-              <div className={styles.ringWrapper}>
-                <svg viewBox="0 0 160 160" className={styles.ringSvg}>
-                  <circle
-                    cx="80"
-                    cy="80"
-                    r="70"
-                    fill="none"
-                    stroke="#e5f9ea"
-                    strokeWidth="14"
-                  />
-                  <circle
-                    cx="80"
-                    cy="80"
-                    r="70"
-                    fill="none"
-                    stroke="#22c55e"
-                    strokeWidth="14"
-                    strokeDasharray={2 * Math.PI * 70}
-                    strokeDashoffset={0}
-                    strokeLinecap="round"
-                    transform="rotate(-90 80 80)"
-                  />
-                </svg>
-                <div className={styles.ringCenter}>
-                  <span className={styles.ringValue}>
-                    {personalEvents?.total ?? 0}
-                  </span>
-                  <span className={styles.ringLabel}>TOTAL EVENTS</span>
-                </div>
+        )}
+
+        {/* ── Personal Events ── */}
+        {personalLoading ? (
+          <CardSkeleton chartHeight={150} />
+        ) : (
+          <div className={styles.analyticsCard}>
+            <div className={styles.cardHeaderRow}>
+              <FiUser size={16} className={styles.cardHeaderIcon} />
+              <h4 className={styles.cardHeaderTitle}>Personal Events</h4>
+            </div>
+            <div className={styles.ringWrapper}>
+              <svg viewBox="0 0 160 160" className={styles.ringSvg}>
+                <circle
+                  cx="80"
+                  cy="80"
+                  r="70"
+                  fill="none"
+                  stroke="#e5f9ea"
+                  strokeWidth="14"
+                />
+                <circle
+                  cx="80"
+                  cy="80"
+                  r="70"
+                  fill="none"
+                  stroke="#22c55e"
+                  strokeWidth="14"
+                  strokeDasharray={2 * Math.PI * 70}
+                  strokeDashoffset={0}
+                  strokeLinecap="round"
+                  transform="rotate(-90 80 80)"
+                />
+              </svg>
+              <div className={styles.ringCenter}>
+                <span className={styles.ringValue}>
+                  {personalEvents?.total ?? 0}
+                </span>
+                <span className={styles.ringLabel}>TOTAL EVENTS</span>
               </div>
-              <div className={styles.personalStatsRow}>
-                <div className={styles.personalStatBox}>
-                  <span
-                    className={`${styles.personalStatValue} ${styles.velocityGreen}`}
-                  >
-                    {personalEvents?.ongoing ?? 0}
-                  </span>
-                  <span className={styles.personalStatLabel}>
-                    ACTIVE ONGOING
-                  </span>
-                </div>
-                <div className={styles.personalStatBox}>
-                  <span
-                    className={`${styles.personalStatValue} ${styles.velocityRed}`}
-                  >
-                    {personalEvents?.missed ?? 0}
-                  </span>
-                  <span className={styles.personalStatLabel}>
-                    EVENTS MISSED
-                  </span>
-                </div>
+            </div>
+            <div className={styles.personalStatsRow}>
+              <div className={styles.personalStatBox}>
+                <span
+                  className={`${styles.personalStatValue} ${styles.velocityGreen}`}
+                >
+                  {personalEvents?.ongoing ?? 0}
+                </span>
+                <span className={styles.personalStatLabel}>ACTIVE ONGOING</span>
               </div>
-            </>
-          )}
-        </div>
+              <div className={styles.personalStatBox}>
+                <span
+                  className={`${styles.personalStatValue} ${styles.velocityRed}`}
+                >
+                  {personalEvents?.missed ?? 0}
+                </span>
+                <span className={styles.personalStatLabel}>EVENTS MISSED</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Institutional Flow (moved to the bottom) ── */}
+        {campusOfficeLoading ? (
+          <>
+            <KpiSkeleton />
+            <KpiSkeleton />
+            <KpiSkeleton />
+          </>
+        ) : (
+          <>
+            {renderKpiCard("Campus Events", campusOfficeData?.campus)}
+            {renderKpiCard("Department Events", campusOfficeData?.department)}
+            {renderKpiCard("Office Events", campusOfficeData?.office)}
+          </>
+        )}
       </div>
 
       {/* ─── Edit Profile Modal ─── */}
@@ -1242,9 +1382,18 @@ export default function Profile() {
                 <input
                   type="text"
                   value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
+                  onChange={(e) => setEditName(sanitizeName(e.target.value))}
+                  maxLength={MAX_NAME_LENGTH}
                   required
                 />
+                <div className={styles.fieldMetaRow}>
+                  <span className={styles.hint}>
+                    Letters and spaces only — no numbers, symbols, or emoji.
+                  </span>
+                  <span className={styles.charCount}>
+                    {editName.length}/{MAX_NAME_LENGTH}
+                  </span>
+                </div>
               </div>
               {editMessage && (
                 <p className={styles.modalError}>{editMessage}</p>
@@ -1519,11 +1668,24 @@ export default function Profile() {
                 <label>Details / Description *</label>
                 <textarea
                   value={requestDetails}
-                  onChange={(e) => setRequestDetails(e.target.value)}
+                  onChange={(e) =>
+                    setRequestDetails(
+                      e.target.value.slice(0, MAX_DESCRIPTION_LENGTH),
+                    )
+                  }
+                  maxLength={MAX_DESCRIPTION_LENGTH}
                   placeholder="Please provide details about your change request..."
                   rows="4"
                   required
                 />
+                <div className={styles.fieldMetaRow}>
+                  <span className={styles.hint}>
+                    Max {MAX_DESCRIPTION_LENGTH} characters.
+                  </span>
+                  <span className={styles.charCount}>
+                    {requestDetails.length}/{MAX_DESCRIPTION_LENGTH}
+                  </span>
+                </div>
               </div>
               {requestMessage && (
                 <p className={styles.modalError}>{requestMessage}</p>
