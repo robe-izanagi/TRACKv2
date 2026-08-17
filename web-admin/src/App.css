@@ -2,7 +2,7 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: sans-serif;
+  font-family: 'Segoe UI';
 }
 
 :root {
@@ -12,4 +12,16 @@
   --border-2: #cacd83;
   --text: #000;
   --text-1: #fff;
-} 
+  --primary-color: #a80202;
+  --secondary-color: #500000;
+  --tertiary-color: #FFFFFF;
+  --fourth-color: #212121;
+  --fifth-color: #000000;
+  --hyperlink-color: #001479;
+  --radio-button-background: #E1E3E4;
+  --page-background-color: #F8F9FA;
+  --input-background-color: #E1E3E4;
+  --input-focus-color: #500000;
+  --text-color: #000000;
+  --background-color: #fff;
+}
