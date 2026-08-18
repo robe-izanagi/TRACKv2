@@ -488,11 +488,7 @@
 
 @media (min-width: 640px) {
   .emailCell {
-    max-width: none;
-    white-space: normal;
-    overflow: visible;
-    text-overflow: clip;
-    word-break: break-word;
+    max-width: 260px;
   }
 }
 
@@ -506,11 +502,7 @@
 
 @media (min-width: 640px) {
   .nameCell {
-    max-width: none;
-    white-space: normal;
-    overflow: visible;
-    text-overflow: clip;
-    word-break: break-word;
+    max-width: 180px;
   }
 }
 
