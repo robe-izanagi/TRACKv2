@@ -12,7 +12,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   gap: 2rem;
   background: #f1f5f9;
 }
@@ -46,8 +46,9 @@
 }
 
 .title {
-  font-family: sans-serif;
-  font-size: clamp(24px, 6vw, 32px);
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--primary-color, #a80202);
   margin: 0;
   text-align: center;
 }
@@ -55,8 +56,7 @@
 .subTitle {
   margin: 0 0 1.5rem 0;
   font-size: clamp(14px, 4vw, 16px);
-  font-family: sans-serif;
-  opacity: 0.8;
+  color: #555;
   text-align: center;
 }
 
@@ -68,7 +68,6 @@
 }
 
 .inputContainer label {
-  font-family: sans-serif;
   font-size: 14px;
   font-weight: 500;
 }
@@ -103,8 +102,8 @@
   border: none;
   font-weight: 700;
   cursor: pointer;
-  background: #a80202;
-  color: white;
+  background: var(--primary-color, #a80202);
+  color: var(--tertiary-color, white);
   text-decoration: none;
   display: inline-block;
   text-align: center;
@@ -115,7 +114,7 @@
 }
 
 .button:hover:not(:disabled) {
-  background: #8a0101;
+  background: var(--secondary-color, #8a0101);
 }
 
 .button:active:not(:disabled) {
@@ -129,7 +128,7 @@
 }
 
 .error {
-  color: #ef4444;
+  color: red;
   margin-top: 0.75rem;
   font-size: 14px;
   text-align: center;
@@ -157,10 +156,6 @@ a:hover {
     border-radius: 20px;
   }
 
-  .title {
-    font-size: clamp(28px, 5vw, 36px);
-  }
-
   .subTitle {
     font-size: clamp(15px, 3.5vw, 18px);
     margin-bottom: 2rem;
@@ -179,10 +174,6 @@ a:hover {
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
   }
 
-  .title {
-    font-size: 36px;
-  }
-
   .subTitle {
     font-size: 16px;
   }
@@ -193,6 +184,6 @@ a:hover {
   }
 
   .button {
-    min-height: 44px;
+    border-radius: 15px;
   }
-}
+} 
