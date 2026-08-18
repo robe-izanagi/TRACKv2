@@ -26,6 +26,7 @@
 .footerLinks a {
   color: #555555;
   text-decoration: none;
+  font-weight: 400;
 }
 
 .footerLinks a:hover {
