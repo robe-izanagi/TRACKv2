@@ -67,7 +67,8 @@ async function initializeDatabase(): Promise<void> {
     console.log('Connected to TiDB Cloud');
 
     if (process.env.RUN_SYNC === 'true') {
-      await sequelize.sync({ force: true });
+      await sequelize.sync({ alter: true });
+      // await sequelize.sync({ force: true });
       console.log('Tables synced');
       await seed();
       console.log('Seed complete');
