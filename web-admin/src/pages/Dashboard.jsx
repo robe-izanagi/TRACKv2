@@ -50,23 +50,28 @@ export default function Dashboard() {
       setError("");
 
       try {
-        const usersRes = await apiClient.get("/admin/users");
+        const [
+          usersRes,
+          codesRes,
+          requestsRes,
+          positionsRes,
+          assignmentsRes,
+          deptRes,
+          officeRes,
+        ] = await Promise.all([
+          apiClient.get("/admin/users"),
+          apiClient.get("/admin/account-codes"),
+          apiClient.get("/account-code-requests?status=pending"),
+          apiClient.get("/admin/positions"),
+          apiClient.get("/admin/position-assignments"),
+          apiClient.get("/admin/departments"),
+          apiClient.get("/admin/offices"),
+        ]);
+
         const users = usersRes.data.users || [];
-
-        const codesRes = await apiClient.get("/admin/account-codes");
         const codes = codesRes.data.codes || [];
-
-        const requestsRes = await apiClient.get(
-          "/account-code-requests?status=pending",
-        );
         const requests = requestsRes.data.requests || [];
-
-        const positionsRes = await apiClient.get("/admin/positions");
         const positions = positionsRes.data.positions || [];
-
-        const assignmentsRes = await apiClient.get(
-          "/admin/position-assignments",
-        );
         const assignments = assignmentsRes.data.assignments || [];
 
         const assignedIds = assignments
@@ -80,9 +85,6 @@ export default function Dashboard() {
         const takenPositions = positions.filter(
           (p) => !p.allow_multiple && takenPositionIds.has(p.id),
         ).length;
-
-        const deptRes = await apiClient.get("/admin/departments");
-        const officeRes = await apiClient.get("/admin/offices");
 
         const activeUsers = users.filter((u) => u.status === "active").length;
         const blockedUsers = users.filter(
