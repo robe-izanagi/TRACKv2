@@ -45,7 +45,6 @@
   display: flex;
   align-items: center;
   gap: clamp(6px, 1vw, 8px);
-  /* padding: clamp(6px 12px, 1vw 2vw, 8px 16px); */
   background: transparent;
   border: 1px solid transparent;
   border-radius: clamp(6px, 1vw, 8px);
@@ -98,7 +97,6 @@
 }
 
 .statsSection {
-  /* outer container visually removed to let subsections stand alone */
   margin-bottom: 0;
   border: none;
   border-radius: 0;
@@ -170,8 +168,6 @@
   }
 }
 
-
-
 .statsGridAccountCodes {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(clamp(120px, 35vw, 200px), 1fr));
@@ -185,7 +181,6 @@
     gap: clamp(8px, 2vw, 12px);
   }
 }
-
 
 .statCard {
   background: #fff;
@@ -645,7 +640,7 @@
   color: #059669;
 }
 
-/* ─── Loading State ────────────────────────────────────── */
+/* ─── Loading State (fallback, unused now but kept) ───── */
 .loadingContainer {
   display: flex;
   flex-direction: column;
@@ -671,6 +666,112 @@
   }
 }
 
+/* ─── Skeleton Loading ────────────────────────────────── */
+.skeleton {
+  background: linear-gradient(90deg,
+      #e5e7eb 25%,
+      #f3f4f6 37%,
+      #e5e7eb 63%);
+  background-size: 400% 100%;
+  animation: skeletonShimmer 1.4s ease infinite;
+  border-radius: 6px;
+}
+
+@keyframes skeletonShimmer {
+  0% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Header skeletons */
+.skeletonTitle {
+  width: clamp(120px, 30vw, 180px);
+  height: clamp(20px, 6vw, 32px);
+  margin-bottom: 8px;
+}
+
+.skeletonSubtitle {
+  width: clamp(160px, 40vw, 240px);
+  height: clamp(12px, 3.5vw, 16px);
+}
+
+.skeletonRefreshBtn {
+  width: 110px;
+  height: clamp(36px, 5vw, 40px);
+  border-radius: clamp(6px, 1vw, 8px);
+}
+
+/* Subsection header skeleton */
+.skeletonSubsectionHeader {
+  width: 120px;
+  height: clamp(12px, 2.8vw, 15px);
+  margin-bottom: 8px;
+}
+
+/* Stat card skeletons */
+.skeletonStatIcon {
+  width: clamp(36px, 8vw, 46px);
+  height: clamp(36px, 8vw, 46px);
+  border-radius: clamp(8px, 1.5vw, 14px);
+  flex-shrink: 0;
+}
+
+.skeletonStatValue {
+  width: 60px;
+  height: clamp(16px, 4vw, 24px);
+  margin-bottom: 6px;
+}
+
+.skeletonStatLabel {
+  width: 90px;
+  height: clamp(11px, 2.5vw, 13px);
+}
+
+/* Table skeletons */
+.skeletonTableTitle {
+  width: 180px;
+  height: clamp(13px, 3.5vw, 16px);
+}
+
+.skeletonTh {
+  width: 60%;
+  height: 10px;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.skeletonAvatar {
+  width: clamp(26px, 6vw, 30px);
+  height: clamp(26px, 6vw, 30px);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.skeletonCellText {
+  width: 100px;
+  height: 12px;
+}
+
+.skeletonBadge {
+  width: 60px;
+  height: 20px;
+  border-radius: 12px;
+}
+
+.skeletonLink {
+  width: 110px;
+  height: 14px;
+  margin-left: auto;
+}
+
+/* System info skeleton */
+.skeletonSystemItem {
+  width: 160px;
+  height: 18px;
+}
 
 /* ─── Responsive Overrides ───────────────────────────── */
 @media (max-width: 768px) {

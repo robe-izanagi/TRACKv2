@@ -18,6 +18,139 @@ import {
 } from "react-icons/fi";
 import styles from "./Dashboard.module.css";
 
+/* ── Skeleton building blocks ── */
+function SkeletonStatCard() {
+  return (
+    <div className={styles.statCard}>
+      <div className={`${styles.skeleton} ${styles.skeletonStatIcon}`} />
+      <div className={styles.statInfo}>
+        <div className={`${styles.skeleton} ${styles.skeletonStatValue}`} />
+        <div className={`${styles.skeleton} ${styles.skeletonStatLabel}`} />
+      </div>
+    </div>
+  );
+}
+
+function SkeletonStatsSubsection({ count = 3 }) {
+  return (
+    <div className={styles.statsSubsection}>
+      <div
+        className={`${styles.skeleton} ${styles.skeletonSubsectionHeader}`}
+      />
+      <div className={styles.statsGrid}>
+        {Array.from({ length: count }).map((_, i) => (
+          <SkeletonStatCard key={i} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SkeletonTableCard() {
+  return (
+    <div className={styles.tableCard}>
+      <div className={styles.tableHeader}>
+        <div className={`${styles.skeleton} ${styles.skeletonTableTitle}`} />
+      </div>
+      <div className={styles.tableWrapper}>
+        <table className={styles.table}>
+          <thead>
+            <tr>
+              <th>
+                <div className={`${styles.skeleton} ${styles.skeletonTh}`} />
+              </th>
+              <th>
+                <div className={`${styles.skeleton} ${styles.skeletonTh}`} />
+              </th>
+              <th>
+                <div className={`${styles.skeleton} ${styles.skeletonTh}`} />
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <tr key={i}>
+                <td>
+                  <div className={styles.userCell}>
+                    <div
+                      className={`${styles.skeleton} ${styles.skeletonAvatar}`}
+                    />
+                    <div
+                      className={`${styles.skeleton} ${styles.skeletonCellText}`}
+                    />
+                  </div>
+                </td>
+                <td>
+                  <div
+                    className={`${styles.skeleton} ${styles.skeletonCellText}`}
+                  />
+                </td>
+                <td>
+                  <div
+                    className={`${styles.skeleton} ${styles.skeletonBadge}`}
+                  />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className={styles.tableFooter}>
+        <div className={`${styles.skeleton} ${styles.skeletonLink}`} />
+      </div>
+    </div>
+  );
+}
+
+function DashboardSkeleton() {
+  return (
+    <div className={styles.dashboard}>
+      <div className={styles.header}>
+        <div>
+          <div className={`${styles.skeleton} ${styles.skeletonTitle}`} />
+          <div className={`${styles.skeleton} ${styles.skeletonSubtitle}`} />
+        </div>
+        <div className={`${styles.skeleton} ${styles.skeletonRefreshBtn}`} />
+      </div>
+
+      <div className={styles.statsSubsectionRow}>
+        <SkeletonStatsSubsection count={3} />
+        <SkeletonStatsSubsection count={3} />
+      </div>
+
+      <div className={styles.statsSubsectionRow}>
+        <SkeletonStatsSubsection count={3} />
+        <SkeletonStatsSubsection count={3} />
+      </div>
+
+      <div className={styles.statsSubsection}>
+        <div
+          className={`${styles.skeleton} ${styles.skeletonSubsectionHeader}`}
+        />
+        <div className={`${styles.statsGrid} ${styles.statsGridAccountCodes}`}>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <SkeletonStatCard key={i} />
+          ))}
+        </div>
+      </div>
+
+      <div className={styles.tablesRow}>
+        <SkeletonTableCard />
+        <SkeletonTableCard />
+      </div>
+
+      <div className={styles.systemInfo}>
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div
+            key={i}
+            className={`${styles.skeleton} ${styles.skeletonSystemItem}`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function Dashboard() {
   const { user } = useAuth();
   const [stats, setStats] = useState({
@@ -161,12 +294,7 @@ export default function Dashboard() {
   };
 
   if (loading) {
-    return (
-      <div className={styles.loadingContainer}>
-        <div className={styles.spinner}></div>
-        <p>Loading dashboard...</p>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   return (
