@@ -22,6 +22,106 @@ import {
 } from "react-icons/fi";
 import styles from "./AccountCodes.module.css";
 
+// ── Skeleton helpers ────────────────────────────────────
+function SkeletonSummaryValue() {
+  return (
+    <span className={`${styles.skeleton} ${styles.skeletonSummaryValue}`} />
+  );
+}
+
+function SkeletonCodeRow() {
+  return (
+    <tr>
+      <td className={styles.codeCell}>
+        <div className={`${styles.skeleton} ${styles.skeletonCodeCell}`} />
+      </td>
+      <td>
+        <div
+          className={`${styles.skeleton} ${styles.skeletonCell}`}
+          style={{ width: "50px" }}
+        />
+      </td>
+      <td>
+        <div
+          className={`${styles.skeleton} ${styles.skeletonCell}`}
+          style={{ width: "90px" }}
+        />
+      </td>
+      <td>
+        <div
+          className={`${styles.skeleton} ${styles.skeletonCell}`}
+          style={{ width: "80px" }}
+        />
+      </td>
+      <td>
+        <div
+          className={`${styles.skeleton} ${styles.skeletonCell}`}
+          style={{ width: "70px" }}
+        />
+      </td>
+      <td>
+        <div
+          className={`${styles.skeleton} ${styles.skeletonCell}`}
+          style={{ width: "90px" }}
+        />
+      </td>
+      <td>
+        <div
+          className={`${styles.skeleton} ${styles.skeletonCell}`}
+          style={{ width: "60px" }}
+        />
+      </td>
+      <td>
+        <div
+          className={`${styles.skeleton} ${styles.skeletonCell}`}
+          style={{ width: "100px" }}
+        />
+      </td>
+      <td>
+        <div
+          className={`${styles.skeleton} ${styles.skeletonCell}`}
+          style={{ width: "100px" }}
+        />
+      </td>
+      <td>
+        <div className={`${styles.skeleton} ${styles.skeletonBadgeCell}`} />
+      </td>
+      <td>
+        <div
+          className={`${styles.skeleton} ${styles.skeletonCell}`}
+          style={{ width: "70px" }}
+        />
+      </td>
+    </tr>
+  );
+}
+
+function SkeletonRequestCard() {
+  return (
+    <div className={styles.requestCard}>
+      <div className={styles.requestHeader}>
+        <div className={styles.requestUser}>
+          <div className={`${styles.skeleton} ${styles.skeletonRequestName}`} />
+          <div
+            className={`${styles.skeleton} ${styles.skeletonRequestEmail}`}
+          />
+        </div>
+        <div className={`${styles.skeleton} ${styles.skeletonRequestBadge}`} />
+      </div>
+      <div className={styles.requestDetails}>
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div className={styles.detailRow} key={i}>
+            <span className={styles.detailLabel}>&nbsp;</span>
+            <div
+              className={`${styles.skeleton} ${styles.skeletonDetailValue}`}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ── Simple searchable dropdown ──────────────────────────
 function SearchableSelect({ options, value, onChange, placeholder }) {
   const [open, setOpen] = useState(false);
@@ -125,6 +225,8 @@ export default function AccountCodes() {
     pendingRequests: requests.filter((r) => r.status === "pending").length,
     totalRequests: requests.length,
   };
+
+  const summaryLoading = codesLoading || requestsLoading;
 
   // ─── Load Account Codes ──────────────────────────────
   const loadCodes = useCallback(async () => {
@@ -388,9 +490,13 @@ export default function AccountCodes() {
               <FiCode size={20} />
             </div>
             <div className={styles.summaryInfo}>
-              <span className={styles.summaryValue}>
-                {summaryStats.totalCodes}
-              </span>
+              {summaryLoading ? (
+                <SkeletonSummaryValue />
+              ) : (
+                <span className={styles.summaryValue}>
+                  {summaryStats.totalCodes}
+                </span>
+              )}
               <span className={styles.summaryLabel}>Total Codes</span>
             </div>
           </div>
@@ -402,9 +508,13 @@ export default function AccountCodes() {
               <FiCheck size={20} />
             </div>
             <div className={styles.summaryInfo}>
-              <span className={styles.summaryValue}>
-                {summaryStats.usedCodes}
-              </span>
+              {summaryLoading ? (
+                <SkeletonSummaryValue />
+              ) : (
+                <span className={styles.summaryValue}>
+                  {summaryStats.usedCodes}
+                </span>
+              )}
               <span className={styles.summaryLabel}>Used</span>
             </div>
           </div>
@@ -416,9 +526,13 @@ export default function AccountCodes() {
               <FiClock size={20} />
             </div>
             <div className={styles.summaryInfo}>
-              <span className={styles.summaryValue}>
-                {summaryStats.unusedCodes}
-              </span>
+              {summaryLoading ? (
+                <SkeletonSummaryValue />
+              ) : (
+                <span className={styles.summaryValue}>
+                  {summaryStats.unusedCodes}
+                </span>
+              )}
               <span className={styles.summaryLabel}>Unused</span>
             </div>
           </div>
@@ -430,9 +544,13 @@ export default function AccountCodes() {
               <FiMail size={20} />
             </div>
             <div className={styles.summaryInfo}>
-              <span className={styles.summaryValue}>
-                {summaryStats.pendingRequests}
-              </span>
+              {summaryLoading ? (
+                <SkeletonSummaryValue />
+              ) : (
+                <span className={styles.summaryValue}>
+                  {summaryStats.pendingRequests}
+                </span>
+              )}
               <span className={styles.summaryLabel}>Pending Requests</span>
             </div>
           </div>
@@ -592,45 +710,11 @@ export default function AccountCodes() {
                 </tr>
               </thead>
               <tbody>
-                {sortedCodes.map((code) => (
-                  <tr key={code.id}>
-                    <td className={styles.codeCell}>
-                      <span className={styles.hiddenCode}>••••••••</span>
-                      <button
-                        className={styles.copyBtn}
-                        onClick={() => copyToClipboard(code.code)}
-                        title="Copy code"
-                      >
-                        <FiCopy size={16} />
-                      </button>
-                    </td>
-                    <td>{code.is_admin ? "Admin" : "User"}</td>
-                    <td>{code.department || "—"}</td>
-                    <td>{code.office || "—"}</td>
-                    <td>{code.role || "—"}</td>
-                    <td>{code.position || "—"}</td>
-                    <td>
-                      {code.source_type === "admin_generated"
-                        ? "Admin"
-                        : "Request"}
-                    </td>
-                    <td>{code.requested_by || "—"}</td>
-                    <td>{code.generated_by || "—"}</td>
-                    <td>
-                      <span
-                        className={`${styles.statusBadge} ${
-                          code.status === "used"
-                            ? styles.statusUsed
-                            : styles.statusUnused
-                        }`}
-                      >
-                        {code.status}
-                      </span>
-                    </td>
-                    <td>{new Date(code.created_at).toLocaleDateString()}</td>
-                  </tr>
-                ))}
-                {sortedCodes.length === 0 && (
+                {codesLoading ? (
+                  Array.from({ length: 6 }).map((_, i) => (
+                    <SkeletonCodeRow key={i} />
+                  ))
+                ) : sortedCodes.length === 0 ? (
                   <tr>
                     <td colSpan="11" className={styles.noData}>
                       {codeSearch
@@ -638,6 +722,45 @@ export default function AccountCodes() {
                         : "No codes yet."}
                     </td>
                   </tr>
+                ) : (
+                  sortedCodes.map((code) => (
+                    <tr key={code.id}>
+                      <td className={styles.codeCell}>
+                        <span className={styles.hiddenCode}>••••••••</span>
+                        <button
+                          className={styles.copyBtn}
+                          onClick={() => copyToClipboard(code.code)}
+                          title="Copy code"
+                        >
+                          <FiCopy size={16} />
+                        </button>
+                      </td>
+                      <td>{code.is_admin ? "Admin" : "User"}</td>
+                      <td>{code.department || "—"}</td>
+                      <td>{code.office || "—"}</td>
+                      <td>{code.role || "—"}</td>
+                      <td>{code.position || "—"}</td>
+                      <td>
+                        {code.source_type === "admin_generated"
+                          ? "Admin"
+                          : "Request"}
+                      </td>
+                      <td>{code.requested_by || "—"}</td>
+                      <td>{code.generated_by || "—"}</td>
+                      <td>
+                        <span
+                          className={`${styles.statusBadge} ${
+                            code.status === "used"
+                              ? styles.statusUsed
+                              : styles.statusUnused
+                          }`}
+                        >
+                          {code.status}
+                        </span>
+                      </td>
+                      <td>{new Date(code.created_at).toLocaleDateString()}</td>
+                    </tr>
+                  ))
                 )}
               </tbody>
             </table>
@@ -685,7 +808,11 @@ export default function AccountCodes() {
 
           {/* ── Request Cards ── */}
           {requestsLoading ? (
-            <p className={styles.loading}>Loading requests...</p>
+            <div className={styles.requestGrid}>
+              {Array.from({ length: 3 }).map((_, i) => (
+                <SkeletonRequestCard key={i} />
+              ))}
+            </div>
           ) : (
             <div className={styles.requestGrid}>
               {requests.length === 0 ? (

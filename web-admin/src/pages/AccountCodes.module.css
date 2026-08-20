@@ -919,6 +919,70 @@
   padding: 20px 0;
 }
 
+/* ─── Skeleton Loading ────────────────────────────────── */
+.skeleton {
+  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 37%, #e5e7eb 63%);
+  background-size: 400% 100%;
+  animation: skeletonShimmer 1.4s ease infinite;
+  border-radius: 6px;
+  display: inline-block;
+}
+
+@keyframes skeletonShimmer {
+  0% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.skeletonSummaryValue {
+  width: 50px;
+  height: 20px;
+}
+
+.skeletonCell {
+  width: 80px;
+  height: 12px;
+}
+
+.skeletonCodeCell {
+  width: 90px;
+  height: 22px;
+  border-radius: 4px;
+}
+
+.skeletonBadgeCell {
+  width: 60px;
+  height: 20px;
+  border-radius: 12px;
+}
+
+.skeletonRequestName {
+  width: 120px;
+  height: 15px;
+  margin-bottom: 6px;
+}
+
+.skeletonRequestEmail {
+  width: 160px;
+  height: 12px;
+}
+
+.skeletonRequestBadge {
+  width: 60px;
+  height: 20px;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.skeletonDetailValue {
+  width: 70%;
+  height: 12px;
+}
+
 /* ─── Responsive ──────────────────────────────────────── */
 @media (min-width: 1025px) and (max-width: 1300px) {
   .parent {
@@ -1033,7 +1097,7 @@
     grid-row: auto;
     height: 450px;
   }
-  
+
   .requestsSection .card {
     height: 100%;
   }
