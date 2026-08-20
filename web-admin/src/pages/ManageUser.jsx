@@ -16,6 +16,96 @@ const STATUS_TABS = [
   { value: "all", label: "All" },
 ];
 
+// ── Skeleton helpers ────────────────────────────────────
+function SkeletonUserRow() {
+  return (
+    <tr>
+      <td>
+        <div className={styles.userCell}>
+          <div className={`${styles.skeleton} ${styles.skeletonAvatar}`} />
+          <div className={styles.userInfo}>
+            <div className={`${styles.skeleton} ${styles.skeletonUserName}`} />
+            <div className={`${styles.skeleton} ${styles.skeletonUsername}`} />
+          </div>
+        </div>
+      </td>
+      <td>
+        <div
+          className={`${styles.skeleton} ${styles.skeletonCell}`}
+          style={{ width: "140px" }}
+        />
+      </td>
+      <td>
+        <div
+          className={`${styles.skeleton} ${styles.skeletonCell}`}
+          style={{ width: "90px" }}
+        />
+      </td>
+      <td>
+        <div
+          className={`${styles.skeleton} ${styles.skeletonCell}`}
+          style={{ width: "90px" }}
+        />
+      </td>
+      <td>
+        <div
+          className={`${styles.skeleton} ${styles.skeletonCell}`}
+          style={{ width: "70px" }}
+        />
+      </td>
+      <td>
+        <div className={`${styles.skeleton} ${styles.skeletonBadgeCell}`} />
+      </td>
+      <td>
+        <div
+          className={`${styles.skeleton} ${styles.skeletonCell}`}
+          style={{ width: "80px" }}
+        />
+      </td>
+      <td>
+        <div className={styles.actionsCell}>
+          <div className={`${styles.skeleton} ${styles.skeletonActionBtn}`} />
+          <div className={`${styles.skeleton} ${styles.skeletonActionBtn}`} />
+        </div>
+      </td>
+    </tr>
+  );
+}
+
+function SkeletonRequestCard() {
+  return (
+    <div className={styles.requestCard}>
+      <div className={styles.requestHeader}>
+        <div>
+          <div
+            className={`${styles.skeleton} ${styles.skeletonRequesterName}`}
+          />
+          <div
+            className={`${styles.skeleton} ${styles.skeletonRequesterEmail}`}
+          />
+        </div>
+        <div className={`${styles.skeleton} ${styles.skeletonRequestDate}`} />
+      </div>
+      <div className={styles.changesBlock}>
+        {Array.from({ length: 2 }).map((_, i) => (
+          <div className={styles.changeRow} key={i}>
+            <div
+              className={`${styles.skeleton} ${styles.skeletonChangeLabel}`}
+            />
+            <div
+              className={`${styles.skeleton} ${styles.skeletonChangeValues}`}
+            />
+          </div>
+        ))}
+      </div>
+      <div className={styles.actionsRow}>
+        <div className={`${styles.skeleton} ${styles.skeletonActionBtnWide}`} />
+        <div className={`${styles.skeleton} ${styles.skeletonActionBtnWide}`} />
+      </div>
+    </div>
+  );
+}
+
 export default function ManageUsers() {
   const [users, setUsers] = useState([]);
   const [usersLoading, setUsersLoading] = useState(true);
@@ -228,7 +318,27 @@ export default function ManageUsers() {
           </form>
 
           {usersLoading ? (
-            <p className={styles.loadingText}>Loading users...</p>
+            <div className={styles.tableWrapper}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>User</th>
+                    <th>Email</th>
+                    <th>Department</th>
+                    <th>Office</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Joined</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <SkeletonUserRow key={i} />
+                  ))}
+                </tbody>
+              </table>
+            </div>
           ) : usersError ? (
             <p className={styles.errorText}>{usersError}</p>
           ) : users.length === 0 ? (
@@ -348,7 +458,11 @@ export default function ManageUsers() {
           </div>
 
           {requestsLoading ? (
-            <p className={styles.loadingText}>Loading requests...</p>
+            <div className={styles.requestList}>
+              {Array.from({ length: 3 }).map((_, i) => (
+                <SkeletonRequestCard key={i} />
+              ))}
+            </div>
           ) : requestsError ? (
             <p className={styles.errorText}>{requestsError}</p>
           ) : requests.length === 0 ? (

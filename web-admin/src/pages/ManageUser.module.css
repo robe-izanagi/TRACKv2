@@ -636,3 +636,89 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+/* ─── Skeleton Loading ────────────────────────────────── */
+.skeleton {
+  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 37%, #e5e7eb 63%);
+  background-size: 400% 100%;
+  animation: skeletonShimmer 1.4s ease infinite;
+  border-radius: 6px;
+  display: inline-block;
+}
+
+@keyframes skeletonShimmer {
+  0% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.skeletonAvatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.skeletonUserName {
+  width: 100px;
+  height: 13px;
+  margin-bottom: 5px;
+}
+
+.skeletonUsername {
+  width: 70px;
+  height: 11px;
+}
+
+.skeletonCell {
+  height: 12px;
+}
+
+.skeletonBadgeCell {
+  width: 60px;
+  height: 20px;
+  border-radius: 12px;
+}
+
+.skeletonActionBtn {
+  width: 55px;
+  height: 26px;
+  border-radius: 8px;
+}
+
+.skeletonRequesterName {
+  width: 130px;
+  height: 15px;
+  margin-bottom: 6px;
+}
+
+.skeletonRequesterEmail {
+  width: 170px;
+  height: 12px;
+}
+
+.skeletonRequestDate {
+  width: 60px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
+.skeletonChangeLabel {
+  width: 90px;
+  height: 11px;
+}
+
+.skeletonChangeValues {
+  width: 160px;
+  height: 12px;
+}
+
+.skeletonActionBtnWide {
+  flex: 1;
+  height: 34px;
+  border-radius: 10px;
+}
