@@ -889,6 +889,51 @@
   flex: 1;
 }
 
+/* ─── Skeleton Loading ────────────────────────────────── */
+.skeleton {
+  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 37%, #e5e7eb 63%);
+  background-size: 400% 100%;
+  animation: skeletonShimmer 1.4s ease infinite;
+  border-radius: 6px;
+  display: inline-block;
+}
+
+@keyframes skeletonShimmer {
+  0% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.skeletonSummaryValue {
+  width: 50px;
+  height: 20px;
+}
+
+.skeletonCell {
+  width: 80%;
+  height: 12px;
+}
+
+.skeletonDragIcon {
+  width: 40px;
+  height: 16px;
+}
+
+.skeletonPositionName {
+  width: 140px;
+  height: 15px;
+}
+
+.skeletonPositionBadge {
+  width: 60px;
+  height: 18px;
+  border-radius: 10px;
+}
+
 /* ─── Responsive ───────────────────────────────────────── */
 @media (max-width: 1024px) {
   .tabContent {

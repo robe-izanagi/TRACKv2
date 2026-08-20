@@ -38,6 +38,39 @@ import {
 import FeedbackModal from "../components/common/FeedbackModal";
 import styles from "./Declaration.module.css";
 
+// ── Skeleton helpers ────────────────────────────────────
+function SkeletonStatValue() {
+  return (
+    <span className={`${styles.skeleton} ${styles.skeletonSummaryValue}`} />
+  );
+}
+
+function SkeletonTableRow({ columns = 5 }) {
+  return (
+    <tr>
+      {Array.from({ length: columns }).map((_, i) => (
+        <td key={i}>
+          <div className={`${styles.skeleton} ${styles.skeletonCell}`} />
+        </td>
+      ))}
+    </tr>
+  );
+}
+
+function SkeletonPositionCard() {
+  return (
+    <div className={styles.positionCard}>
+      <div className={styles.cardDragHandle}>
+        <span className={`${styles.skeleton} ${styles.skeletonDragIcon}`} />
+      </div>
+      <div className={styles.cardContent}>
+        <div className={`${styles.skeleton} ${styles.skeletonPositionName}`} />
+        <div className={`${styles.skeleton} ${styles.skeletonPositionBadge}`} />
+      </div>
+    </div>
+  );
+}
+
 export default function Declaration() {
   const [tab, setTab] = useState("departments");
 
@@ -524,9 +557,13 @@ export default function Declaration() {
                       <FiUser size={20} />
                     </div>
                     <div className={styles.summaryInfo}>
-                      <span className={styles.summaryValue}>
-                        {departments.length}
-                      </span>
+                      {loading ? (
+                        <SkeletonStatValue />
+                      ) : (
+                        <span className={styles.summaryValue}>
+                          {departments.length}
+                        </span>
+                      )}
                       <span className={styles.summaryLabel}>
                         Total Departments
                       </span>
@@ -539,9 +576,13 @@ export default function Declaration() {
                       <FiCheck size={20} />
                     </div>
                     <div className={styles.summaryInfo}>
-                      <span className={styles.summaryValue}>
-                        {departments.filter((d) => d.is_active).length}
-                      </span>
+                      {loading ? (
+                        <SkeletonStatValue />
+                      ) : (
+                        <span className={styles.summaryValue}>
+                          {departments.filter((d) => d.is_active).length}
+                        </span>
+                      )}
                       <span className={styles.summaryLabel}>
                         Active Departments
                       </span>
@@ -554,9 +595,13 @@ export default function Declaration() {
                       <FiX size={20} />
                     </div>
                     <div className={styles.summaryInfo}>
-                      <span className={styles.summaryValue}>
-                        {departments.filter((d) => !d.is_active).length}
-                      </span>
+                      {loading ? (
+                        <SkeletonStatValue />
+                      ) : (
+                        <span className={styles.summaryValue}>
+                          {departments.filter((d) => !d.is_active).length}
+                        </span>
+                      )}
                       <span className={styles.summaryLabel}>
                         Inactive Departments
                       </span>
@@ -580,96 +625,96 @@ export default function Declaration() {
                   />
                 </div>
               </div>
-              {loading ? (
-                <p className={styles.loading}>Loading...</p>
-              ) : (
-                <div className={styles.tableWrapper}>
-                  <table className={styles.table}>
-                    <thead>
+              <div className={styles.tableWrapper}>
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th style={{ width: 60 }}>Edit</th>
+                      <th>Name</th>
+                      <th>Created By</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {loading ? (
+                      Array.from({ length: 5 }).map((_, i) => (
+                        <SkeletonTableRow key={i} columns={5} />
+                      ))
+                    ) : filteredDepartments.length === 0 ? (
                       <tr>
-                        <th style={{ width: 60 }}>Edit</th>
-                        <th>Name</th>
-                        <th>Created By</th>
-                        <th>Status</th>
-                        <th>Actions</th>
+                        <td colSpan="5" className={styles.noData}>
+                          No departments found
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {filteredDepartments.length === 0 ? (
-                        <tr>
-                          <td colSpan="5" className={styles.noData}>
-                            No departments found
+                    ) : (
+                      filteredDepartments.map((item) => (
+                        <tr key={item.id}>
+                          <td>
+                            <button
+                              onClick={() => startEditDept(item)}
+                              className={styles.editBtn}
+                            >
+                              <FiEdit size={14} />
+                            </button>
+                          </td>
+                          <td>
+                            {editDeptId === item.id ? (
+                              <div className={styles.inlineEdit}>
+                                <input
+                                  type="text"
+                                  value={editDeptName}
+                                  onChange={(e) =>
+                                    setEditDeptName(e.target.value)
+                                  }
+                                  className={styles.inlineInput}
+                                  autoFocus
+                                />
+                                <button
+                                  onClick={() => saveEditDept(item.id)}
+                                  className={styles.saveEditBtn}
+                                >
+                                  Save
+                                </button>
+                                <button
+                                  onClick={cancelEditDept}
+                                  className={styles.cancelEditBtn}
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            ) : (
+                              item.name
+                            )}
+                          </td>
+                          <td>{item.created_by_username || "—"}</td>
+                          <td>{getStatusBadge(item.is_active)}</td>
+                          <td>
+                            <button
+                              onClick={() =>
+                                toggleItem(
+                                  item.id,
+                                  item.is_active,
+                                  "department",
+                                )
+                              }
+                              className={styles.toggleBtn}
+                            >
+                              {item.is_active ? "Deactivate" : "Activate"}
+                            </button>
+                            <button
+                              onClick={() => handleDeleteDepartment(item.id)}
+                              className={styles.dangerBtn}
+                            >
+                              <FiTrash2 size={14} />
+                            </button>
                           </td>
                         </tr>
-                      ) : (
-                        filteredDepartments.map((item) => (
-                          <tr key={item.id}>
-                            <td>
-                              <button
-                                onClick={() => startEditDept(item)}
-                                className={styles.editBtn}
-                              >
-                                <FiEdit size={14} />
-                              </button>
-                            </td>
-                            <td>
-                              {editDeptId === item.id ? (
-                                <div className={styles.inlineEdit}>
-                                  <input
-                                    type="text"
-                                    value={editDeptName}
-                                    onChange={(e) =>
-                                      setEditDeptName(e.target.value)
-                                    }
-                                    className={styles.inlineInput}
-                                    autoFocus
-                                  />
-                                  <button
-                                    onClick={() => saveEditDept(item.id)}
-                                    className={styles.saveEditBtn}
-                                  >
-                                    Save
-                                  </button>
-                                  <button
-                                    onClick={cancelEditDept}
-                                    className={styles.cancelEditBtn}
-                                  >
-                                    Cancel
-                                  </button>
-                                </div>
-                              ) : (
-                                item.name
-                              )}
-                            </td>
-                            <td>{item.created_by_username || "—"}</td>
-                            <td>{getStatusBadge(item.is_active)}</td>
-                            <td>
-                              <button
-                                onClick={() =>
-                                  toggleItem(
-                                    item.id,
-                                    item.is_active,
-                                    "department",
-                                  )
-                                }
-                                className={styles.toggleBtn}
-                              >
-                                {item.is_active ? "Deactivate" : "Activate"}
-                              </button>
-                              <button
-                                onClick={() => handleDeleteDepartment(item.id)}
-                                className={styles.dangerBtn}
-                              >
-                                <FiTrash2 size={14} />
-                              </button>
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
@@ -707,9 +752,13 @@ export default function Declaration() {
                       <FiUser size={20} />
                     </div>
                     <div className={styles.summaryInfo}>
-                      <span className={styles.summaryValue}>
-                        {offices.length}
-                      </span>
+                      {loading ? (
+                        <SkeletonStatValue />
+                      ) : (
+                        <span className={styles.summaryValue}>
+                          {offices.length}
+                        </span>
+                      )}
                       <span className={styles.summaryLabel}>Total Offices</span>
                     </div>
                   </div>
@@ -720,9 +769,13 @@ export default function Declaration() {
                       <FiCheck size={20} />
                     </div>
                     <div className={styles.summaryInfo}>
-                      <span className={styles.summaryValue}>
-                        {offices.filter((o) => o.is_active).length}
-                      </span>
+                      {loading ? (
+                        <SkeletonStatValue />
+                      ) : (
+                        <span className={styles.summaryValue}>
+                          {offices.filter((o) => o.is_active).length}
+                        </span>
+                      )}
                       <span className={styles.summaryLabel}>
                         Active Offices
                       </span>
@@ -735,9 +788,13 @@ export default function Declaration() {
                       <FiX size={20} />
                     </div>
                     <div className={styles.summaryInfo}>
-                      <span className={styles.summaryValue}>
-                        {offices.filter((o) => !o.is_active).length}
-                      </span>
+                      {loading ? (
+                        <SkeletonStatValue />
+                      ) : (
+                        <span className={styles.summaryValue}>
+                          {offices.filter((o) => !o.is_active).length}
+                        </span>
+                      )}
                       <span className={styles.summaryLabel}>
                         Inactive Offices
                       </span>
@@ -761,92 +818,92 @@ export default function Declaration() {
                   />
                 </div>
               </div>
-              {loading ? (
-                <p className={styles.loading}>Loading...</p>
-              ) : (
-                <div className={styles.tableWrapper}>
-                  <table className={styles.table}>
-                    <thead>
+              <div className={styles.tableWrapper}>
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th style={{ width: 60 }}>Edit</th>
+                      <th>Name</th>
+                      <th>Created By</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {loading ? (
+                      Array.from({ length: 5 }).map((_, i) => (
+                        <SkeletonTableRow key={i} columns={5} />
+                      ))
+                    ) : filteredOffices.length === 0 ? (
                       <tr>
-                        <th style={{ width: 60 }}>Edit</th>
-                        <th>Name</th>
-                        <th>Created By</th>
-                        <th>Status</th>
-                        <th>Actions</th>
+                        <td colSpan="5" className={styles.noData}>
+                          No offices found
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {filteredOffices.length === 0 ? (
-                        <tr>
-                          <td colSpan="5" className={styles.noData}>
-                            No offices found
+                    ) : (
+                      filteredOffices.map((item) => (
+                        <tr key={item.id}>
+                          <td>
+                            <button
+                              onClick={() => startEditOffice(item)}
+                              className={styles.editBtn}
+                            >
+                              <FiEdit size={14} />
+                            </button>
+                          </td>
+                          <td>
+                            {editOfficeId === item.id ? (
+                              <div className={styles.inlineEdit}>
+                                <input
+                                  type="text"
+                                  value={editOfficeName}
+                                  onChange={(e) =>
+                                    setEditOfficeName(e.target.value)
+                                  }
+                                  className={styles.inlineInput}
+                                  autoFocus
+                                />
+                                <button
+                                  onClick={() => saveEditOffice(item.id)}
+                                  className={styles.saveEditBtn}
+                                >
+                                  Save
+                                </button>
+                                <button
+                                  onClick={cancelEditOffice}
+                                  className={styles.cancelEditBtn}
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            ) : (
+                              item.name
+                            )}
+                          </td>
+                          <td>{item.created_by_username || "—"}</td>
+                          <td>{getStatusBadge(item.is_active)}</td>
+                          <td>
+                            <button
+                              onClick={() =>
+                                toggleItem(item.id, item.is_active, "office")
+                              }
+                              className={styles.toggleBtn}
+                            >
+                              {item.is_active ? "Deactivate" : "Activate"}
+                            </button>
+                            <button
+                              onClick={() => handleDeleteOffice(item.id)}
+                              className={styles.dangerBtn}
+                            >
+                              <FiTrash2 size={14} />
+                            </button>
                           </td>
                         </tr>
-                      ) : (
-                        filteredOffices.map((item) => (
-                          <tr key={item.id}>
-                            <td>
-                              <button
-                                onClick={() => startEditOffice(item)}
-                                className={styles.editBtn}
-                              >
-                                <FiEdit size={14} />
-                              </button>
-                            </td>
-                            <td>
-                              {editOfficeId === item.id ? (
-                                <div className={styles.inlineEdit}>
-                                  <input
-                                    type="text"
-                                    value={editOfficeName}
-                                    onChange={(e) =>
-                                      setEditOfficeName(e.target.value)
-                                    }
-                                    className={styles.inlineInput}
-                                    autoFocus
-                                  />
-                                  <button
-                                    onClick={() => saveEditOffice(item.id)}
-                                    className={styles.saveEditBtn}
-                                  >
-                                    Save
-                                  </button>
-                                  <button
-                                    onClick={cancelEditOffice}
-                                    className={styles.cancelEditBtn}
-                                  >
-                                    Cancel
-                                  </button>
-                                </div>
-                              ) : (
-                                item.name
-                              )}
-                            </td>
-                            <td>{item.created_by_username || "—"}</td>
-                            <td>{getStatusBadge(item.is_active)}</td>
-                            <td>
-                              <button
-                                onClick={() =>
-                                  toggleItem(item.id, item.is_active, "office")
-                                }
-                                className={styles.toggleBtn}
-                              >
-                                {item.is_active ? "Deactivate" : "Activate"}
-                              </button>
-                              <button
-                                onClick={() => handleDeleteOffice(item.id)}
-                                className={styles.dangerBtn}
-                              >
-                                <FiTrash2 size={14} />
-                              </button>
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
@@ -884,9 +941,13 @@ export default function Declaration() {
                       <FiUser size={20} />
                     </div>
                     <div className={styles.summaryInfo}>
-                      <span className={styles.summaryValue}>
-                        {domains.length}
-                      </span>
+                      {loading ? (
+                        <SkeletonStatValue />
+                      ) : (
+                        <span className={styles.summaryValue}>
+                          {domains.length}
+                        </span>
+                      )}
                       <span className={styles.summaryLabel}>Total Domains</span>
                     </div>
                   </div>
@@ -897,9 +958,13 @@ export default function Declaration() {
                       <FiCheck size={20} />
                     </div>
                     <div className={styles.summaryInfo}>
-                      <span className={styles.summaryValue}>
-                        {domains.filter((d) => d.is_active).length}
-                      </span>
+                      {loading ? (
+                        <SkeletonStatValue />
+                      ) : (
+                        <span className={styles.summaryValue}>
+                          {domains.filter((d) => d.is_active).length}
+                        </span>
+                      )}
                       <span className={styles.summaryLabel}>
                         Active Domains
                       </span>
@@ -912,9 +977,13 @@ export default function Declaration() {
                       <FiX size={20} />
                     </div>
                     <div className={styles.summaryInfo}>
-                      <span className={styles.summaryValue}>
-                        {domains.filter((d) => !d.is_active).length}
-                      </span>
+                      {loading ? (
+                        <SkeletonStatValue />
+                      ) : (
+                        <span className={styles.summaryValue}>
+                          {domains.filter((d) => !d.is_active).length}
+                        </span>
+                      )}
                       <span className={styles.summaryLabel}>
                         Inactive Domains
                       </span>
@@ -938,92 +1007,92 @@ export default function Declaration() {
                   />
                 </div>
               </div>
-              {loading ? (
-                <p className={styles.loading}>Loading...</p>
-              ) : (
-                <div className={styles.tableWrapper}>
-                  <table className={styles.table}>
-                    <thead>
+              <div className={styles.tableWrapper}>
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th style={{ width: 60 }}>Edit</th>
+                      <th>Domain</th>
+                      <th>Created By</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {loading ? (
+                      Array.from({ length: 5 }).map((_, i) => (
+                        <SkeletonTableRow key={i} columns={5} />
+                      ))
+                    ) : filteredDomains.length === 0 ? (
                       <tr>
-                        <th style={{ width: 60 }}>Edit</th>
-                        <th>Domain</th>
-                        <th>Created By</th>
-                        <th>Status</th>
-                        <th>Actions</th>
+                        <td colSpan="5" className={styles.noData}>
+                          No domains found
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {filteredDomains.length === 0 ? (
-                        <tr>
-                          <td colSpan="5" className={styles.noData}>
-                            No domains found
+                    ) : (
+                      filteredDomains.map((item) => (
+                        <tr key={item.id}>
+                          <td>
+                            <button
+                              onClick={() => startEditDomain(item)}
+                              className={styles.editBtn}
+                            >
+                              <FiEdit size={14} />
+                            </button>
+                          </td>
+                          <td>
+                            {editDomainId === item.id ? (
+                              <div className={styles.inlineEdit}>
+                                <input
+                                  type="text"
+                                  value={editDomainValue}
+                                  onChange={(e) =>
+                                    setEditDomainValue(e.target.value)
+                                  }
+                                  className={styles.inlineInput}
+                                  autoFocus
+                                />
+                                <button
+                                  onClick={() => saveEditDomain(item.id)}
+                                  className={styles.saveEditBtn}
+                                >
+                                  Save
+                                </button>
+                                <button
+                                  onClick={cancelEditDomain}
+                                  className={styles.cancelEditBtn}
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            ) : (
+                              item.domain
+                            )}
+                          </td>
+                          <td>{item.created_by_username || "—"}</td>
+                          <td>{getStatusBadge(item.is_active)}</td>
+                          <td>
+                            <button
+                              onClick={() =>
+                                toggleItem(item.id, item.is_active, "domain")
+                              }
+                              className={styles.toggleBtn}
+                            >
+                              {item.is_active ? "Deactivate" : "Activate"}
+                            </button>
+                            <button
+                              onClick={() => handleDeleteDomain(item.id)}
+                              className={styles.dangerBtn}
+                            >
+                              <FiTrash2 size={14} />
+                            </button>
                           </td>
                         </tr>
-                      ) : (
-                        filteredDomains.map((item) => (
-                          <tr key={item.id}>
-                            <td>
-                              <button
-                                onClick={() => startEditDomain(item)}
-                                className={styles.editBtn}
-                              >
-                                <FiEdit size={14} />
-                              </button>
-                            </td>
-                            <td>
-                              {editDomainId === item.id ? (
-                                <div className={styles.inlineEdit}>
-                                  <input
-                                    type="text"
-                                    value={editDomainValue}
-                                    onChange={(e) =>
-                                      setEditDomainValue(e.target.value)
-                                    }
-                                    className={styles.inlineInput}
-                                    autoFocus
-                                  />
-                                  <button
-                                    onClick={() => saveEditDomain(item.id)}
-                                    className={styles.saveEditBtn}
-                                  >
-                                    Save
-                                  </button>
-                                  <button
-                                    onClick={cancelEditDomain}
-                                    className={styles.cancelEditBtn}
-                                  >
-                                    Cancel
-                                  </button>
-                                </div>
-                              ) : (
-                                item.domain
-                              )}
-                            </td>
-                            <td>{item.created_by_username || "—"}</td>
-                            <td>{getStatusBadge(item.is_active)}</td>
-                            <td>
-                              <button
-                                onClick={() =>
-                                  toggleItem(item.id, item.is_active, "domain")
-                                }
-                                className={styles.toggleBtn}
-                              >
-                                {item.is_active ? "Deactivate" : "Activate"}
-                              </button>
-                              <button
-                                onClick={() => handleDeleteDomain(item.id)}
-                                className={styles.dangerBtn}
-                              >
-                                <FiTrash2 size={14} />
-                              </button>
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
@@ -1042,9 +1111,13 @@ export default function Declaration() {
                 <FiPlus size={20} />
               </div>
               <div className={styles.summaryInfo}>
-                <span className={styles.summaryValue}>
-                  {positionStats.total}
-                </span>
+                {loading ? (
+                  <SkeletonStatValue />
+                ) : (
+                  <span className={styles.summaryValue}>
+                    {positionStats.total}
+                  </span>
+                )}
                 <span className={styles.summaryLabel}>Total Positions</span>
               </div>
             </div>
@@ -1056,9 +1129,13 @@ export default function Declaration() {
                 <FiCheck size={20} />
               </div>
               <div className={styles.summaryInfo}>
-                <span className={styles.summaryValue}>
-                  {positionStats.active}
-                </span>
+                {loading ? (
+                  <SkeletonStatValue />
+                ) : (
+                  <span className={styles.summaryValue}>
+                    {positionStats.active}
+                  </span>
+                )}
                 <span className={styles.summaryLabel}>Active Positions</span>
               </div>
             </div>
@@ -1070,9 +1147,13 @@ export default function Declaration() {
                 <FiX size={20} />
               </div>
               <div className={styles.summaryInfo}>
-                <span className={styles.summaryValue}>
-                  {positionStats.inactive}
-                </span>
+                {loading ? (
+                  <SkeletonStatValue />
+                ) : (
+                  <span className={styles.summaryValue}>
+                    {positionStats.inactive}
+                  </span>
+                )}
                 <span className={styles.summaryLabel}>Inactive Positions</span>
               </div>
             </div>
@@ -1084,9 +1165,13 @@ export default function Declaration() {
                 <FiLock size={20} />
               </div>
               <div className={styles.summaryInfo}>
-                <span className={styles.summaryValue}>
-                  {positionStats.taken}
-                </span>
+                {loading ? (
+                  <SkeletonStatValue />
+                ) : (
+                  <span className={styles.summaryValue}>
+                    {positionStats.taken}
+                  </span>
+                )}
                 <span className={styles.summaryLabel}>Taken Positions</span>
               </div>
             </div>
@@ -1139,7 +1224,11 @@ export default function Declaration() {
                 </div>
               </div>
               {loading ? (
-                <p className={styles.loading}>Loading...</p>
+                <div className={styles.positionList}>
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <SkeletonPositionCard key={i} />
+                  ))}
+                </div>
               ) : (
                 <DragDropContext onDragEnd={handleDragEnd}>
                   <Droppable droppableId="positions">
@@ -1289,40 +1378,40 @@ export default function Declaration() {
           <div className={styles.rightPanelPositions}>
             <div className={styles.card}>
               <h3>Current Assignments</h3>
-              {loading ? (
-                <p className={styles.loading}>Loading...</p>
-              ) : (
-                <div className={styles.tableWrapper}>
-                  <table className={styles.table}>
-                    <thead>
+              <div className={styles.tableWrapper}>
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th>Position</th>
+                      <th>Email</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {loading ? (
+                      Array.from({ length: 4 }).map((_, i) => (
+                        <SkeletonTableRow key={i} columns={3} />
+                      ))
+                    ) : assignments.length === 0 ? (
                       <tr>
-                        <th>Position</th>
-                        <th>Email</th>
-                        <th>Status</th>
+                        <td colSpan="4" className={styles.noData}>
+                          No active assignments
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {assignments.length === 0 ? (
-                        <tr>
-                          <td colSpan="4" className={styles.noData}>
-                            No active assignments
+                    ) : (
+                      assignments.map((ass) => (
+                        <tr key={ass.id}>
+                          <td>{ass.Position?.name || "—"}</td>
+                          <td>{ass.User?.email || "—"}</td>
+                          <td>
+                            <span className={styles.badgeActive}>Active</span>
                           </td>
                         </tr>
-                      ) : (
-                        assignments.map((ass) => (
-                          <tr key={ass.id}>
-                            <td>{ass.Position?.name || "—"}</td>
-                            <td>{ass.User?.email || "—"}</td>
-                            <td>
-                              <span className={styles.badgeActive}>Active</span>
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
