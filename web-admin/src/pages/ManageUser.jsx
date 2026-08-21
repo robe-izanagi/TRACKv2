@@ -224,6 +224,14 @@ export default function ManageUsers() {
     return () => clearTimeout(timer);
   }, [reqStatus, fetchRequests]);
 
+  // ── Single top-level refresh: reloads both users and requests ──
+  const handleRefreshAll = () => {
+    fetchUsers(search);
+    fetchRequests(reqStatus);
+  };
+
+  const isRefreshing = usersLoading || requestsLoading;
+
   const handleApprove = async (id) => {
     if (
       !window.confirm(
@@ -295,14 +303,22 @@ export default function ManageUsers() {
             Manage Users, block, delete, and review profile change requests.
           </p>
         </div>
+        <button
+          className={styles.refreshBtn}
+          onClick={handleRefreshAll}
+          disabled={isRefreshing}
+        >
+          <FiRefreshCw
+            size={16}
+            className={isRefreshing ? styles.spinning : ""}
+          />
+          {isRefreshing ? "Refreshing..." : "Refresh"}
+        </button>
       </div>
       <div className={styles.pageGrid}>
         <div className={styles.sectionBlock}>
           <div className={styles.sectionHeaderRow}>
             <h2 className={styles.sectionTitle}>User Records</h2>
-            <button className={styles.refreshBtn}>
-              <FiRefreshCw size={16} /> Refresh
-            </button>
           </div>
           <form onSubmit={handleSearchSubmit} className={styles.searchForm}>
             <input
@@ -440,9 +456,6 @@ export default function ManageUsers() {
         <div className={styles.sectionBlock}>
           <div className={styles.sectionHeaderRow}>
             <h2 className={styles.sectionTitle}>Profile Change Requests</h2>
-            <button className={styles.refreshBtn}>
-              <FiRefreshCw size={16} /> Refresh
-            </button>
           </div>
 
           <div className={styles.subTabs}>
