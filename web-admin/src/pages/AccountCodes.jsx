@@ -624,7 +624,7 @@ export default function AccountCodes() {
                 />
                 <select
                   className={styles.select}
-                  value={form.role_id}
+                  value={form.role_id} 
                   onChange={(e) =>
                     setForm({ ...form, role_id: e.target.value })
                   }
@@ -633,7 +633,7 @@ export default function AccountCodes() {
                   <option value="">-- Select Role --</option>
                   {roles.map((r) => (
                     <option key={r.id} value={r.id}>
-                      {r.name}
+                      {r.name == "officials"? "heads" : r.name} 
                     </option>
                   ))}
                 </select>
@@ -738,7 +738,7 @@ export default function AccountCodes() {
                       <td>{code.is_admin ? "Admin" : "User"}</td>
                       <td>{code.department || "—"}</td>
                       <td>{code.office || "—"}</td>
-                      <td>{code.role || "—"}</td>
+                      <td>{code.role == "officials"? "heads" : code.role || "—"}</td>
                       <td>{code.position || "—"}</td>
                       <td>
                         {code.source_type === "admin_generated"
@@ -846,7 +846,7 @@ export default function AccountCodes() {
                       <div className={styles.detailRow}>
                         <span className={styles.detailLabel}>Role:</span>
                         <span className={styles.detailValue}>
-                          {req.role_name || "—"}
+                          {req.role_name == "officials"? "heads" : req.role_name || "—"}
                         </span>
                       </div>
                       <div className={styles.detailRow}>
