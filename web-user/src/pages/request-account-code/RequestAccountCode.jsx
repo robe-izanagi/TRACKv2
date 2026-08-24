@@ -275,7 +275,7 @@ export default function RequestAccountCode() {
                 <option value="">Select Role</option>
                 {roles.map((r) => (
                   <option key={r.id} value={r.id}>
-                    {r.name}
+                    {r.name=="officials"?"heads":r.name}
                   </option>
                 ))}
               </select>

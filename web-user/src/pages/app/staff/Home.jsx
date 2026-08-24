@@ -1141,7 +1141,7 @@ function Home() {
           <p>
             {[displayUser.position, displayUser.office, displayUser.department]
               .filter(Boolean)
-              .join(" | ") || "No additional details"}
+              .join(" | ") || ""}
           </p>
         )}
       </div>

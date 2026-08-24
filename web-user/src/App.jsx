@@ -31,7 +31,9 @@ import Tasks from "./pages/app/tasks/Tasks";
 const RoleRedirect = () => {
   const { user } = useAuth();
   const role = user?.role || "faculty";
-  return <Navigate to={`/${role}/home`} replace />;
+  return (
+    <Navigate to={`/${role == "officials" ? "heads" : role}/home`} replace />
+  );
 };
 
 export default function App() {
@@ -57,7 +59,8 @@ export default function App() {
             }
           >
             <Route index element={<RoleRedirect />} />
-            <Route path="/officials/home" element={<OfficialsHome />} />
+            {/* <Route path="/officials/home" element={<OfficialsHome />} /> */}
+            <Route path="/heads/home" element={<OfficialsHome />} />
             <Route path="/staff/home" element={<StaffHome />} />
             <Route path="/faculty/home" element={<FacultyHome />} />
             <Route path="/calendar" element={<CalendarView />} />

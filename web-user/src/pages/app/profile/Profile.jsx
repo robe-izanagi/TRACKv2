@@ -700,7 +700,7 @@ export default function Profile() {
 
   const displayUser = profile || user || {};
   const roleLine = [
-    displayUser.role,
+    displayUser.role=="officials"?"heads":displayUser.role,
     displayUser.department,
     displayUser.office,
     displayUser.position,
@@ -847,7 +847,7 @@ export default function Profile() {
           </p>
         </div>
 
-        {venuesLoading ? (
+        {/* {venuesLoading ? (
           <SkeletonBar h={40} r={12} />
         ) : venues.length === 0 ? (
           <div className={styles.emptyNotice}>
@@ -1025,10 +1025,10 @@ export default function Profile() {
               </>
             )}
           </>
-        )}
+        )} */}
 
         {/* ── Venue Pie Chart ── */}
-        {venuePieLoading ? (
+        {/* {venuePieLoading ? (
           <CardSkeleton chartHeight={220} />
         ) : (
           <div className={styles.analyticsCard}>
@@ -1094,7 +1094,7 @@ export default function Profile() {
               </>
             )}
           </div>
-        )}
+        )} */}
 
         {/* ── Task Velocity ── */}
         {taskStatsLoading ? (
@@ -1606,7 +1606,7 @@ export default function Profile() {
                       <div className={styles.nestedFormGroup}>
                         <p className={styles.currentValueNote}>
                           Current role:{" "}
-                          <strong>{profile?.role || "None"}</strong>
+                          <strong>{profile?.role=="officials"?"heads":profile?.role || "None"}</strong>
                         </p>
                         <select
                           value={selectedRole}
@@ -1616,7 +1616,7 @@ export default function Profile() {
                           <option value="">Choose a role</option>
                           {roles.map((role) => (
                             <option key={role.id} value={role.id}>
-                              {role.name}
+                              {role.name=="officials"?"heads":role.name}
                             </option>
                           ))}
                         </select>

@@ -30,7 +30,7 @@ export default function AuthCallback() {
     getMe()
       .then(res => {
         if (res.ok) {
-          const role = res.user.role || 'faculty';
+          const role = res.user.role=="officials"?"heads":res.user.role || 'faculty';
           const rolePath = `/${role}/home`;
           navigate(rolePath, { replace: true });
         } else {

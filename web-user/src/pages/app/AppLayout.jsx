@@ -82,7 +82,7 @@ export default function AppLayout() {
   if (!isFocused) {
     if (role === "staff") {
       bottomItems.push(
-        { label: "Home", path: `/${role}/home`, icon: <FiHome size={20} /> },
+        { label: "Home", path: `/${role=="officials"?"heads":role}/home`, icon: <FiHome size={20} /> },
         { label: "Venues", path: "/venues", icon: <FiMapPin size={20} /> },
         {
           label: "Calendar",
@@ -94,7 +94,11 @@ export default function AppLayout() {
       );
     } else {
       bottomItems.push(
-        { label: "Home", path: `/${role}/home`, icon: <FiHome size={20} /> },
+        {
+          label: "Home",
+          path: `/${role=="officials"?"heads":role}/home`,
+          icon: <FiHome size={20} />,
+        },
         { label: "Events", path: "/events", icon: <FiList size={20} /> },
         { label: "Tasks", path: "/tasks", icon: <FiCheckSquare size={20} /> },
         {
