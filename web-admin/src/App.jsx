@@ -20,17 +20,17 @@ export default function App() {
           <Route
             path="/*"
             element={
-              // <RequireAuth>
-              <Layout>
-                <Routes>
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/account-codes" element={<AccountCodes />} />
-                  <Route path="/declaration" element={<Declaration />} />
-                  <Route path="/users" element={<ManageUsers />} />
-                  <Route path="*" element={<Navigate to="/login" />} />
-                </Routes>
-              </Layout>
-              // </RequireAuth>
+              <RequireAuth>
+                <Layout>
+                  <Routes>
+                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/account-codes" element={<AccountCodes />} />
+                    <Route path="/declaration" element={<Declaration />} />
+                    <Route path="/users" element={<ManageUsers />} />
+                    <Route path="*" element={<Navigate to="/login" />} />
+                  </Routes>
+                </Layout>
+              </RequireAuth>
             }
           />
         </Routes>
