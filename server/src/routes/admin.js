@@ -39,6 +39,7 @@ const {
 } = require('../controllers/positionAssignmentsController');
 
 const { getAllUsers, toggleBlockUser, deleteUser } = require('../controllers/adminUserController');
+const { getFeedbackSummary, getTextMining, listFeedback } = require('../controllers/feedbackController');
 
 const {
   listChangeRequests,
@@ -103,5 +104,11 @@ router.delete('/users/:id', requireAdmin, deleteUser);
 router.get('/profile-change-requests', requireAdmin, listChangeRequests);
 router.put('/profile-change-requests/:id/approve', requireAdmin, approveChangeRequest);
 router.put('/profile-change-requests/:id/reject', requireAdmin, rejectChangeRequest);
+
+
+// ─── Feedback (Text Mining Dashboard) ───────────────
+router.get('/feedback/summary', requireAdmin, getFeedbackSummary);
+router.get('/feedback/text-mining', requireAdmin, getTextMining);
+router.get('/feedback', requireAdmin, listFeedback);
 
 module.exports = router;
