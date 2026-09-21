@@ -16,11 +16,14 @@ import venueRoutes from './routes/venues';
 import eventRoutes from './routes/events';
 import attachmentRoutes from './routes/attachments';
 import notificationsRoutes from './routes/notifications';
-import conflictRoutes from './routes/conflict'; 
-import analyticsRoutes from './routes/analytics'; 
+import conflictRoutes from './routes/conflict';
+import analyticsRoutes from './routes/analytics';
+import feedbackRoutes from './routes/feedback';
+
 const taskRoutes = require('./routes/tasks');
 
 const app: Express = express();
+
 require('./services/emailQueueProcessor').start();
 
 // ─── Middleware ───
@@ -46,31 +49,41 @@ app.use('/api/events', conflictRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/profile', require('./routes/profile'));
+app.use('/api/feedback', feedbackRoutes);
 
 // ─── Static files ───
 const uploadsPath = path.join(__dirname, '..', 'uploads');
+
 if (!fs.existsSync(uploadsPath)) {
   fs.mkdirSync(uploadsPath, { recursive: true });
 }
+
 app.use('/uploads', express.static(uploadsPath));
 
 const publicPath = path.join(__dirname, '..', 'public');
+
 if (!fs.existsSync(publicPath)) {
   fs.mkdirSync(publicPath, { recursive: true });
 }
+
 app.use('/data', express.static(publicPath));
 
 // ─── Database initialization ───
 async function initializeDatabase(): Promise<void> {
   try {
     await sequelize.authenticate();
+
     console.log('Connected to TiDB Cloud');
 
     if (process.env.RUN_SYNC === 'true') {
       await sequelize.sync({ alter: true });
+
       // await sequelize.sync({ force: true });
+
       console.log('Tables synced');
+
       await seed();
+
       console.log('Seed complete');
     } else {
       await models.Location.sync();
@@ -83,9 +96,15 @@ async function initializeDatabase(): Promise<void> {
 initializeDatabase();
 
 // ─── Error handling middleware ───
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-  console.error('Unhandled error:', err);
-  res.status(500).json({ ok: false, message: 'Internal server error' });
-});
+app.use(
+  (err: Error, req: Request, res: Response, next: NextFunction) => {
+    console.error('Unhandled error:', err);
+
+    res.status(500).json({
+      ok: false,
+      message: 'Internal server error.',
+    });
+  }
+);
 
 export default app;
