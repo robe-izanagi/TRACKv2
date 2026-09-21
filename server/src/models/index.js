@@ -45,6 +45,7 @@ const FeedbackRating = require('./feedback_ratings');
 const FeedbackKeyword = require('./feedback_keywords');
 const Notification = require('./notifications');
 const EmailQueue = require('./email_queue');
+const UserFeedback = require('./user_feedback');
 
 // =====================
 // ASSOCIATIONS
@@ -196,5 +197,6 @@ module.exports = {
   FeedbackKeyword,
   Notification,
   VenueConflictLog,
-  EmailQueue
+  EmailQueue,
+  UserFeedback
 };
