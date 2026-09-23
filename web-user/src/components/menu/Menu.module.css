@@ -311,10 +311,13 @@
   gap: 12px;
 }
 
+/* home content — fills height so the feedback card sticks to the bottom */
 .homeMenuContent {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  flex: 1 1 auto;
+  min-height: 100%;
 }
 
 .homeQuickLinks {
@@ -350,4 +353,117 @@
 
 .homeLinkBtn:hover {
   opacity: 0.9;
+}
+
+/* ── Feedback button (bottom of home menu) ── */
+.feedbackCard {
+  margin-top: auto;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #f1dede;
+  border-radius: 14px;
+  background: #ffffff;
+  cursor: pointer;
+  text-align: left;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(128, 0, 0, 0.04);
+  transition: transform 0.18s ease, box-shadow 0.22s ease,
+    border-color 0.22s ease, background 0.22s ease;
+}
+
+.feedbackCard:hover {
+  transform: translateY(-1px);
+  border-color: #e8c9c9;
+  background: #fffafa;
+  box-shadow: 0 4px 14px rgba(128, 0, 0, 0.1);
+}
+
+.feedbackCard:active {
+  transform: scale(0.985);
+}
+
+.feedbackBubble {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--primary-color, #800000);
+  color: #fff;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(128, 0, 0, 0.22);
+}
+
+.feedbackBubble svg {
+  color: #fff;
+}
+
+.feedbackDot {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #fbbf24;
+  border: 2px solid #fff;
+  animation: feedbackPulse 1.8s ease-in-out infinite;
+}
+
+@keyframes feedbackPulse {
+
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.55);
+  }
+
+  50% {
+    transform: scale(1.08);
+    box-shadow: 0 0 0 6px rgba(251, 191, 36, 0);
+  }
+}
+
+.feedbackTextWrap {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  gap: 1px;
+}
+
+.feedbackTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1.2;
+  letter-spacing: -0.1px;
+}
+
+.feedbackSubtitle {
+  font-size: 12px;
+  color: #8a5a5a;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.feedbackArrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary-color, #800000);
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.feedbackCard:hover .feedbackArrow {
+  transform: translateX(3px);
 }
