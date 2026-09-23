@@ -840,12 +840,12 @@ export default function Profile() {
         </div>
 
         {/* ── Conflict Forecast ── */}
-        <div className={styles.sectionHeaderBlock}>
+        {/* <div className={styles.sectionHeaderBlock}>
           <h3 className={styles.analyticsSectionTitle}>Conflict Forecast</h3>
           <p className={styles.analyticsSectionSubtitle}>
             Intelligent room allocation projections
           </p>
-        </div>
+        </div> */}
 
         {/* {venuesLoading ? (
           <SkeletonBar h={40} r={12} />
