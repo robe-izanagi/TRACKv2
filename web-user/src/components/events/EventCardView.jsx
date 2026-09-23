@@ -11,7 +11,6 @@ import {
   FiCheckCircle,
   FiXCircle,
   FiClock,
-  FiUsers,
   FiLink,
   FiCopy,
   FiAlertTriangle,
@@ -228,7 +227,6 @@ export default function EventCardView({ isOpen, onClose, event }) {
             </div>
 
             <div className={styles.container8}>
-              {/* WHEN & WHERE */}
               <div className={styles.whenWhereGroup}>
                 <div className={styles.sectionHeader}>
                   <EventNoteOutlinedIcon fontSize="small" />
@@ -274,7 +272,6 @@ export default function EventCardView({ isOpen, onClose, event }) {
                   )}
               </div>
 
-              {/* ORGANIZER */}
               <div className={styles.organizerSection}>
                 <div className={styles.sectionHeader}>
                   <PersonOutlinedIcon fontSize="small" />
@@ -343,7 +340,6 @@ export default function EventCardView({ isOpen, onClose, event }) {
                 </div>
               </div>
 
-              {/* AUDIENCE */}
               <div className={styles.audienceSection}>
                 <div className={styles.sectionHeader}>
                   <GroupsOutlinedIcon fontSize="small" />
@@ -383,7 +379,6 @@ export default function EventCardView({ isOpen, onClose, event }) {
                 </div>
               </div>
 
-              {/* ATTACHMENTS */}
               {attachments.length > 0 &&
                 event.viewerResponse === "accepted" && (
                   <div className={styles.attachmentsSection}>
@@ -397,7 +392,7 @@ export default function EventCardView({ isOpen, onClose, event }) {
                       {attachments.map((file) => (
                         <a
                           key={file.id}
-                          href={file.file_url}
+                          href={`/attachments/download/${file.id}`}
                           download
                           target="_blank"
                           rel="noreferrer"
