@@ -1,0 +1,263 @@
+.container {
+  padding: 24px;
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 4px;
+}
+
+.subtitle {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0 0 20px;
+}
+
+.card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  margin-bottom: 20px;
+}
+
+.cardTitle {
+  font-size: 17px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 14px;
+}
+
+.loadingText,
+.emptyState {
+  color: #9ca3af;
+  padding: 20px 0;
+  text-align: center;
+}
+
+.miningMeta {
+  font-size: 12px;
+  color: #9ca3af;
+  margin: -8px 0 16px;
+}
+
+.subheading {
+  font-size: 13px;
+  font-weight: 700;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin: 18px 0 10px;
+}
+
+.keywordList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.keywordRow {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.keywordTop {
+  display: flex;
+  justify-content: space-between;
+}
+
+.keywordWord {
+  font-weight: 700;
+  color: #111827;
+  text-transform: capitalize;
+}
+
+.keywordCount {
+  font-weight: 700;
+  color: #800000;
+}
+
+.keywordBarTrack {
+  height: 6px;
+  background: #f3f4f6;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.keywordBarFill {
+  height: 100%;
+  background: linear-gradient(90deg, #800000, #b91c1c);
+}
+
+.keywordRatings {
+  display: flex;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.ratingTagGood,
+.ratingTagNeutral,
+.ratingTagBad {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.ratingTagGood {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.ratingTagNeutral {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.ratingTagBad {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.phraseList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.phraseItem {
+  display: flex;
+  justify-content: space-between;
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+}
+
+.phraseText {
+  color: #374151;
+  font-style: italic;
+}
+
+.phraseCount {
+  color: #800000;
+  font-weight: 700;
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.summaryBox {
+  background: #f9fafb;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.summaryGood {
+  background: #d1fae5;
+}
+
+.summaryNeutral {
+  background: #fef3c7;
+}
+
+.summaryBad {
+  background: #fee2e2;
+}
+
+.summaryValue {
+  font-size: 24px;
+  font-weight: 800;
+  color: #111827;
+}
+
+.summaryLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.filterTabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.filterTab {
+  padding: 6px 16px;
+  border-radius: 20px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7280;
+  cursor: pointer;
+}
+
+.filterTabActive {
+  background: #800000;
+  color: #fff;
+  border-color: #800000;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+
+.table thead th {
+  text-align: left;
+  padding: 10px 14px;
+  background: #f9fafb;
+  color: #6b7280;
+  font-size: 11.5px;
+  text-transform: uppercase;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.table tbody td {
+  padding: 10px 14px;
+  border-bottom: 1px solid #f3f4f6;
+  color: #374151;
+}
+
+.ratingBadge {
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.badge_good {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.badge_neutral {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.badge_not_good {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.dim {
+  color: #d1d5db;
+}
