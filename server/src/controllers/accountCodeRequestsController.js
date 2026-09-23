@@ -1,4 +1,4 @@
-const { AccountCodeRequest, Department, Office, Role, Position, Admin, User } = require('../models');
+const { AccountCodeRequest, Department, Office, Role, Position, Admin, User, PositionAssignment } = require('../models');
 const { Op } = require('sequelize');
 const { v4: uuidv4 } = require('uuid');
 const { generateUniqueCode } = require('../utils/codeGenerator');
