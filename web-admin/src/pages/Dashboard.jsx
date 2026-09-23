@@ -545,101 +545,92 @@ export default function Dashboard() {
 
       {/* Tables Row */}
       <div className={styles.tablesRow}>
-        {/* Recent Users */}
-        <div className={styles.tableCard}>
-          <div className={styles.tableHeader}>
-            <h3>Recently Registered Users</h3>
+        {/* Recently Registered Users */}
+        <div className={styles.listCard}>
+          <div className={styles.listHeader}>
+            <div>
+              <h3>Recently Registered Users</h3>
+              <p>{recentUsers.length} latest registrations</p>
+            </div>
+
+            <div className={styles.headerBadge}>
+              <FiUsers />
+            </div>
           </div>
-          <div className={styles.tableWrapper}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentUsers.length === 0 ? (
-                  <tr>
-                    <td colSpan="3" className={styles.noData}>
-                      No users found
-                    </td>
-                  </tr>
-                ) : (
-                  recentUsers.map((u) => (
-                    <tr key={u.id}>
-                      <td className={styles.userCell}>
-                        <span className={styles.userAvatar}>
-                          {u.full_name?.charAt(0) ||
-                            u.username?.charAt(0) ||
-                            "?"}
-                        </span>
-                        <span className={styles.nameCell}>
-                          {u.full_name || u.username || "—"}
-                        </span>
-                      </td>
-                      <td>
-                        <span className={styles.emailCell}>{u.email}</span>
-                      </td>
-                      <td>{getStatusBadge(u.status)}</td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+
+          <div className={styles.listBody}>
+            {recentUsers.length === 0 ? (
+              <div className={styles.emptyState}>No users found</div>
+            ) : (
+              recentUsers.map((u) => (
+                <div key={u.id} className={styles.listRow}>
+                  <div className={styles.rowLeft}>
+                    <div className={styles.avatarLarge}>
+                      {(u.full_name || u.username || "?")
+                        .charAt(0)
+                        .toUpperCase()}
+                    </div>
+
+                    <div className={styles.rowInfo}>
+                      <h4>{u.full_name || u.username || "—"}</h4>
+                      <p>{u.email}</p>
+                    </div>
+                  </div>
+
+                  <div>{getStatusBadge(u.status)}</div>
+                </div>
+              ))
+            )}
           </div>
-          {/* ─── View All Link ─── */}
+
           <div className={styles.tableFooter}>
-            <Link to="/users" className={styles.viewAllLink}>
-              View All Users <FiArrowRight size={14} />
+            <Link to="/users" className={styles.viewAllButton}>
+              View All Users
+              <FiArrowRight />
             </Link>
           </div>
         </div>
 
-        {/* Pending Account Requests */}
-        <div className={styles.tableCard}>
-          <div className={styles.tableHeader}>
-            <h3>Pending Account Code Requests</h3>
+        {/* Pending Account Code Requests */}
+        <div className={styles.listCard}>
+          <div className={styles.listHeader}>
+            <div>
+              <h3>Pending Account Code Requests</h3>
+              <p>{recentRequests.length} waiting for approval</p>
+            </div>
+
+            <div className={styles.headerBadge}>
+              <FiMail />
+            </div>
           </div>
-          <div className={styles.tableWrapper}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentRequests.length === 0 ? (
-                  <tr>
-                    <td colSpan="3" className={styles.noData}>
-                      No pending requests
-                    </td>
-                  </tr>
-                ) : (
-                  recentRequests.map((r) => (
-                    <tr key={r.id}>
-                      <td>
-                        <span className={styles.nameCell}>
-                          {r.full_name || "—"}
-                        </span>
-                      </td>
-                      <td>
-                        <span className={styles.emailCell}>{r.email}</span>
-                      </td>
-                      <td>{getRequestBadge(r.status)}</td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+
+          <div className={styles.listBody}>
+            {recentRequests.length === 0 ? (
+              <div className={styles.emptyState}>No pending requests</div>
+            ) : (
+              recentRequests.map((r) => (
+                <div key={r.id} className={styles.listRow}>
+                  <div className={styles.rowLeft}>
+                    <div className={styles.avatarLarge}>
+                      {(r.full_name || "?").charAt(0).toUpperCase()}
+                    </div>
+
+                    <div className={styles.rowInfo}>
+                      <h4>{r.full_name || "—"}</h4>
+                      <p>{r.email}</p>
+                    </div>
+                  </div>
+
+                  <div>{getRequestBadge(r.status)}</div>
+                </div>
+              ))
+            )}
           </div>
-          {/* ─── View All Link ─── */}
+
           <div className={styles.tableFooter}>
-            <Link to="/account-codes" className={styles.viewAllLink}>
-              View All Requests <FiArrowRight size={14} />
+            <Link to="/account-codes" className={styles.viewAllButton}>
+              View All Requests
+              <FiArrowRight />
             </Link>
           </div>
         </div>
