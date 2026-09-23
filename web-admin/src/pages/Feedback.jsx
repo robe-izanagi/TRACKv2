@@ -154,32 +154,48 @@ export default function Feedback() {
           ) : (
             <div className={styles.summaryGrid}>
               <div className={`${styles.summaryBox} ${styles.summaryGood}`}>
-                <FiSmile className={styles.summaryIcon} />
-                <span className={styles.summaryValue}>
-                  {summary?.good ?? 0}
+                <span className={styles.summaryIconBox}>
+                  <FiSmile className={styles.summaryIcon} />
                 </span>
-                <span className={styles.summaryLabel}>Good</span>
+                <div className={styles.summaryText}>
+                  <span className={styles.summaryValue}>
+                    {summary?.good ?? 0}
+                  </span>
+                  <span className={styles.summaryLabel}>Good</span>
+                </div>
               </div>
               <div className={`${styles.summaryBox} ${styles.summaryNeutral}`}>
-                <FiMeh className={styles.summaryIcon} />
-                <span className={styles.summaryValue}>
-                  {summary?.neutral ?? 0}
+                <span className={styles.summaryIconBox}>
+                  <FiMeh className={styles.summaryIcon} />
                 </span>
-                <span className={styles.summaryLabel}>Neutral</span>
+                <div className={styles.summaryText}>
+                  <span className={styles.summaryValue}>
+                    {summary?.neutral ?? 0}
+                  </span>
+                  <span className={styles.summaryLabel}>Neutral</span>
+                </div>
               </div>
               <div className={`${styles.summaryBox} ${styles.summaryBad}`}>
-                <FiFrown className={styles.summaryIcon} />
-                <span className={styles.summaryValue}>
-                  {summary?.not_good ?? 0}
+                <span className={styles.summaryIconBox}>
+                  <FiFrown className={styles.summaryIcon} />
                 </span>
-                <span className={styles.summaryLabel}>Not Good</span>
+                <div className={styles.summaryText}>
+                  <span className={styles.summaryValue}>
+                    {summary?.not_good ?? 0}
+                  </span>
+                  <span className={styles.summaryLabel}>Not Good</span>
+                </div>
               </div>
               <div className={styles.summaryBox}>
-                <FiBarChart2 className={styles.summaryIcon} />
-                <span className={styles.summaryValue}>
-                  {summary?.total ?? 0}
+                <span className={styles.summaryIconBox}>
+                  <FiBarChart2 className={styles.summaryIcon} />
                 </span>
-                <span className={styles.summaryLabel}>Total</span>
+                <div className={styles.summaryText}>
+                  <span className={styles.summaryValue}>
+                    {summary?.total ?? 0}
+                  </span>
+                  <span className={styles.summaryLabel}>Total</span>
+                </div>
               </div>
             </div>
           )}

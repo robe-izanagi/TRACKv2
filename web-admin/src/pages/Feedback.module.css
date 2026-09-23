@@ -241,37 +241,54 @@
 }
 
 .summaryBox {
-  background: #f9fafb;
-  border-radius: 12px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
   padding: 16px;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 14px;
 }
 
-.summaryGood {
-  background: #d1fae5;
+.summaryIconBox {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #eff6ff;
 }
 
-.summaryNeutral {
-  background: #fef3c7;
+.summaryGood .summaryIconBox {
+  background: #ecfdf5;
 }
 
-.summaryBad {
-  background: #fee2e2;
+.summaryNeutral .summaryIconBox {
+  background: #fffbeb;
+}
+
+.summaryBad .summaryIconBox {
+  background: #fef2f2;
+}
+
+.summaryText {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
 }
 
 .summaryValue {
-  font-size: 26px;
+  font-size: 22px;
   font-weight: 800;
   color: #111827;
-  line-height: 1;
+  line-height: 1.2;
 }
 
 .summaryIcon {
   font-size: 20px;
-  color: #9ca3af;
+  color: #2563eb;
 }
 
 .summaryGood .summaryIcon {
@@ -287,8 +304,8 @@
 }
 
 .summaryLabel {
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 500;
   color: #6b7280;
 }
 
