@@ -166,54 +166,249 @@ const EmptyState = ({ icon: Icon, title, subtitle }) => (
   </div>
 );
 
+// ── Real spinning loader (replaces the plain "Loading..." text) ──
+const Spinner = ({ size = 14, light = false, className = "" }) => (
+  <span
+    role="status"
+    aria-label="Loading"
+    className={`${styles.spinner} ${light ? styles.spinnerLight : ""} ${className}`}
+    style={{ width: size, height: size }}
+  />
+);
+
 // ── Skeleton building blocks — shimmer placeholders shaped like the real
 // content, shown instead of the word "Loading...". ──
-const SkeletonBar = ({ w = "100%", h = 14, r = 8, style }) => (
+const SkeletonBar = ({
+  w = "100%",
+  h = 14,
+  r = 8,
+  style,
+  tone = "default",
+}) => (
   <div
-    className={styles.skeleton}
+    className={`${styles.skeleton} ${tone === "light" ? styles.skeletonLight : ""}`}
     style={{ width: w, height: h, borderRadius: r, ...style }}
   />
 );
 
-const StatsSkeleton = () => (
-  <div className={styles.statsGridWrapper}>
-    <SkeletonBar h={72} r={12} />
-    <div className={styles.twoColGrid}>
-      <SkeletonBar h={64} r={12} />
-      <SkeletonBar h={64} r={12} />
+// Mirrors a single .statItem (icon box + label + number)
+const StatItemSkeleton = () => (
+  <div className={styles.statItem}>
+    <SkeletonBar w={40} h={40} r={11} style={{ flexShrink: 0 }} />
+    <div className={styles.statTextWrap} style={{ width: "100%" }}>
+      <SkeletonBar w="65%" h={9} />
+      <SkeletonBar w={40} h={18} style={{ marginTop: 6 }} />
     </div>
-    <div className={styles.twoColGrid}>
-      <SkeletonBar h={64} r={12} />
-      <SkeletonBar h={64} r={12} />
-    </div>
-    <SkeletonBar h={64} r={12} />
   </div>
 );
 
+// Mirrors the whole Quick Stats block — either the event layout
+// (primary card + Responses / Action Needed / Post Event sections)
+// or the simple 3-card task layout — depending on the active filter.
+const StatsSkeleton = ({ type }) => {
+  if (type === "task") {
+    return (
+      <div className={styles.statsGrid}>
+        <StatItemSkeleton />
+        <StatItemSkeleton />
+        <StatItemSkeleton />
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.statsGridWrapper}>
+      <div className={`${styles.statItem} ${styles.statPrimary}`}>
+        <SkeletonBar
+          w={40}
+          h={40}
+          r={11}
+          tone="light"
+          style={{ flexShrink: 0 }}
+        />
+        <div className={styles.statTextWrap} style={{ width: "100%" }}>
+          <SkeletonBar w={120} h={9} tone="light" />
+          <SkeletonBar w={64} h={22} tone="light" style={{ marginTop: 8 }} />
+        </div>
+        <SkeletonBar
+          w={34}
+          h={34}
+          r={10}
+          tone="light"
+          style={{ flexShrink: 0 }}
+        />
+      </div>
+
+      <div className={styles.sectionContainer}>
+        <SkeletonBar w={86} h={10} style={{ marginBottom: 10 }} />
+        <div className={styles.twoColGrid}>
+          <StatItemSkeleton />
+          <StatItemSkeleton />
+        </div>
+      </div>
+
+      <div className={styles.sectionContainer}>
+        <SkeletonBar w={112} h={10} style={{ marginBottom: 10 }} />
+        <div className={styles.twoColGrid}>
+          <StatItemSkeleton />
+          <StatItemSkeleton />
+        </div>
+      </div>
+
+      <div className={styles.sectionContainer}>
+        <SkeletonBar w={94} h={10} style={{ marginBottom: 10 }} />
+        <div className={styles.oneColGrid}>
+          <StatItemSkeleton />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Mirrors the featured Today's Event card: badges row + title,
+// description lines, the 3-box info grid, and the action button.
 const TodayEventSkeleton = () => (
   <div className={styles.featuredCard}>
     <div className={styles.badgesStatus}>
-      <SkeletonBar w={220} h={16} r={20} />
+      <div className={styles.badgeRow}>
+        <SkeletonBar w={72} h={22} r={999} />
+        <SkeletonBar w={58} h={22} r={999} />
+        <SkeletonBar w={66} h={22} r={999} />
+        <SkeletonBar w={54} h={22} r={999} />
+        <SkeletonBar w={78} h={22} r={999} />
+      </div>
+      <SkeletonBar w="55%" h={26} style={{ marginTop: 2 }} />
     </div>
+
     <div className={styles.featuredCardContent}>
-      <SkeletonBar w="65%" h={22} style={{ marginBottom: 12 }} />
-      <SkeletonBar w="100%" h={13} style={{ marginBottom: 6 }} />
-      <SkeletonBar w="80%" h={13} style={{ marginBottom: 18 }} />
-      <SkeletonBar h={110} r={14} style={{ marginBottom: 12 }} />
-      <SkeletonBar h={90} r={14} style={{ marginBottom: 12 }} />
-      <SkeletonBar h={90} r={14} />
+      <div className={styles.titleDescription}>
+        <SkeletonBar w="95%" h={12} style={{ marginBottom: 6 }} />
+        <SkeletonBar w="72%" h={12} />
+      </div>
+
+      <div className={styles.container8}>
+        <div className={styles.whenWhereGroup}>
+          <div className={styles.sectionHeader}>
+            <SkeletonBar w={16} h={16} r={4} />
+            <SkeletonBar w={92} h={10} />
+          </div>
+          <div className={styles.infoGrid}>
+            <SkeletonBar h={56} r={11} />
+            <SkeletonBar h={56} r={11} />
+            <SkeletonBar h={56} r={11} />
+          </div>
+        </div>
+
+        <div className={styles.organizerSection}>
+          <div className={styles.sectionHeader}>
+            <SkeletonBar w={16} h={16} r={4} />
+            <SkeletonBar w={78} h={10} />
+          </div>
+          <div className={styles.organizerRow}>
+            <SkeletonBar w={44} h={44} r={13} style={{ flexShrink: 0 }} />
+            <div
+              style={{
+                flex: 1,
+                minWidth: 0,
+                display: "flex",
+                flexDirection: "column",
+                gap: 6,
+              }}
+            >
+              <SkeletonBar w="70%" h={12} />
+              <SkeletonBar w="50%" h={10} />
+            </div>
+          </div>
+          <SkeletonBar w="100%" h={32} r={9} />
+          <SkeletonBar w="100%" h={32} r={9} />
+        </div>
+
+        <div className={styles.audienceSection}>
+          <div className={styles.sectionHeader}>
+            <SkeletonBar w={16} h={16} r={4} />
+            <SkeletonBar w={68} h={10} />
+          </div>
+          <div className={styles.audienceRow}>
+            <div style={{ display: "flex" }}>
+              <SkeletonBar
+                w={32}
+                h={32}
+                r={999}
+                style={{ border: "2px solid #fff" }}
+              />
+              <SkeletonBar
+                w={32}
+                h={32}
+                r={999}
+                style={{ marginLeft: -9, border: "2px solid #fff" }}
+              />
+              <SkeletonBar
+                w={32}
+                h={32}
+                r={999}
+                style={{ marginLeft: -9, border: "2px solid #fff" }}
+              />
+            </div>
+            <SkeletonBar w="60%" h={10} />
+          </div>
+          <SkeletonBar w="100%" h={38} r={10} />
+        </div>
+      </div>
+
+      <SkeletonBar w="100%" h={42} r={10} style={{ marginTop: "0.9rem" }} />
     </div>
   </div>
 );
 
-const ListRowSkeleton = () => (
-  <div className={styles.skeletonRow}>
-    <SkeletonBar w={56} h={56} r={10} style={{ flexShrink: 0 }} />
-    <div style={{ flex: 1, minWidth: 0 }}>
-      <SkeletonBar w="55%" h={14} style={{ marginBottom: 8 }} />
-      <SkeletonBar w="90%" h={12} style={{ marginBottom: 8 }} />
-      <SkeletonBar w="40%" h={11} />
+// Mirrors a single .upcomingItem row (date card + title/desc/meta + chevron)
+const EventRowSkeleton = () => (
+  <div className={styles.upcomingItem}>
+    <SkeletonBar w={52} h={58} r={11} style={{ flexShrink: 0 }} />
+    <div
+      style={{
+        flex: 1,
+        minWidth: 0,
+        display: "flex",
+        flexDirection: "column",
+        gap: 6,
+      }}
+    >
+      <SkeletonBar w="55%" h={13} />
+      <SkeletonBar w="85%" h={11} />
+      <div style={{ display: "flex", gap: 10 }}>
+        <SkeletonBar w={48} h={10} />
+        <SkeletonBar w={64} h={10} />
+        <SkeletonBar w={42} h={10} />
+      </div>
     </div>
+    <SkeletonBar w={28} h={28} r={9} style={{ flexShrink: 0 }} />
+  </div>
+);
+
+// Mirrors a single .taskCard (checkbox + priority badge, title, meta rows,
+// checklist row + progress bar)
+const TaskCardSkeleton = () => (
+  <div className={styles.taskCard} style={{ cursor: "default" }}>
+    <div className={styles.taskCardTop}>
+      <SkeletonBar w={19} h={19} r={999} />
+      <SkeletonBar w={74} h={18} r={999} />
+    </div>
+    <SkeletonBar w="75%" h={13} style={{ marginTop: 2 }} />
+    <SkeletonBar w="55%" h={10} />
+    <SkeletonBar w="40%" h={10} />
+    <SkeletonBar w="90%" h={10} />
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        marginTop: "auto",
+      }}
+    >
+      <SkeletonBar w={100} h={9} />
+      <SkeletonBar w={28} h={9} />
+    </div>
+    <SkeletonBar w="100%" h={6} r={999} />
   </div>
 );
 
@@ -241,7 +436,6 @@ function Home() {
   const [statTypeFilter, setStatTypeFilter] = useState("all");
   const [quickStats, setQuickStats] = useState(null);
   const [statsLoading, setStatsLoading] = useState(false);
-  const [statsRange, setStatsRange] = useState("week");
 
   // ── Today's Events ──
   const [todayEvents, setTodayEvents] = useState([]);
@@ -276,7 +470,7 @@ function Home() {
   const [showTaskModal, setShowTaskModal] = useState(false);
 
   // ── Quick Stats fetch ──
-  const fetchQuickStats = useCallback(async (type, range = "week") => {
+  const fetchQuickStats = useCallback(async (type) => {
     setStatsLoading(true);
     try {
       if (type === "task") {
@@ -299,9 +493,7 @@ function Home() {
         setStatsLoading(false);
         return;
       }
-      const res = await apiClient.get(
-        `/events/stats?type=${type}&range=${range}`,
-      );
+      const res = await apiClient.get(`/events/stats?type=${type}`);
       if (res.data.ok) setQuickStats(res.data.stats);
     } catch (err) {
       console.error("Failed to fetch quick stats:", err);
@@ -380,8 +572,8 @@ function Home() {
   }, []);
 
   useEffect(() => {
-    fetchQuickStats(statTypeFilter, statsRange);
-  }, [statTypeFilter, statsRange, fetchQuickStats]);
+    fetchQuickStats(statTypeFilter);
+  }, [statTypeFilter, fetchQuickStats]);
 
   useEffect(() => {
     fetchTodayEvents();
@@ -389,8 +581,6 @@ function Home() {
     fetchOngoingTasks();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const handleStatsRangeChange = (range) => setStatsRange(range);
 
   const handleShowMoreEvents = () => fetchUpcomingEvents(false);
   const handleShowMoreTasks = () => setUpcomingTasksLimit((prev) => prev + 4);
@@ -941,9 +1131,9 @@ function Home() {
     if (upcomingEventsLoading && upcomingEvents.length === 0) {
       return (
         <div className={styles.upcomingList}>
-          <ListRowSkeleton />
-          <ListRowSkeleton />
-          <ListRowSkeleton />
+          <EventRowSkeleton />
+          <EventRowSkeleton />
+          <EventRowSkeleton />
         </div>
       );
     }
@@ -1013,8 +1203,16 @@ function Home() {
               onClick={handleShowMoreEvents}
               disabled={upcomingEventsLoading}
             >
-              {upcomingEventsLoading ? "Loading..." : "Show More"}
-              <FiChevronDown size={14} />
+              {upcomingEventsLoading ? (
+                <>
+                  <Spinner size={13} /> Loading
+                </>
+              ) : (
+                <>
+                  Show More
+                  <FiChevronDown size={14} />
+                </>
+              )}
             </button>
           </div>
         )}
@@ -1026,9 +1224,10 @@ function Home() {
     if (upcomingTasksLoading && allOngoingTasks.length === 0) {
       return (
         <div className={styles.upcomingList}>
-          <ListRowSkeleton />
-          <ListRowSkeleton />
-          <ListRowSkeleton />
+          <TaskCardSkeleton />
+          <TaskCardSkeleton />
+          <TaskCardSkeleton />
+          <TaskCardSkeleton />
         </div>
       );
     }
@@ -1118,8 +1317,16 @@ function Home() {
               onClick={handleShowMoreTasks}
               disabled={upcomingTasksLoading}
             >
-              {upcomingTasksLoading ? "Loading..." : "Show More"}
-              <FiChevronDown size={14} />
+              {upcomingTasksLoading ? (
+                <>
+                  <Spinner size={13} /> Loading
+                </>
+              ) : (
+                <>
+                  Show More
+                  <FiChevronDown size={14} />
+                </>
+              )}
             </button>
           </div>
         )}
@@ -1160,24 +1367,6 @@ function Home() {
                   statTypeFilter.slice(1) +
                   " Events"}
             </h3>
-            <div className={styles.quickNav}>
-              <div className={styles.filterButtons}>
-                <button
-                  type="button"
-                  className={`${styles.pillBtn} ${statsRange === "week" ? styles.pillBtnActive : ""}`}
-                  onClick={() => handleStatsRangeChange("week")}
-                >
-                  This Week
-                </button>
-                <button
-                  type="button"
-                  className={`${styles.pillBtn} ${statsRange === "month" ? styles.pillBtnActive : ""}`}
-                  onClick={() => handleStatsRangeChange("month")}
-                >
-                  This Month
-                </button>
-              </div>
-            </div>
           </div>
           <div className={styles.quickTopRight}>
             <button
@@ -1190,20 +1379,32 @@ function Home() {
           </div>
         </div>
 
-        <div className={styles.filterRow}>
-          {STAT_TYPE_OPTIONS.map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              className={`${styles.pillBtn} ${statTypeFilter === opt.value ? styles.pillBtnActive : ""}`}
-              onClick={() => setStatTypeFilter(opt.value)}
+        <div className={styles.statsTypeFilterRow}>
+          <label className={styles.selectLabel} htmlFor="quick-stats-type">
+            View by
+          </label>
+          <div className={styles.selectWrap}>
+            <select
+              id="quick-stats-type"
+              className={styles.statsTypeSelect}
+              value={statTypeFilter}
+              onChange={(e) => setStatTypeFilter(e.target.value)}
             >
-              {opt.label}
-            </button>
-          ))}
+              {STAT_TYPE_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+            <FiChevronDown
+              className={styles.selectChevron}
+              size={16}
+              aria-hidden="true"
+            />
+          </div>
         </div>
 
-        {statsLoading ? <StatsSkeleton /> : renderStats()}
+        {statsLoading ? <StatsSkeleton type={statTypeFilter} /> : renderStats()}
       </div>
 
       {/* Today's Event */}
@@ -1223,84 +1424,85 @@ function Home() {
         <div className={styles.todayContent}>{renderTodayEventsCarousel()}</div>
       </div>
 
-      {/* Upcoming Events */}
-      <div className={styles.upcomingEvent}>
-        <div className={styles.upcomingHeader}>
-          <h2>Upcoming Events</h2>
-          <button
-            type="button"
-            className={styles.viewLink}
-            onClick={gotoCalendar}
-          >
-            View Calendar
-          </button>
+      {/* Upcoming Events + Ongoing Tasks */}
+      <div className={styles.dashboardLowerGrid}>
+        <div className={styles.upcomingEvent}>
+          <div className={styles.upcomingHeader}>
+            <h2>Upcoming Events</h2>
+            <button
+              type="button"
+              className={styles.viewLink}
+              onClick={gotoCalendar}
+            >
+              View Calendar
+            </button>
+          </div>
+
+          <div className={styles.filterRow}>
+            <SelectDropdown
+              label="Event Type"
+              options={[
+                { value: "all", label: "All Types" },
+                { value: "campus", label: "Campus" },
+                { value: "department", label: "Department" },
+                { value: "private", label: "Private" },
+              ]}
+              value={eventTypeFilter}
+              onChange={(e) => setEventTypeFilter(e.target.value)}
+            />
+            <SelectDropdown
+              label="Time Range"
+              options={[
+                { value: "all", label: "All Time" },
+                { value: "week", label: "This Week" },
+                { value: "month", label: "This Month" },
+              ]}
+              value={eventDurationFilter}
+              onChange={(e) => setEventDurationFilter(e.target.value)}
+            />
+          </div>
+
+          <div className={styles.upcomingContent}>{renderUpcomingEvents()}</div>
         </div>
 
-        <div className={styles.filterRow}>
-          <SelectDropdown
-            label="Event Type"
-            options={[
-              { value: "all", label: "All Types" },
-              { value: "campus", label: "Campus" },
-              { value: "department", label: "Department" },
-              { value: "private", label: "Private" },
-            ]}
-            value={eventTypeFilter}
-            onChange={(e) => setEventTypeFilter(e.target.value)}
-          />
-          <SelectDropdown
-            label="Time Range"
-            options={[
-              { value: "all", label: "All Time" },
-              { value: "week", label: "This Week" },
-              { value: "month", label: "This Month" },
-            ]}
-            value={eventDurationFilter}
-            onChange={(e) => setEventDurationFilter(e.target.value)}
-          />
+        <div className={styles.upcomingTask}>
+          <div className={styles.upcomingHeader}>
+            <h2>Ongoing Tasks</h2>
+            <button
+              type="button"
+              className={styles.viewLink}
+              onClick={gotoTaskLists}
+            >
+              View Task Lists
+            </button>
+          </div>
+
+          <div className={styles.filterRow}>
+            <SelectDropdown
+              label="Task Type"
+              options={[
+                { value: "all", label: "All Tasks" },
+                { value: "personal", label: "Personal Task" },
+                { value: "campus", label: "Campus Task" },
+                { value: "department", label: "Department Task" },
+              ]}
+              value={taskTypeFilter}
+              onChange={(e) => setTaskTypeFilter(e.target.value)}
+            />
+            <SelectDropdown
+              label="Time Range"
+              options={[
+                { value: "all", label: "All Time" },
+                { value: "week", label: "This Week" },
+                { value: "month", label: "This Month" },
+              ]}
+              value={taskDurationFilter}
+              onChange={(e) => setTaskDurationFilter(e.target.value)}
+            />
+          </div>
+
+          <div className={styles.upcomingContent}>{renderUpcomingTasks()}</div>
         </div>
-
-        <div className={styles.upcomingContent}>{renderUpcomingEvents()}</div>
-      </div>
-
-      {/* Ongoing Tasks */}
-      <div className={styles.upcomingTask}>
-        <div className={styles.upcomingHeader}>
-          <h2>Ongoing Tasks</h2>
-          <button
-            type="button"
-            className={styles.viewLink}
-            onClick={gotoTaskLists}
-          >
-            View Task Lists
-          </button>
-        </div>
-
-        <div className={styles.filterRow}>
-          <SelectDropdown
-            label="Task Type"
-            options={[
-              { value: "all", label: "All Tasks" },
-              { value: "personal", label: "Personal Task" },
-              { value: "campus", label: "Campus Task" },
-              { value: "department", label: "Department Task" },
-            ]}
-            value={taskTypeFilter}
-            onChange={(e) => setTaskTypeFilter(e.target.value)}
-          />
-          <SelectDropdown
-            label="Time Range"
-            options={[
-              { value: "all", label: "All Time" },
-              { value: "week", label: "This Week" },
-              { value: "month", label: "This Month" },
-            ]}
-            value={taskDurationFilter}
-            onChange={(e) => setTaskDurationFilter(e.target.value)}
-          />
-        </div>
-
-        <div className={styles.upcomingContent}>{renderUpcomingTasks()}</div>
       </div>
 
       <EventCardView
