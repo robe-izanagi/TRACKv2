@@ -6,6 +6,8 @@ import { useEventsFilter } from "../../context/EventsFilterContext";
 import { useTasksFilter } from "../../context/TasksFilterContext";
 import apiClient from "../../api/client";
 import { getVenues } from "../../api/venues";
+import { useFeedbackSheet } from "../../context/FeedbackSheetContext";
+import { FiMessageSquare } from "react-icons/fi";
 import {
   FiHome,
   FiCalendar as FiCalendarIcon,
@@ -160,6 +162,7 @@ const generateMonthGrid = (year, month) => {
 export default function Menu({ activePath, onCloseDrawer }) {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { openFeedback } = useFeedbackSheet();
   const isStaff = user?.role === "staff";
 
   const {
@@ -412,6 +415,7 @@ export default function Menu({ activePath, onCloseDrawer }) {
             >
               <FiPlus size={18} /> Create Event
             </button>
+
             <button
               className={styles.homeLinkBtn}
               onClick={() => {
@@ -461,6 +465,30 @@ export default function Menu({ activePath, onCloseDrawer }) {
               <span className={styles.listLabel}>View Analytics</span>
             </button>
           </div>
+
+          {/* ── Feedback button (bottom of home menu) ── */}
+          <button
+            type="button"
+            className={styles.feedbackCard}
+            onClick={() => {
+              onCloseDrawer();
+              openFeedback();
+            }}
+          >
+            <span className={styles.feedbackBubble}>
+              <FiMessageSquare size={16} />
+              <span className={styles.feedbackDot} />
+            </span>
+
+            <span className={styles.feedbackTextWrap}>
+              <span className={styles.feedbackTitle}>Got a thought?</span>
+              <span className={styles.feedbackSubtitle}>
+                Share your feedback
+              </span>
+            </span>
+
+            <span className={styles.feedbackArrow}>→</span>
+          </button>
         </div>
       )}
 
