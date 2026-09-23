@@ -195,7 +195,6 @@ export default function TaskCardView({
           )}
         </div>
 
-        {/* ── Assignees section (avatar list) ── */}
         <div className={styles.assigneesSection}>
           <h4 className={styles.assigneesTitle}>
             <FiUsers size={14} /> Assignees
@@ -249,7 +248,7 @@ export default function TaskCardView({
               {task.attachments.map((file) => (
                 <a
                   key={file.id}
-                  href={file.file_url}
+                  href={`/attachments/download/${file.id}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className={styles.attachmentItem}
@@ -277,7 +276,6 @@ export default function TaskCardView({
                 <div className={styles.checklist}>
                   {group.items.map((item) => (
                     <div key={item.id} className={styles.checklistItem}>
-                      {/* ── Top part: checkbox, title, checked by ── */}
                       <div className={styles.checklistTop}>
                         <button
                           className={styles.checkToggle}
@@ -319,7 +317,6 @@ export default function TaskCardView({
 
                       <div className={styles.checklistSeparator} />
 
-                      {/* ── Comments thread ── */}
                       {item.comments && item.comments.length > 0 && (
                         <div className={styles.commentsThread}>
                           {item.comments.map((comment) => (
@@ -358,7 +355,6 @@ export default function TaskCardView({
                         </div>
                       )}
 
-                      {/* ── Add comment ── */}
                       {canModifyChecklist && !showCommentInput[item.id] && (
                         <div className={styles.commentAction}>
                           <button
