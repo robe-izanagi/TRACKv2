@@ -15,6 +15,10 @@ import apiClient from "../../../api/client";
 import { useAuth } from "../../../context/AuthContext";
 import { getReadableTextColor } from "../../../utils/colorUtils";
 import {
+  validateAttachmentFiles,
+  ACCEPTED_ATTACHMENT_MIME_TYPES,
+} from "../../../utils/fileValidation";
+import {
   buildLocalDateTimeISO,
   splitISOToLocalParts,
 } from "../../../utils/dateTimeUtils";
@@ -136,7 +140,15 @@ export default function CreateEvent() {
 
   const handleFileAdd = () => fileInputRef.current?.click();
   const handleFileChange = (e) => {
-    const files = Array.from(e.target.files);
+    const files = Array.from(e.target.files || []);
+    const validation = validateAttachmentFiles(files);
+
+    if (!validation.ok) {
+      showFeedback(validation.message, "error");
+      e.target.value = "";
+      return;
+    }
+
     const newAttachments = files.map((file) => ({
       file,
       name: file.name,
@@ -270,7 +282,27 @@ export default function CreateEvent() {
       }
 
       showFeedback("Event created successfully!", "success");
-      setTimeout(() => navigate("/calendar"), 800);
+
+      const feedbackShownKey = `track_first_event_feedback_shown_${user?.id}`;
+      const hasShownFeedback = user?.id
+        ? localStorage.getItem(feedbackShownKey)
+        : null;
+
+      setLoading(false);
+
+      if (!hasShownFeedback && user?.id) {
+        setTimeout(() => {
+          navigate("/calendar", {
+            state: {
+              openFeedbackAfterFirstEvent: true,
+            },
+          });
+        }, 800);
+      } else {
+        setTimeout(() => {
+          navigate("/calendar");
+        }, 800);
+      }
     } catch (err) {
       const errMsg = err.response?.data?.message || "Server error";
       setMessage(errMsg);
@@ -630,6 +662,7 @@ export default function CreateEvent() {
         <input
           type="file"
           multiple
+          accept={`${ACCEPTED_ATTACHMENT_MIME_TYPES.join(",")},.pdf,.docx`}
           ref={fileInputRef}
           style={{ display: "none" }}
           onChange={handleFileChange}
