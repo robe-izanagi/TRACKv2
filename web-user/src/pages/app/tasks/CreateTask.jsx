@@ -11,6 +11,10 @@ import InvitationModal from "../../../components/tasks/InvitationModal";
 import FileAttachment from "../../../components/common/FileAttachment";
 import FeedbackModal from "../../../components/common/FeedbackModal";
 import { getReadableTextColor } from "../../../utils/colorUtils";
+import {
+  validateAttachmentFiles,
+  ACCEPTED_ATTACHMENT_MIME_TYPES,
+} from "../../../utils/fileValidation";
 import { buildLocalDateTimeISO } from "../../../utils/dateTimeUtils";
 import {
   FiCalendar,
@@ -151,7 +155,15 @@ export default function CreateTask() {
   };
 
   const handleFileChange = (e) => {
-    const files = Array.from(e.target.files);
+    const files = Array.from(e.target.files || []);
+    const validation = validateAttachmentFiles(files);
+
+    if (!validation.ok) {
+      showFeedback(validation.message, "error");
+      e.target.value = "";
+      return;
+    }
+
     const newAttachments = files.map((file) => ({
       file,
       name: file.name,
