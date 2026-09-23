@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate, Outlet } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import styles from "./layout.module.css";
 import { MdDashboard, MdManageAccounts } from "react-icons/md";
@@ -7,16 +7,15 @@ import { BiAtom, BiMenu, BiSolidUser, BiLogOut } from "react-icons/bi";
 import { useState } from "react";
 import logo from "../assets/pup_logo.png";
 
-export default function Layout({ children }) {
+export default function Layout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [menuActive, setMenuActive] = useState(true);
 
   const handleLogout = () => {
     logout();
-    navigate("/login");
+    navigate("/login", { replace: true });
   };
-
-  const [menuActive, setMenuActive] = useState(true);
 
   return (
     <div className={styles.mainContainer}>
@@ -28,11 +27,13 @@ export default function Layout({ children }) {
             onClick={() => setMenuActive((prev) => !prev)}
           />
         </div>
+
         <div className={styles.topContent}>
           <div className={styles.title}>
             <img src={logo} alt="pup logo" width={30} height={30} />
             <h1>TRACK</h1>
           </div>
+
           <div className={styles.topModules}>
             <BiSolidUser className={styles.userIcon} title="account" />
           </div>
@@ -41,12 +42,10 @@ export default function Layout({ children }) {
 
       <div className={styles.main}>
         <aside className={`${styles.aside} ${!menuActive ? styles.mini : ""}`}>
-          {/* Filler for corner curve */}
           <div className={styles.filler} />
 
-          {/* Welcome section */}
           <div className={styles.welcome}>
-            {/* <p className={styles.welcomeText}>Welcome, Admin</p> */}
+            {/* <p className={styles.welcomeText}>Welcome, {user?.name}</p> */}
           </div>
 
           <nav className={styles.nav}>
@@ -55,7 +54,6 @@ export default function Layout({ children }) {
               className={({ isActive }) =>
                 `${styles.navLink} ${isActive ? styles.active : ""}`
               }
-              title="dashboard"
             >
               <MdDashboard className={styles.icon} />
               <span className={!menuActive ? styles.hide : ""}>Dashboard</span>
@@ -66,7 +64,6 @@ export default function Layout({ children }) {
               className={({ isActive }) =>
                 `${styles.navLink} ${isActive ? styles.active : ""}`
               }
-              title="account codes"
             >
               <FaCode className={styles.icon} />
               <span className={!menuActive ? styles.hide : ""}>
@@ -79,7 +76,6 @@ export default function Layout({ children }) {
               className={({ isActive }) =>
                 `${styles.navLink} ${isActive ? styles.active : ""}`
               }
-              title="declaration"
             >
               <BiAtom className={styles.icon} />
               <span className={!menuActive ? styles.hide : ""}>
@@ -92,7 +88,6 @@ export default function Layout({ children }) {
               className={({ isActive }) =>
                 `${styles.navLink} ${isActive ? styles.active : ""}`
               }
-              title="manage users"
             >
               <MdManageAccounts className={styles.icon} />
               <span className={!menuActive ? styles.hide : ""}>
@@ -101,13 +96,19 @@ export default function Layout({ children }) {
             </NavLink>
           </nav>
 
-          <button onClick={handleLogout} className={styles.btnLogout} title="logout">
+          <button
+            onClick={handleLogout}
+            className={styles.btnLogout}
+            title="logout"
+          >
             <BiLogOut className={styles.icon} />
             <span className={!menuActive ? styles.hide : ""}>Logout</span>
           </button>
         </aside>
 
-        <main className={styles.content}>{children}</main>
+        <main className={styles.content}>
+          <Outlet />
+        </main>
       </div>
     </div>
   );
