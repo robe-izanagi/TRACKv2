@@ -15,6 +15,28 @@ const { logVenueConflictAttempt } = require('../services/analyticsService');
 
 const EMPTY_CONFLICT = { isConflicted: false, isPriority: false, conflictsWith: [], reason: null };
 
+// ─── Timezone-safe "today" bounds (Asia/Manila, UTC+8) ───────────
+const TZ_OFFSET_MINUTES = 8 * 60;
+
+const getLocalDayBounds = (date = new Date()) => {
+  const shifted = new Date(date.getTime() + TZ_OFFSET_MINUTES * 60000);
+  const startOfDayShifted = new Date(Date.UTC(
+    shifted.getUTCFullYear(),
+    shifted.getUTCMonth(),
+    shifted.getUTCDate(),
+    0, 0, 0, 0
+  ));
+  const endOfDayShifted = new Date(Date.UTC(
+    shifted.getUTCFullYear(),
+    shifted.getUTCMonth(),
+    shifted.getUTCDate(),
+    23, 59, 59, 999
+  ));
+  const startOfDay = new Date(startOfDayShifted.getTime() - TZ_OFFSET_MINUTES * 60000);
+  const endOfDay = new Date(endOfDayShifted.getTime() - TZ_OFFSET_MINUTES * 60000);
+  return { startOfDay, endOfDay };
+};
+
 const getUserContact = async (userId) => {
   const u = await User.findByPk(userId, { attributes: ['id', 'email'] });
   if (!u) return null;
@@ -918,11 +940,7 @@ exports.getEventStats = async (req, res) => {
 exports.getTodayEvent = async (req, res) => {
   try {
     const userId = req.userId;
-    const today = new Date();
-    const startOfDay = new Date(today);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(today);
-    endOfDay.setHours(23, 59, 59, 999);
+    const { startOfDay, endOfDay } = getLocalDayBounds();
 
     const attendeeEvents = await EventAttendee.findAll({
       where: { user_id: userId },
@@ -937,7 +955,8 @@ exports.getTodayEvent = async (req, res) => {
           { creator_id: userId },
           { id: { [Op.in]: eventIds } }
         ],
-        start_datetime: { [Op.between]: [startOfDay, endOfDay] }
+        start_datetime: { [Op.lte]: endOfDay },
+        end_datetime: { [Op.gte]: startOfDay }
       },
       order: [['start_datetime', 'ASC']]
     });
@@ -1073,7 +1092,8 @@ exports.getUpcomingEvents = async (req, res) => {
   try {
     const userId = req.userId;
     const { limit = 4, offset = 0 } = req.query;
-    const now = new Date();
+    const { endOfDay: todayEnd } = getLocalDayBounds();
+    const now = new Date(todayEnd.getTime() + 1);
 
     const attendeeEvents = await EventAttendee.findAll({
       where: { user_id: userId },
