@@ -12,6 +12,10 @@ import FeedbackModal from "../common/FeedbackModal";
 import apiClient from "../../api/client";
 import { getReadableTextColor } from "../../utils/colorUtils";
 import {
+  validateAttachmentFiles,
+  ACCEPTED_ATTACHMENT_MIME_TYPES,
+} from "../../utils/fileValidation";
+import {
   buildLocalDateTimeISO,
   splitISOToLocalParts,
 } from "../../utils/dateTimeUtils";
@@ -217,7 +221,15 @@ export default function EditTask() {
 
   const handleFileAdd = () => fileInputRef.current?.click();
   const handleFileChange = (e) => {
-    const files = Array.from(e.target.files);
+    const files = Array.from(e.target.files || []);
+    const validation = validateAttachmentFiles(files);
+
+    if (!validation.ok) {
+      showFeedback(validation.message, "error");
+      e.target.value = "";
+      return;
+    }
+
     const newAttachments = files.map((file) => ({
       file,
       name: file.name,
@@ -231,9 +243,6 @@ export default function EditTask() {
   const handleRemoveExistingFile = (fileId) =>
     setExistingAttachments((prev) => prev.filter((f) => f.id !== fileId));
 
-  // ── Auto-add any text still sitting in an "Add item..." input before
-  // building the payload, so unconfirmed typed items never get silently
-  // dropped just because the user forgot to press + or Enter. ──
   const flushPendingChecklistItems = (cards) => {
     return cards.map((card) => {
       const pendingText = card.newItemText?.trim();
@@ -380,7 +389,6 @@ export default function EditTask() {
         </div>
 
         <div className={styles.sectionContent}>
-          {/* Title */}
           <div className={styles.card}>
             <div className={styles.cardHeader}>
               <FiType size={16} className={styles.cardHeaderIcon} />
@@ -395,7 +403,6 @@ export default function EditTask() {
             />
           </div>
 
-          {/* Basics */}
           <div className={styles.card}>
             <div className={styles.cardHeader}>
               <FiInfo size={16} className={styles.cardHeaderIcon} />
@@ -418,7 +425,6 @@ export default function EditTask() {
             />
           </div>
 
-          {/* Visibility */}
           <div className={styles.card}>
             <div className={styles.cardHeader}>
               <FiUsers size={16} className={styles.cardHeaderIcon} />
@@ -449,7 +455,6 @@ export default function EditTask() {
             )}
           </div>
 
-          {/* Assignees & Collaborators */}
           <div className={styles.row}>
             <div className={styles.card}>
               <div className={styles.cardHeader}>
@@ -479,7 +484,6 @@ export default function EditTask() {
             </div>
           </div>
 
-          {/* Deadline */}
           <div className={styles.card}>
             <div className={styles.cardHeader}>
               <FiCalendar size={16} className={styles.cardHeaderIcon} />
@@ -505,7 +509,6 @@ export default function EditTask() {
             </div>
           </div>
 
-          {/* Checklist */}
           <div className={styles.card}>
             <div className={styles.cardHeader}>
               <FiList size={16} className={styles.cardHeaderIcon} />
@@ -626,7 +629,6 @@ export default function EditTask() {
             </div>
           </div>
 
-          {/* Description */}
           <div className={styles.card}>
             <div className={styles.cardHeader}>
               <FiFileText size={16} className={styles.cardHeaderIcon} />
@@ -642,7 +644,6 @@ export default function EditTask() {
             />
           </div>
 
-          {/* Attachments */}
           <div className={styles.card}>
             <div className={styles.cardHeader}>
               <FiPaperclip size={16} className={styles.cardHeaderIcon} />
@@ -680,13 +681,13 @@ export default function EditTask() {
             <input
               type="file"
               multiple
+              accept={`${ACCEPTED_ATTACHMENT_MIME_TYPES.join(",")},.pdf,.docx`}
               ref={fileInputRef}
               style={{ display: "none" }}
               onChange={handleFileChange}
             />
           </div>
 
-          {/* Reminder */}
           <div className={styles.card}>
             <div className={styles.cardHeader}>
               <FiClock size={16} className={styles.cardHeaderIcon} />
