@@ -1,7 +1,7 @@
 import { NavLink, useNavigate, Outlet } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import styles from "./layout.module.css";
-import { MdDashboard, MdManageAccounts } from "react-icons/md";
+import { MdDashboard, MdFeedback, MdManageAccounts } from "react-icons/md";
 import { FaCode } from "react-icons/fa";
 import { BiAtom, BiMenu, BiSolidUser, BiLogOut } from "react-icons/bi";
 import { useState } from "react";
@@ -34,9 +34,9 @@ export default function Layout() {
             <h1>TRACK</h1>
           </div>
 
-          <div className={styles.topModules}>
+          {/* <div className={styles.topModules}>
             <BiSolidUser className={styles.userIcon} title="account" />
-          </div>
+          </div> */}
         </div>
       </header>
 
@@ -92,6 +92,18 @@ export default function Layout() {
               <MdManageAccounts className={styles.icon} />
               <span className={!menuActive ? styles.hide : ""}>
                 User Management
+              </span>
+            </NavLink>
+
+            <NavLink
+              to="/feedback"
+              className={({ isActive }) =>
+                `${styles.navLink} ${isActive ? styles.active : ""}`
+              }
+            >
+              <MdFeedback className={styles.icon} />
+              <span className={!menuActive ? styles.hide : ""}>
+                Feedback
               </span>
             </NavLink>
           </nav>
