@@ -189,10 +189,16 @@ exports.combine = async (req, res) => {
       }
     }
 
+    // FIX: `where` and `transaction` must be in the SAME options object.
+    // update(values, options) only takes two arguments — a third
+    // argument is silently dropped, so this update was previously
+    // running outside the transaction.
     await PositionAssignment.update(
       { status: 'inactive' },
-      { where: { position_id: sourcePos.id, status: 'active' } },
-      { transaction: t }
+      {
+        where: { position_id: sourcePos.id, status: 'active' },
+        transaction: t
+      }
     );
 
     sourcePos.is_active = false;
