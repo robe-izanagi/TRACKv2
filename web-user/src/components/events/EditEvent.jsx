@@ -15,6 +15,10 @@ import apiClient from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
 import { getReadableTextColor } from "../../utils/colorUtils";
 import {
+  validateAttachmentFiles,
+  ACCEPTED_ATTACHMENT_MIME_TYPES,
+} from "../../utils/fileValidation";
+import {
   buildLocalDateTimeISO,
   splitISOToLocalParts,
 } from "../../utils/dateTimeUtils";
@@ -165,7 +169,15 @@ export default function EditEvent() {
 
   const handleFileAdd = () => fileInputRef.current?.click();
   const handleFileChange = (e) => {
-    const files = Array.from(e.target.files);
+    const files = Array.from(e.target.files || []);
+    const validation = validateAttachmentFiles(files);
+
+    if (!validation.ok) {
+      showFeedback(validation.message, "error");
+      e.target.value = "";
+      return;
+    }
+
     const newAttachments = files.map((file) => ({
       file,
       name: file.name,
@@ -374,7 +386,6 @@ export default function EditEvent() {
         </div>
 
         <div className={styles.sectionContent}>
-          {/* ── Title ── */}
           <div className={styles.card}>
             <div className={styles.cardHeader}>
               <FiType size={16} className={styles.cardHeaderIcon} />
@@ -387,7 +398,6 @@ export default function EditEvent() {
             />
           </div>
 
-          {/* ── Event Basics ── */}
           <div className={styles.card}>
             <div className={styles.cardHeader}>
               <FiInfo size={16} className={styles.cardHeaderIcon} />
@@ -434,7 +444,6 @@ export default function EditEvent() {
             )}
           </div>
 
-          {/* ── Classification ── */}
           <div className={styles.card}>
             <div className={styles.cardHeader}>
               <FiTag size={16} className={styles.cardHeaderIcon} />
@@ -465,7 +474,6 @@ export default function EditEvent() {
             </div>
           </div>
 
-          {/* ── Location ── */}
           {form.method !== "online" && (
             <div className={styles.card}>
               <div className={styles.cardHeader}>
@@ -499,7 +507,6 @@ export default function EditEvent() {
             </div>
           )}
 
-          {/* ── Attendees ── */}
           <div className={styles.card}>
             <div className={styles.cardHeader}>
               <FiUsers size={16} className={styles.cardHeaderIcon} />
@@ -527,7 +534,6 @@ export default function EditEvent() {
             </button>
           </div>
 
-          {/* ── Date & Time ── */}
           <div className={styles.card}>
             <div className={styles.cardHeader}>
               <FiCalendar size={16} className={styles.cardHeaderIcon} />
@@ -625,7 +631,6 @@ export default function EditEvent() {
             </div>
           </div>
 
-          {/* ── Description ── */}
           <div className={styles.card}>
             <div className={styles.cardHeader}>
               <FiFileText size={16} className={styles.cardHeaderIcon} />
@@ -640,7 +645,6 @@ export default function EditEvent() {
             />
           </div>
 
-          {/* ── Attachments ── */}
           <div className={styles.card}>
             <div className={styles.cardHeader}>
               <FiPaperclip size={16} className={styles.cardHeaderIcon} />
@@ -677,7 +681,6 @@ export default function EditEvent() {
             />
           </div>
 
-          {/* ── Collaborators ── */}
           <div className={styles.card}>
             <div className={styles.cardHeader}>
               <FiUserPlus size={16} className={styles.cardHeaderIcon} />
@@ -722,6 +725,7 @@ export default function EditEvent() {
         <input
           type="file"
           multiple
+          accept={`${ACCEPTED_ATTACHMENT_MIME_TYPES.join(",")},.pdf,.docx`}
           ref={fileInputRef}
           style={{ display: "none" }}
           onChange={handleFileChange}
