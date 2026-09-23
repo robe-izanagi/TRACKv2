@@ -845,23 +845,12 @@ exports.listEvents = async (req, res) => {
   }
 };
 
-// ─── GET EVENT STATISTICS ──────────────────────────────
 exports.getEventStats = async (req, res) => {
   try {
-    const { type = 'campus', range = 'week' } = req.query;
+    const { type = 'campus' } = req.query;
     const userId = req.userId;
 
     const now = new Date();
-    let startDate;
-    if (range === 'week') {
-      startDate = new Date(now);
-      startDate.setDate(now.getDate() - 7);
-    } else if (range === 'month') {
-      startDate = new Date(now);
-      startDate.setMonth(now.getMonth() - 1);
-    } else {
-      startDate = new Date(0);
-    }
 
     let visibilityCondition;
     if (type === 'all') {
@@ -900,14 +889,13 @@ exports.getEventStats = async (req, res) => {
       return res.status(400).json({ ok: false, message: 'Invalid type' });
     }
 
-    const where = {
-      is_archived: false,
-      start_datetime: { [Op.gte]: startDate },
-      end_datetime: { [Op.lte]: now },
-      ...visibilityCondition
-    };
+    const events = await Event.findAll({
+      where: {
+        is_archived: false,
+        ...visibilityCondition
+      }
+    });
 
-    const events = await Event.findAll({ where });
     const eventIds2 = events.map(e => e.id);
     const attendances = await EventAttendee.findAll({
       where: { user_id: userId, event_id: { [Op.in]: eventIds2 } }
@@ -915,20 +903,41 @@ exports.getEventStats = async (req, res) => {
     const attendanceMap = {};
     attendances.forEach(a => { attendanceMap[a.event_id] = a.response; });
 
-    let total = events.length;
-    let accepted = 0, declined = 0, pending = 0, missed = 0, conflicted = 0;
+    const conflictMap = await buildConflictMap(userId);
+
+    const total = events.length;
+    let activeEvents = 0, accepted = 0, declined = 0, pending = 0, missed = 0, conflicted = 0;
 
     for (const ev of events) {
       const response = attendanceMap[ev.id] || 'pending';
-      if (response === 'accepted') accepted++;
-      else if (response === 'declined') declined++;
-      else if (response === 'pending') pending++;
-      if (ev.end_datetime < now && response !== 'accepted' && response !== 'declined') missed++;
+      const isActive = new Date(ev.end_datetime) >= now; // ongoing OR upcoming
+
+      if (isActive) {
+        activeEvents++;
+        if (response === 'accepted') accepted++;
+        else if (response === 'declined') declined++;
+        else pending++;
+
+        const conflict = conflictMap[ev.id];
+        if (conflict && conflict.isConflicted) conflicted++;
+      } else {
+        // Event has already ended — only counts as "missed" if the
+        // viewer never responded accepted/declined to it.
+        if (response !== 'accepted' && response !== 'declined') missed++;
+      }
     }
 
     res.json({
       ok: true,
-      stats: { total, active_events: total, accepted, declined, missed, pending, conflicted: 0 }
+      stats: {
+        total,
+        active_events: activeEvents,
+        accepted,
+        declined,
+        missed,
+        pending,
+        conflicted
+      }
     });
   } catch (error) {
     console.error('Get event stats error:', error);
