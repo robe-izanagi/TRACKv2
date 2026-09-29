@@ -5,7 +5,7 @@
   "scripts": {
     "start": "tsx server.js",
     "dev": "tsx server.js",
-    "seed": "tsx src/seed.ts"
+    "seed": "tsx src/seeders/seed.ts"
   },
   "keywords": [],
   "author": "",
