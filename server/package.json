@@ -4,7 +4,8 @@
   "main": "server.js",
   "scripts": {
     "start": "tsx server.js",
-    "dev": "tsx server.js"
+    "dev": "tsx server.js",
+    "seed": "tsx src/seed.ts"
   },
   "keywords": [],
   "author": "",
