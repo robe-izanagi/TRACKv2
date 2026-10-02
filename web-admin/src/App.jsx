@@ -10,6 +10,8 @@ import Declaration from "./pages/Declaration";
 import ManageUsers from "./pages/ManageUser";
 import Feedback from "./pages/Feedback";
 import "./App.css";
+import Termsnconditions from "./pages/Termsnconditions";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 
 export default function App() {
   return (
@@ -19,6 +21,8 @@ export default function App() {
           {/* Public routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/terms-and-conditions" element={<Termsnconditions />} />
 
           {/* Protected routes */}
           <Route
