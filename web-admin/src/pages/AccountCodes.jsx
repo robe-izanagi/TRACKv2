@@ -29,60 +29,22 @@ function SkeletonSummaryValue() {
   );
 }
 
+const SKELETON_CELL_WIDTHS = [50, 90, 80, 70, 90, 60, 100, 100];
+
 function SkeletonCodeRow() {
   return (
     <tr>
       <td className={styles.codeCell}>
         <div className={`${styles.skeleton} ${styles.skeletonCodeCell}`} />
       </td>
-      <td>
-        <div
-          className={`${styles.skeleton} ${styles.skeletonCell}`}
-          style={{ width: "50px" }}
-        />
-      </td>
-      <td>
-        <div
-          className={`${styles.skeleton} ${styles.skeletonCell}`}
-          style={{ width: "90px" }}
-        />
-      </td>
-      <td>
-        <div
-          className={`${styles.skeleton} ${styles.skeletonCell}`}
-          style={{ width: "80px" }}
-        />
-      </td>
-      <td>
-        <div
-          className={`${styles.skeleton} ${styles.skeletonCell}`}
-          style={{ width: "70px" }}
-        />
-      </td>
-      <td>
-        <div
-          className={`${styles.skeleton} ${styles.skeletonCell}`}
-          style={{ width: "90px" }}
-        />
-      </td>
-      <td>
-        <div
-          className={`${styles.skeleton} ${styles.skeletonCell}`}
-          style={{ width: "60px" }}
-        />
-      </td>
-      <td>
-        <div
-          className={`${styles.skeleton} ${styles.skeletonCell}`}
-          style={{ width: "100px" }}
-        />
-      </td>
-      <td>
-        <div
-          className={`${styles.skeleton} ${styles.skeletonCell}`}
-          style={{ width: "100px" }}
-        />
-      </td>
+      {SKELETON_CELL_WIDTHS.map((w, i) => (
+        <td key={i}>
+          <div
+            className={`${styles.skeleton} ${styles.skeletonCell}`}
+            style={{ width: `${w}px` }}
+          />
+        </td>
+      ))}
       <td>
         <div className={`${styles.skeleton} ${styles.skeletonBadgeCell}`} />
       </td>
@@ -122,7 +84,7 @@ function SkeletonRequestCard() {
   );
 }
 
-// ── Simple searchable dropdown ──────────────────────────
+// ── Searchable dropdown (clearable) ─────────────────────
 function SearchableSelect({ options, value, onChange, placeholder }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -144,6 +106,12 @@ function SearchableSelect({ options, value, onChange, placeholder }) {
 
   const selectedLabel = options.find((o) => o.value === value)?.label || "";
 
+  const clear = () => {
+    onChange("");
+    setSearch("");
+    setOpen(false);
+  };
+
   return (
     <div ref={wrapperRef} className={styles.searchableWrapper}>
       <input
@@ -160,8 +128,27 @@ function SearchableSelect({ options, value, onChange, placeholder }) {
           setOpen(true);
         }}
       />
+
+      {value && !open ? (
+        <button
+          type="button"
+          className={styles.clearBtn}
+          onClick={clear}
+          title="Clear selection"
+        >
+          <FiX size={14} />
+        </button>
+      ) : (
+        <FiChevronDown className={styles.fieldChevron} size={14} />
+      )}
+
       {open && (
         <ul className={styles.dropdown}>
+          {value && (
+            <li className={styles.dropdownNone} onClick={clear}>
+              — None —
+            </li>
+          )}
           {filtered.map((opt) => (
             <li
               key={opt.value}
@@ -291,9 +278,10 @@ export default function AccountCodes() {
     try {
       const payload = { is_admin: form.is_admin };
       if (!form.is_admin) {
+        // Empty selections are sent as undefined (omitted from the request)
         payload.department_id = form.department_id || undefined;
-        payload.office_id = form.office_id;
-        payload.role_id = form.role_id;
+        payload.office_id = form.office_id || undefined;
+        payload.role_id = form.role_id || undefined;
         payload.position_id = form.position_id || undefined;
       }
       const res = await generateCode(payload);
@@ -568,83 +556,106 @@ export default function AccountCodes() {
           </h2>
           <form onSubmit={handleSubmit}>
             {/* Admin/User radio selection */}
-            <div className={styles.toggleWrapper}>
-              <div
-                className={styles.radioGroup}
-                role="radiogroup"
-                aria-label="Code type"
+            <div
+              className={styles.radioGroup}
+              role="radiogroup"
+              aria-label="Code type"
+            >
+              <label
+                className={`${styles.radioLabel} ${form.is_admin ? styles.radioActive : ""}`}
               >
-                <label
-                  className={`${styles.radioLabel} ${form.is_admin ? styles.radioActive : ""}`}
-                >
-                  <input
-                    type="radio"
-                    name="codeType"
-                    value="admin"
-                    checked={form.is_admin === true}
-                    onChange={() => setForm({ ...form, is_admin: true })}
-                  />
-                  <span>Admin Code</span>
-                </label>
-
-                <label
-                  className={`${styles.radioLabel} ${!form.is_admin ? styles.radioActive : ""}`}
-                >
-                  <input
-                    type="radio"
-                    name="codeType"
-                    value="user"
-                    checked={form.is_admin === false}
-                    onChange={() => setForm({ ...form, is_admin: false })}
-                  />
-                  <span>User Code</span>
-                </label>
-              </div>
+                <input
+                  type="radio"
+                  name="codeType"
+                  value="admin"
+                  checked={form.is_admin === true}
+                  onChange={() => setForm({ ...form, is_admin: true })}
+                />
+                <span>Admin Code</span>
+              </label>
+              <label
+                className={`${styles.radioLabel} ${!form.is_admin ? styles.radioActive : ""}`}
+              >
+                <input
+                  type="radio"
+                  name="codeType"
+                  value="user"
+                  checked={form.is_admin === false}
+                  onChange={() => setForm({ ...form, is_admin: false })}
+                />
+                <span>User Code</span>
+              </label>
             </div>
 
             {!form.is_admin && (
-              <>
-                <SearchableSelect
-                  options={positionOpts}
-                  value={form.position_id}
-                  onChange={(val) => setForm({ ...form, position_id: val })}
-                  placeholder="-- Select Position (if on the list) --"
-                />
-                <SearchableSelect
-                  options={deptOpts}
-                  value={form.department_id}
-                  onChange={(val) => setForm({ ...form, department_id: val })}
-                  placeholder="-- Select Department (if have) --"
-                />
-                <SearchableSelect
-                  options={officeOpts}
-                  value={form.office_id}
-                  onChange={(val) => setForm({ ...form, office_id: val })}
-                  placeholder="-- Select Office --"
-                />
-                <select
-                  className={styles.select}
-                  value={form.role_id} 
-                  onChange={(e) =>
-                    setForm({ ...form, role_id: e.target.value })
-                  }
-                  required={!form.is_admin}
-                >
-                  <option value="">-- Select Role --</option>
-                  {roles.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {r.name == "officials"? "heads" : r.name} 
-                    </option>
-                  ))}
-                </select>
-              </>
+              <div className={styles.formGrid}>
+                <div className={styles.field}>
+                  <div className={styles.fieldLabel}>
+                    Position <span className={styles.optional}>(optional)</span>
+                  </div>
+                  <SearchableSelect
+                    options={positionOpts}
+                    value={form.position_id}
+                    onChange={(val) => setForm({ ...form, position_id: val })}
+                    placeholder="Select position"
+                  />
+                </div>
+
+                <div className={styles.field}>
+                  <div className={styles.fieldLabel}>
+                    Department{" "}
+                    <span className={styles.optional}>(optional)</span>
+                  </div>
+                  <SearchableSelect
+                    options={deptOpts}
+                    value={form.department_id}
+                    onChange={(val) => setForm({ ...form, department_id: val })}
+                    placeholder="Select department"
+                  />
+                </div>
+
+                <div className={styles.field}>
+                  <div className={styles.fieldLabel}>
+                    Office <span className={styles.optional}>(optional)</span>
+                  </div>
+                  <SearchableSelect
+                    options={officeOpts}
+                    value={form.office_id}
+                    onChange={(val) => setForm({ ...form, office_id: val })}
+                    placeholder="Select office"
+                  />
+                </div>
+
+                <div className={styles.field}>
+                  <div className={styles.fieldLabel}>
+                    Role <span className={styles.required}>*</span>
+                  </div>
+                  <select
+                    className={styles.select}
+                    value={form.role_id}
+                    onChange={(e) =>
+                      setForm({ ...form, role_id: e.target.value })
+                    }
+                    required={!form.is_admin}
+                  >
+                    <option value="">Select role</option>
+                    {roles.map((r) => (
+                      <option key={r.id} value={r.id}>
+                        {r.name === "officials" ? "heads" : r.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
             )}
 
-            <button type="submit" disabled={loading} className={styles.btn}>
-              {loading ? "Generating..." : "Generate Code"}
-            </button>
+            <div className={styles.formFooter}>
+              {message && <p className={styles.msg}>{message}</p>}
+              <button type="submit" disabled={loading} className={styles.btn}>
+                {loading ? "Generating..." : "Generate Code"}
+              </button>
+            </div>
           </form>
-          {message && <p className={styles.msg}>{message}</p>}
         </div>
       </div>
 
@@ -738,7 +749,9 @@ export default function AccountCodes() {
                       <td>{code.is_admin ? "Admin" : "User"}</td>
                       <td>{code.department || "—"}</td>
                       <td>{code.office || "—"}</td>
-                      <td>{code.role == "officials"? "heads" : code.role || "—"}</td>
+                      <td>
+                        {code.role === "officials" ? "heads" : code.role || "—"}
+                      </td>
                       <td>{code.position || "—"}</td>
                       <td>
                         {code.source_type === "admin_generated"
@@ -846,7 +859,9 @@ export default function AccountCodes() {
                       <div className={styles.detailRow}>
                         <span className={styles.detailLabel}>Role:</span>
                         <span className={styles.detailValue}>
-                          {req.role_name == "officials"? "heads" : req.role_name || "—"}
+                          {req.role_name === "officials"
+                            ? "heads"
+                            : req.role_name || "—"}
                         </span>
                       </div>
                       <div className={styles.detailRow}>
