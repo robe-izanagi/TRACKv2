@@ -150,29 +150,36 @@
   font-weight: 500;
 }
 
-/* ─── Toggle Button (Admin Code) ────────────────────── */
-.toggleWrapper {
-  margin-bottom: 16px;
+/* ─── Generate Form (compact) ─────────────────────────── */
+/* overflow visible so the dropdown list isn't clipped by the card */
+.generateSection .card {
+  overflow: visible;
+  padding: 16px 20px;
+}
+
+.generateSection .cardTitle {
+  margin-bottom: 12px;
 }
 
 /* Radio group for Admin/User */
 .radioGroup {
-  margin-top: 14px;
+  margin: 0 0 12px 0;
   display: flex;
-  gap: 12px;
+  gap: 8px;
 }
 
 .radioLabel {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
-  border: 2px solid #d1d5db;
-  border-radius: 12px;
+  padding: 5px 14px;
+  border: 1.5px solid #d1d5db;
+  border-radius: 8px;
   background: #f9fafb;
   cursor: pointer;
   font-weight: 600;
+  font-size: 13px;
   color: #374151;
+  transition: all 0.15s;
 }
 
 .radioLabel input {
@@ -185,59 +192,46 @@
   color: var(--primary-color, #800000);
 }
 
-.toggleBtn {
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 14px;
+  margin-bottom: 12px;
+}
+
+.field {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 16px;
-  border: 2px solid #d1d5db;
-  border-radius: 30px;
-  background: #f9fafb;
-  cursor: pointer;
-  transition: all 0.2s;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.fieldLabel {
+  font-size: 12px;
   font-weight: 600;
-  font-size: 14px;
   color: #374151;
-  width: fit-content;
-  user-select: none;
 }
 
-.toggleBtn:hover {
-  border-color: #9ca3af;
-  background: #f3f4f6;
+.optional {
+  font-weight: 400;
+  color: #9ca3af;
 }
 
-.toggleBtn .toggleIndicator {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: #d1d5db;
-  transition: all 0.2s;
+.required {
+  color: #dc2626;
 }
 
-.toggleBtn.toggleActive {
-  border-color: var(--primary-color, #800000);
-  background: #fef2f2;
-}
-
-.toggleBtn.toggleActive .toggleIndicator {
-  background: var(--primary-color, #800000);
-}
-
-.toggleBtn.toggleActive {
-  color: var(--primary-color, #800000);
-}
-
-/* ─── Form Elements ──────────────────────────────────── */
 .select {
   display: block;
   width: 100%;
-  padding: 10px 12px;
-  margin: 8px 0;
+  height: 36px;
+  padding: 0 10px;
+  margin: 0;
   border: 1px solid #d1d5db;
   border-radius: 8px;
   background: #fff;
-  font-size: 14px;
+  font-size: 13px;
+  box-sizing: border-box;
 }
 
 .select:focus {
@@ -245,17 +239,29 @@
   border-color: var(--primary-color, #800000);
 }
 
+.formFooter {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+}
+
+.formFooter .msg {
+  margin: 0 auto 0 0;
+}
+
 .btn {
   background: var(--primary-color, #800000);
   color: #fff;
   border: none;
-  padding: 10px 20px;
+  height: 36px;
+  padding: 0 24px;
   border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 13px;
   transition: background 0.2s;
-  width: 100%;
+  width: auto;
 }
 
 .btn:hover:not(:disabled) {
@@ -276,15 +282,16 @@
 /* ─── Searchable Dropdown ────────────────────────────── */
 .searchableWrapper {
   position: relative;
-  margin-bottom: 10px;
+  margin: 0;
 }
 
 .searchableWrapper .input {
   width: 100%;
-  padding: 10px 12px;
+  height: 36px;
+  padding: 0 32px 0 10px;
   border: 1px solid #d1d5db;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 13px;
   box-sizing: border-box;
   background: #fff;
 }
@@ -294,32 +301,75 @@
   border-color: var(--primary-color, #800000);
 }
 
+.fieldChevron {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+.clearBtn {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 50%;
+  background: #f3f4f6;
+  color: #6b7280;
+  cursor: pointer;
+}
+
+.clearBtn:hover {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
 .dropdown {
   position: absolute;
-  top: 100%;
+  top: calc(100% + 2px);
   left: 0;
   right: 0;
   background: #fff;
   border: 1px solid #d1d5db;
-  border-radius: 0 0 8px 8px;
-  max-height: 150px;
+  border-radius: 8px;
+  max-height: 180px;
   overflow-y: auto;
-  z-index: 10;
+  z-index: 20;
   list-style: none;
-  padding: 0;
+  padding: 4px 0;
   margin: 0;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
 }
 
 .dropdownItem {
   padding: 8px 12px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
   color: #374151;
 }
 
 .dropdownItem:hover {
   background: #f3f4f6;
+}
+
+.dropdownNone {
+  padding: 7px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #991b1b;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.dropdownNone:hover {
+  background: #fef2f2;
 }
 
 .dropdownEmpty {
@@ -346,7 +396,7 @@
 
 .sortSelect {
   width: 100%;
-  padding: 8px 34px 8px 14px;
+  padding: 8px 34px 8px 34px;
   border: 1px solid #d1d5db;
   border-radius: 8px;
   font-size: 14px;
@@ -372,10 +422,6 @@
   right: 10px;
   color: #6b7280;
   pointer-events: none;
-}
-
-.sortSelect {
-  padding-left: 34px;
 }
 
 /* ─── Table ───────────────────────────────────────────── */
@@ -1174,5 +1220,24 @@
 
   .summaryLabel {
     font-size: 11px;
+  }
+}
+
+@media (max-width: 600px) {
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .formFooter {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .formFooter .msg {
+    margin: 0;
+  }
+
+  .btn {
+    width: 100%;
   }
 }
