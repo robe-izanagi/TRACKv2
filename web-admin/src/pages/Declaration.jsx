@@ -1172,7 +1172,7 @@ export default function Declaration() {
                     {positionStats.taken}
                   </span>
                 )}
-                <span className={styles.summaryLabel}>Taken Positions</span>
+                <span className={styles.summaryLabel}>Taken Single Positions</span>
               </div>
             </div>
           </div>
