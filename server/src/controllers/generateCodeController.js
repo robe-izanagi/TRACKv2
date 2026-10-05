@@ -10,7 +10,7 @@ const {
   autoDeactivateAt,
   getActionBlock,
   deactivateStaleCodes,
-} = require('../utils/accountCodeLifecycle');
+} = require('../utils/Accountcodelifecycle');
 
 function makePrefix(name) {
   if (!name) return 'NON';
