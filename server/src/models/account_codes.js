@@ -40,7 +40,7 @@ const AccountCode = sequelize.define('account_codes', {
     allowNull: true
   },
   status: {
-    type: DataTypes.ENUM('unused','used','revoked','expired'),
+    type: DataTypes.ENUM('unused', 'used', 'revoked', 'expired', 'inactive'),
     defaultValue: 'unused'
   },
   source_type: {
