@@ -1,9 +1,16 @@
 const { v4: uuidv4 } = require('uuid');
-const { Sequelize } = require('sequelize');
+const { Sequelize, Op } = require('sequelize');
 const {
   AccountCode, AccountCodeRequest, Department, Office, Role, Position, PositionAssignment,
   Admin, User
 } = require('../models');
+const {
+  isRequestedCode,
+  actionsAvailableAt,
+  autoDeactivateAt,
+  getActionBlock,
+  deactivateStaleCodes,
+} = require('../utils/accountCodeLifecycle');
 
 function makePrefix(name) {
   if (!name) return 'NON';
@@ -67,8 +74,8 @@ exports.generateAccountCode = async (req, res) => {
           generated_by_admin_id: req.adminId || null,
           status: 'unused',
           expires_at: expires_at ? new Date(expires_at) : null,
-          source_type: 'admin_generated',  // ← NEW
-          account_code_request_id: null    // ← NEW
+          source_type: 'admin_generated',
+          account_code_request_id: null
         });
         break;
       } catch (err) {
@@ -91,6 +98,13 @@ exports.generateAccountCode = async (req, res) => {
 // ─── List all generated codes ─────────────────────────
 exports.listCodes = async (req, res) => {
   try {
+    // Make sure the list never shows a stale "unused" code older than 7 days
+    try {
+      await deactivateStaleCodes();
+    } catch (err) {
+      console.error('Auto-deactivate (list) failed:', err.message);
+    }
+
     const codes = await AccountCode.findAll({
       order: [['created_at', 'DESC']],
       limit: 100,
@@ -139,11 +153,13 @@ exports.listCodes = async (req, res) => {
         }
       }
 
-      // ─── NEW: Get requester info from the associated request ───
       let requestedBy = null;
       if (code.request) {
         requestedBy = code.request.full_name || code.request.email;
       }
+
+      // What can the admin do with this code right now? (server is the authority)
+      const block = getActionBlock(code);
 
       return {
         id: code.id,
@@ -156,15 +172,87 @@ exports.listCodes = async (req, res) => {
         role,
         position,
         generated_by: generatedBy,
-        // ─── NEW FIELDS ──────────────────────────────────
         source_type: code.source_type,
-        requested_by: requestedBy
+        requested_by: requestedBy,
+        // ─── Actions ─────────────────────────────────────
+        can_deactivate: !block && code.status === 'unused',
+        can_delete: !block,
+        lock_reason: block ? block.message : null,
+        actions_available_at: isRequestedCode(code) ? actionsAvailableAt(code) : null,
+        auto_deactivate_at: code.status === 'unused' ? autoDeactivateAt(code) : null
       };
     }));
 
     res.json({ ok: true, codes: resolved });
   } catch (error) {
     console.error('List codes error:', error);
+    res.status(500).json({ ok: false, message: 'Server error.' });
+  }
+};
+
+// ─── Deactivate a code (unused -> inactive) ───────────
+exports.deactivateCode = async (req, res) => {
+  try {
+    const code = await AccountCode.findByPk(req.params.id);
+    if (!code) {
+      return res.status(404).json({ ok: false, message: 'Account code not found.' });
+    }
+
+    const block = getActionBlock(code);
+    if (block) {
+      return res.status(block.status).json({ ok: false, message: block.message });
+    }
+
+    if (code.status === 'inactive') {
+      return res.status(400).json({ ok: false, message: 'This account code is already inactive.' });
+    }
+    if (code.status !== 'unused') {
+      return res.status(400).json({ ok: false, message: 'Only unused codes can be deactivated.' });
+    }
+
+    // Conditional update so a code that was just used can't be deactivated
+    const [affected] = await AccountCode.update(
+      { status: 'inactive' },
+      { where: { id: code.id, status: 'unused' } }
+    );
+    if (!affected) {
+      return res.status(409).json({ ok: false, message: 'This account code is no longer unused.' });
+    }
+
+    res.json({ ok: true, message: 'Account code deactivated.', id: code.id, status: 'inactive' });
+  } catch (error) {
+    console.error('Deactivate code error:', error);
+    res.status(500).json({ ok: false, message: 'Server error.' });
+  }
+};
+
+// ─── Hard delete a code ───────────────────────────────
+exports.deleteCode = async (req, res) => {
+  try {
+    const code = await AccountCode.findByPk(req.params.id);
+    if (!code) {
+      return res.status(404).json({ ok: false, message: 'Account code not found.' });
+    }
+
+    const block = getActionBlock(code);
+    if (block) {
+      return res.status(block.status).json({ ok: false, message: block.message });
+    }
+
+    // Conditional delete so a code that was just used can't be deleted
+    const deleted = await AccountCode.destroy({
+      where: { id: code.id, status: { [Op.ne]: 'used' } }
+    });
+    if (!deleted) {
+      return res.status(409).json({ ok: false, message: 'This account code was just used and cannot be deleted.' });
+    }
+
+    res.json({ ok: true, message: 'Account code deleted.' });
+  } catch (error) {
+    if (error instanceof Sequelize.ForeignKeyConstraintError) {
+      return res.status(409).json({ ok: false, message: 'This account code is still referenced by another record.' });
+    }
+    console.error('Delete code error:', error);
     res.status(500).json({ ok: false, message: 'Server error.' });
   }
 };
