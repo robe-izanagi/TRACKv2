@@ -2,6 +2,7 @@ const { v4: uuidv4 } = require('uuid');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { sequelize, User, Admin, AccountCode, UserSession } = require('../models');
+const { getUsabilityError } = require('../utils/accountCodeLifecycle');
 
 exports.registerAdmin = async (req, res) => {
   const t = await sequelize.transaction();
@@ -28,17 +29,17 @@ exports.registerAdmin = async (req, res) => {
       await t.rollback();
       return res.status(400).json({ ok: false, message: 'Invalid account code.' });
     }
-    if (codeRecord.status !== 'unused') {
+
+    // Rejects used, inactive/deactivated, expired, and older-than-7-days codes
+    const usabilityError = getUsabilityError(codeRecord);
+    if (usabilityError) {
       await t.rollback();
-      return res.status(400).json({ ok: false, message: 'This account code has already been used or is no longer valid.' });
+      return res.status(400).json({ ok: false, message: usabilityError });
     }
+
     if (!codeRecord.is_admin) {
       await t.rollback();
       return res.status(403).json({ ok: false, message: 'This account code is not valid for admin registration.' });
-    }
-    if (codeRecord.expires_at && new Date(codeRecord.expires_at) < new Date()) {
-      await t.rollback();
-      return res.status(400).json({ ok: false, message: 'This account code has expired.' });
     }
 
     const existingUser = await User.findOne({ where: { username: trimmedUsername }, transaction: t });
