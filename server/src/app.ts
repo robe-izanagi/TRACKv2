@@ -94,7 +94,7 @@ async function initializeDatabase(): Promise<void> {
 }
 
 initializeDatabase().then(() => {
-  require('./utils/accountCodeLifecycle').startAutoDeactivate();
+  require('./utils/accCodeLifeCycle').startAutoDeactivate();
 });
 
 // ─── Error handling middleware ───
