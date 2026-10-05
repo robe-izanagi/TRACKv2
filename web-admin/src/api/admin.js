@@ -11,6 +11,18 @@ export const listCodes = async () => {
   return data;
 };
 
+// Unused -> inactive (blocked for used codes and during the 3-day cooldown of requested codes)
+export const deactivateAccountCode = async (id) => {
+  const { data } = await apiClient.put(`/admin/account-codes/${id}/deactivate`);
+  return data;
+};
+
+// Hard delete (same restrictions as deactivate)
+export const deleteAccountCode = async (id) => {
+  const { data } = await apiClient.delete(`/admin/account-codes/${id}`);
+  return data;
+};
+
 // ── Departments (TODO: backend CRUD) ──
 export const getDepartments = async () => {
   const { data } = await apiClient.get('/admin/departments');
