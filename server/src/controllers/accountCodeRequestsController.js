@@ -1,7 +1,8 @@
-const { AccountCodeRequest, Department, Office, Role, Position, Admin, User, PositionAssignment } = require('../models');
+const { AccountCodeRequest, AccountCode, Department, Office, Role, Position, Admin, User, PositionAssignment } = require('../models');
 const { Op } = require('sequelize');
 const { v4: uuidv4 } = require('uuid');
 const { generateUniqueCode } = require('../utils/codeGenerator');
+const { getUsabilityError } = require('../utils/accountCodeLifecycle');
 const { sendAccountCodeEmail } = require('../services/emailService');
 
 // ─── Public – Create request ──────────────────────────
@@ -246,6 +247,16 @@ exports.sendCodeEmail = async (req, res) => {
 
     if (request.status !== 'approved' || !request.generated_code) {
       return res.status(400).json({ ok: false, message: 'No code to send.' });
+    }
+
+    // Don't email a code that was deleted, deactivated, expired, or already used
+    const codeRecord = await AccountCode.findOne({ where: { code: request.generated_code } });
+    if (!codeRecord) {
+      return res.status(404).json({ ok: false, message: 'This account code was deleted, so it can no longer be sent.' });
+    }
+    const usabilityError = getUsabilityError(codeRecord);
+    if (usabilityError) {
+      return res.status(400).json({ ok: false, message: `Can't send this code. ${usabilityError}` });
     }
 
     await sendAccountCodeEmail({
