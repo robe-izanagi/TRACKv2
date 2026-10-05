@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const { User, Admin, UserSession, AccountCode, UserProfile, sequelize } = require('../models');
 const { Op } = require('sequelize');
-const { getUsabilityError } = require('../utils/Accountcodelifecycle');
+const { getUsabilityError } = require('../utils/accCodeLifeCycle');
 
 // Login (supports username OR email)
 // Admin login only (username + password)
