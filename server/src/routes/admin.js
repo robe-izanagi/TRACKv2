@@ -3,7 +3,12 @@ const router = express.Router();
 const { requireAdmin } = require('../middleware/auth');
 const { adminRegisterLimiter } = require('../middleware/rateLimiter');
 const { registerAdmin } = require('../controllers/adminAuthController');
-const { generateAccountCode, listCodes } = require('../controllers/generateCodeController');
+const {
+  generateAccountCode,
+  listCodes,
+  deactivateCode,
+  deleteCode,
+} = require('../controllers/generateCodeController');
 const {
   listDepartments,
   createDepartment,
@@ -58,6 +63,8 @@ router.get('/me', requireAdmin, (req, res) => {
 // --- Account Codes ---
 router.post('/account-codes', requireAdmin, generateAccountCode);
 router.get('/account-codes', requireAdmin, listCodes);
+router.put('/account-codes/:id/deactivate', requireAdmin, deactivateCode);
+router.delete('/account-codes/:id', requireAdmin, deleteCode);
 
 // --- Departments ---
 router.get('/departments', requireAdmin, listDepartments);
