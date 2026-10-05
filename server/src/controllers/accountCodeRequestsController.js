@@ -2,7 +2,7 @@ const { AccountCodeRequest, AccountCode, Department, Office, Role, Position, Adm
 const { Op } = require('sequelize');
 const { v4: uuidv4 } = require('uuid');
 const { generateUniqueCode } = require('../utils/codeGenerator');
-const { getUsabilityError } = require('../utils/Accountcodelifecycle');
+const { getUsabilityError } = require('../utils/accCodeLifeCycle');
 const { sendAccountCodeEmail } = require('../services/emailService');
 
 // ─── Public – Create request ──────────────────────────
