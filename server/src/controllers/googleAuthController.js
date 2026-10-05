@@ -2,6 +2,7 @@ const { OAuth2Client } = require('google-auth-library');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const { User, Admin, UserSession, AccountCode, UserProfile, AllowedDomain, PositionAssignment, sequelize } = require('../models');
+const { getUsabilityError } = require('../utils/accountCodeLifecycle');
 
 const client = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
@@ -136,12 +137,13 @@ exports.completeGoogleRegistration = async (req, res) => {
     if (!code) {
       return res.status(400).json({ ok: false, message: 'Invalid account code.' });
     }
-    if (code.status === 'used') {
-      return res.status(400).json({ ok: false, message: 'Account code already used.' });
+
+    // Rejects used, inactive/deactivated, expired, and older-than-7-days codes
+    const usabilityError = getUsabilityError(code);
+    if (usabilityError) {
+      return res.status(400).json({ ok: false, message: usabilityError });
     }
-    if (code.expires_at && code.expires_at < new Date()) {
-      return res.status(400).json({ ok: false, message: 'Account code has expired.' });
-    }
+
     if (code.is_admin) {
       return res.status(400).json({ ok: false, message: 'This code is for admin accounts only.' });
     }
