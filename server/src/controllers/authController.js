@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const { User, Admin, UserSession, AccountCode, UserProfile, sequelize } = require('../models');
 const { Op } = require('sequelize');
+const { getUsabilityError } = require('../utils/Accountcodelifecycle');
 
 // Login (supports username OR email)
 // Admin login only (username + password)
@@ -92,11 +93,11 @@ exports.register = async (req, res) => {
     if (!accountCode) {
       return res.status(400).json({ ok: false, message: 'Invalid account code.' });
     }
-    if (accountCode.status === 'used') {
-      return res.status(400).json({ ok: false, message: 'Account code already used.' });
-    }
-    if (accountCode.expires_at && accountCode.expires_at < new Date()) {
-      return res.status(400).json({ ok: false, message: 'Account code has expired.' });
+
+    // Rejects used, inactive/deactivated, expired, and older-than-7-days codes
+    const usabilityError = getUsabilityError(accountCode);
+    if (usabilityError) {
+      return res.status(400).json({ ok: false, message: usabilityError });
     }
 
     const t = await sequelize.transaction();
