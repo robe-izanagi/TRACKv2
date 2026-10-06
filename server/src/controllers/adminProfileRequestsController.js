@@ -3,6 +3,8 @@ const {
   Department, Office, Role, Position, PositionAssignment, Notification
 } = require('../models');
 const { v4: uuidv4 } = require('uuid');
+const A = require('../utils/auditActions');
+const { logAudit } = require('../utils/auditLogger');
 
 const CHANGE_LABELS = {
   department_change: 'Department Change',
@@ -160,6 +162,12 @@ exports.approveChangeRequest = async (req, res) => {
     await request.save({ transaction: t });
 
     await t.commit();
+    await logAudit({
+      req, targetUserId: request.user_id, actionType: A.PROFILE_CHANGE_APPROVED,
+      entityTable: 'profile_change_requests', entityId: request.id,
+      description: 'Admin approved a profile change request',
+      metadata: { changes: request.changes },
+    });
 
     try {
       await Notification.create({
@@ -200,6 +208,12 @@ exports.rejectChangeRequest = async (req, res) => {
     request.reviewed_by_admin_id = req.adminId;
     request.reviewed_at = new Date();
     await request.save();
+    await logAudit({
+      req, targetUserId: request.user_id, actionType: A.PROFILE_CHANGE_REJECTED,
+      entityTable: 'profile_change_requests', entityId: request.id,
+      description: 'Admin rejected a profile change request',
+      metadata: { changes: request.changes },
+    });
 
     try {
       await Notification.create({
