@@ -1,16 +1,22 @@
 import { NavLink, useNavigate, Outlet } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import styles from "./layout.module.css";
-import { MdDashboard, MdFeedback, MdManageAccounts } from "react-icons/md";
+import {
+  MdDashboard,
+  MdFeedback,
+  MdManageAccounts,
+  MdQueryStats,
+  MdFactCheck,
+} from "react-icons/md";
 import { FaCode } from "react-icons/fa";
-import { BiAtom, BiMenu, BiSolidUser, BiLogOut } from "react-icons/bi";
+import { BiAtom, BiMenu, BiLogOut } from "react-icons/bi";
 import { useState } from "react";
 import logo from "../assets/pup_logo.png";
 
 export default function Layout() {
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
   const navigate = useNavigate();
-  const [menuActive, setMenuActive] = useState(true);
+  const [menuActive, setMenuActive] = useState(() => window.innerWidth > 720);
 
   const handleLogout = () => {
     logout();
@@ -105,6 +111,28 @@ export default function Layout() {
               <span className={!menuActive ? styles.hide : ""}>
                 Feedback
               </span>
+            </NavLink>
+
+            <NavLink
+              to="/analytics"
+              className={({ isActive }) =>
+                `${styles.navLink} ${isActive ? styles.active : ""}`
+              }
+              title="Analytics"
+            >
+              <MdQueryStats className={styles.icon} />
+              <span className={!menuActive ? styles.hide : ""}>Analytics</span>
+            </NavLink>
+
+            <NavLink
+              to="/audit-logs"
+              className={({ isActive }) =>
+                `${styles.navLink} ${isActive ? styles.active : ""}`
+              }
+              title="Audit Logs"
+            >
+              <MdFactCheck className={styles.icon} />
+              <span className={!menuActive ? styles.hide : ""}>Audit Logs</span>
             </NavLink>
           </nav>
 
