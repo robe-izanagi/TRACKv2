@@ -9,6 +9,8 @@ import AccountCodes from "./pages/AccountCodes";
 import Declaration from "./pages/Declaration";
 import ManageUsers from "./pages/ManageUser";
 import Feedback from "./pages/Feedback";
+import Analytics from "./pages/Analytics";
+import AuditLogs from "./pages/AuditLogs";
 import "./App.css";
 import Termsnconditions from "./pages/Termsnconditions";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
@@ -37,6 +39,8 @@ export default function App() {
             <Route path="/declaration" element={<Declaration />} />
             <Route path="/users" element={<ManageUsers />} />
             <Route path="/feedback" element={<Feedback />} />
+            <Route path="/analytics" element={<Analytics />} />
+            <Route path="/audit-logs" element={<AuditLogs />} />
           </Route>
 
           {/* Default */}
