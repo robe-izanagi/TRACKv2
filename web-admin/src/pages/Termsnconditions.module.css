@@ -1,6 +1,6 @@
 .terms-page {
   min-height: 100vh;
-  background: #f5f7fb;
+  background: var(--admin-surface-muted);
   padding: 40px 20px 60px;
 }
 
@@ -8,10 +8,10 @@
   width: 100%;
   max-width: 920px;
   margin: 0 auto;
-  background: #ffffff;
-  border: 1px solid #e4e7ec;
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
   border-radius: 18px;
-  box-shadow: 0 10px 35px rgba(16, 24, 40, 0.06);
+  box-shadow: 0 10px 35px var(--admin-shadow-color-soft);
   overflow: hidden;
 }
 
@@ -19,8 +19,8 @@
 
 .terms-header {
   padding: 50px 55px 35px;
-  border-bottom: 1px solid #eaecf0;
-  background: #ffffff;
+  border-bottom: 1px solid var(--admin-border);
+  background: var(--admin-surface);
 }
 
 .terms-badge {
@@ -28,9 +28,9 @@
   align-items: center;
   padding: 7px 12px;
   border-radius: 999px;
-  background: #eef4ff;
-  color: #315efb;
-  font-size: 12px;
+  background: var(--admin-info-soft);
+  color: var(--admin-info);
+  font-size: var(--font-size-xs);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -39,16 +39,16 @@
 
 .terms-header h1 {
   margin: 0;
-  color: #101828;
-  font-size: 36px;
+  color: var(--admin-text);
+  font-size: var(--font-size-display-lg);
   line-height: 1.2;
   font-weight: 700;
 }
 
 .terms-subtitle {
   margin: 10px 0 0;
-  color: #667085;
-  font-size: 15px;
+  color: var(--admin-muted);
+  font-size: var(--font-size-md);
   line-height: 1.6;
 }
 
@@ -57,22 +57,22 @@
 .terms-notice {
   margin-top: 28px;
   padding: 18px 20px;
-  border: 1px solid #dbe4ff;
+  border: 1px solid var(--admin-info-bg);
   border-radius: 12px;
-  background: #f8faff;
+  background: var(--admin-surface-muted);
 }
 
 .terms-notice strong {
   display: block;
   margin-bottom: 6px;
-  color: #1d3fbf;
-  font-size: 14px;
+  color: var(--admin-info);
+  font-size: var(--font-size-base);
 }
 
 .terms-notice p {
   margin: 0;
-  color: #475467;
-  font-size: 14px;
+  color: var(--admin-text-secondary);
+  font-size: var(--font-size-base);
   line-height: 1.7;
 }
 
@@ -84,8 +84,8 @@
 
 .terms-intro {
   margin: 28px 0 35px;
-  color: #475467;
-  font-size: 15px;
+  color: var(--admin-text-secondary);
+  font-size: var(--font-size-md);
   line-height: 1.8;
 }
 
@@ -93,7 +93,7 @@
 
 .terms-section {
   padding: 30px 0;
-  border-bottom: 1px solid #eaecf0;
+  border-bottom: 1px solid var(--admin-border);
 }
 
 .terms-section:last-child {
@@ -105,8 +105,8 @@
   align-items: center;
   gap: 12px;
   margin: 0 0 17px;
-  color: #101828;
-  font-size: 20px;
+  color: var(--admin-text);
+  font-size: var(--font-size-2xl);
   line-height: 1.4;
   font-weight: 700;
 }
@@ -119,16 +119,16 @@
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  background: #f2f4f7;
-  color: #344054;
-  font-size: 13px;
+  background: var(--admin-surface-muted);
+  color: var(--admin-text-secondary);
+  font-size: var(--font-size-sm);
   font-weight: 700;
 }
 
 .terms-section p {
   margin: 0 0 14px;
-  color: #475467;
-  font-size: 15px;
+  color: var(--admin-text-secondary);
+  font-size: var(--font-size-md);
   line-height: 1.85;
 }
 
@@ -146,8 +146,8 @@
 .terms-section li {
   margin-bottom: 9px;
   padding-left: 4px;
-  color: #475467;
-  font-size: 15px;
+  color: var(--admin-text-secondary);
+  font-size: var(--font-size-md);
   line-height: 1.75;
 }
 
@@ -165,15 +165,15 @@
 
 .terms-footer {
   padding: 25px 55px;
-  border-top: 1px solid #eaecf0;
-  background: #f9fafb;
+  border-top: 1px solid var(--admin-border);
+  background: var(--admin-surface-raised);
   text-align: center;
 }
 
 .terms-footer p {
   margin: 4px 0;
-  color: #98a2b3;
-  font-size: 12px;
+  color: var(--admin-subtle);
+  font-size: var(--font-size-xs);
   line-height: 1.6;
 }
 
@@ -193,7 +193,7 @@
   }
 
   .terms-header h1 {
-    font-size: 30px;
+    font-size: var(--font-size-display);
   }
 
   .terms-content {
@@ -205,12 +205,12 @@
   }
 
   .terms-section h2 {
-    font-size: 18px;
+    font-size: var(--font-size-xl);
   }
 
   .terms-section p,
   .terms-section li {
-    font-size: 14px;
+    font-size: var(--font-size-base);
   }
 
   .terms-footer {
@@ -224,7 +224,7 @@
   }
 
   .terms-header h1 {
-    font-size: 26px;
+    font-size: var(--font-size-4xl);
   }
 
   .terms-content {
@@ -238,7 +238,7 @@
   .terms-section h2 span {
     width: 29px;
     height: 29px;
-    font-size: 12px;
+    font-size: var(--font-size-xs);
   }
 
   .terms-notice {
