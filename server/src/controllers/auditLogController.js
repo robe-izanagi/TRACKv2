@@ -19,7 +19,7 @@ function parseDateBound(value, endOfDay = false) {
   return date;
 }
 
-function buildWhere(query) {
+async function buildWhere(query) {
   const { admin_id, user_id, action_type, entity_table, entity_id, actor_type, severity, from, to, search } = query;
   const where = {};
   if (admin_id) where.actor_admin_id = admin_id;
@@ -37,7 +37,38 @@ function buildWhere(query) {
     if (from) where.created_at[Op.gte] = parseDateBound(from);
     if (to) where.created_at[Op.lte] = parseDateBound(to, true);
   }
-  if (search) where.description = { [Op.like]: `%${String(search).slice(0, 100)}%` };
+  const term = String(search || '').trim().slice(0, 100);
+  if (term) {
+    const pattern = `%${term}%`;
+    const matchingUsers = await User.findAll({
+      where: {
+        [Op.or]: [
+          { id: { [Op.like]: pattern } },
+          { username: { [Op.like]: pattern } },
+          { email: { [Op.like]: pattern } },
+        ],
+      },
+      attributes: ['id'],
+      limit: 500,
+    });
+    const userIds = matchingUsers.map(user => user.id);
+    const adminFilters = [{ id: { [Op.like]: pattern } }];
+    if (userIds.length) adminFilters.push({ user_id: { [Op.in]: userIds } });
+    const matchingAdmins = await Admin.findAll({
+      where: { [Op.or]: adminFilters },
+      attributes: ['id'],
+      limit: 500,
+    });
+
+    where[Op.or] = [
+      { description: { [Op.like]: pattern } },
+      { entity_id: { [Op.like]: pattern } },
+      ...(userIds.length ? [{ target_user_id: { [Op.in]: userIds } }] : []),
+      ...(matchingAdmins.length
+        ? [{ actor_admin_id: { [Op.in]: matchingAdmins.map(admin => admin.id) } }]
+        : []),
+    ];
+  }
   return where;
 }
 
@@ -51,7 +82,7 @@ exports.listAuditLogs = async (req, res) => {
     if (!validIds(req.query)) return res.status(400).json({ ok: false, message: 'Invalid id filter.' });
     const page = Math.max(1, Number(req.query.page) || 1);
     const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 25));
-    const where = buildWhere(req.query);
+    const where = await buildWhere(req.query);
 
     const { rows, count } = await AuditLog.findAndCountAll({
       where, order: [['created_at', 'DESC'], ['id', 'DESC']], limit, offset: (page - 1) * limit,
