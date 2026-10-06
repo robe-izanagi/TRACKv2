@@ -1,15 +1,5 @@
 /* layout.module.css */
 
-:root {
-  --bg-dark: #1a1a2e;
-  --bg-light: #2d2d44;
-  --text-1: #f0f0f0;
-  --primary: #a80202;
-  --secondary: #500000;
-  --sidebar-width: 220px;
-  --sidebar-mini-width: 70px;
-}
-
 * {
   box-sizing: border-box;
   margin: 0;
@@ -24,7 +14,7 @@
 
 /* ===== HEADER ===== */
 .screenTop {
-  background: var(--bg-dark);
+  background: var(--admin-sidebar);
   padding: 8px 16px;
   display: flex;
   align-items: center;
@@ -34,8 +24,8 @@
 }
 
 .menuContainer {
-  font-size: 28px;
-  color: var(--text-1);
+  font-size: var(--font-size-4xl);
+  color: var(--admin-sidebar-text);
   width: var(--sidebar-width);
   display: flex;
   align-items: center;
@@ -46,12 +36,12 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  color: var(--text-1);
-  font-family: sans-serif;
+  color: var(--admin-sidebar-text);
+  font-family: var(--font-family-display);
 }
 
 .title h1 {
-  font-size: 1.5rem;
+  font-size: var(--font-size-3xl);
   margin: 0;
 }
 
@@ -61,9 +51,35 @@
   justify-content: space-between;
   width: 100%;
   gap: 20px;
-  color: var(--text-1);
-  font-size: 28px;
+  color: var(--admin-sidebar-text);
+  font-size: var(--font-size-4xl);
   margin-left: 10px;
+}
+
+.themeToggle {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  place-items: center;
+  margin-left: auto;
+  border: 1px solid var(--admin-divider-inverse);
+  border-radius: 6px;
+  background: var(--admin-overlay);
+  color: var(--admin-sidebar-text);
+  cursor: pointer;
+  font-size: var(--font-size-lg);
+  transition: background 0.18s ease, border-color 0.18s ease;
+}
+
+.themeToggle:hover {
+  border-color: var(--admin-divider-inverse);
+  background: var(--admin-overlay-strong);
+}
+
+.themeToggle:focus-visible {
+  outline: 2px solid var(--admin-primary);
+  outline-offset: 2px;
 }
 
 .menuIcon,
@@ -88,8 +104,8 @@
 /* ===== SIDEBAR ===== */
 .aside {
   width: var(--sidebar-width);
-  background: var(--bg-dark);
-  color: white;
+  background: var(--admin-sidebar);
+  color: var(--admin-sidebar-text);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
@@ -110,7 +126,7 @@
   right: -24px;
   width: 24px;
   height: 24px;
-  background: var(--bg-dark);
+  background: var(--admin-sidebar);
   z-index: 1;
   pointer-events: none;
   transition: all 0.3s ease;
@@ -122,7 +138,7 @@
   display: block;
   width: 100%;
   height: 100%;
-  background: var(--bg-light);
+  background: var(--admin-page);
   border-radius: 50% 0 0 0;
   transition: all 0.3s ease;
 }
@@ -130,7 +146,7 @@
 /* ===== WELCOME ===== */
 .welcome {
   padding: 10px 12px 20px 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid var(--admin-divider-inverse);
   margin-bottom: 16px;
   transition: all 0.3s ease;
 }
@@ -159,8 +175,8 @@
   gap: 12px;
   padding: 10px 16px;
   text-decoration: none;
-  color: #b0b0c0;
-  font-size: 15px;
+  color: var(--admin-subtle);
+  font-size: var(--font-size-md);
   border-radius: 20px;
   position: relative;
   height: 50px;
@@ -170,7 +186,7 @@
 }
 
 .navLink .icon {
-  font-size: 22px;
+  font-size: var(--font-size-3xl);
   flex-shrink: 0;
 }
 
@@ -188,8 +204,8 @@
 
 /* Active state */
 .navLink.active {
-  background: var(--bg-light);
-  color: var(--text);
+  background: var(--admin-sidebar-active);
+  color: var(--admin-sidebar-text);
   border-radius: 20px;
   transition: all 0.3s ease;
 }
@@ -213,11 +229,11 @@
 } */
 
 .navLink:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--admin-overlay);
 }
 
 .navLink.active:hover {
-  background: var(--bg-light);
+  background: var(--admin-sidebar-active);
 }
 
 
@@ -228,26 +244,26 @@
   gap: 12px;
   padding: 10px 16px;
   margin-top: auto;
-  background: var(--secondary);
-  color: white;
+  background: var(--admin-primary-strong);
+  color: var(--admin-sidebar-text);
   border: none;
   border-radius: 8px;
-  font-size: 16px;
+  font-size: var(--font-size-lg);
   cursor: pointer;
   transition: background 0.2s;
   white-space: nowrap;
   overflow: hidden;
-  font-family: 'Times New Roman', Times, serif;
+  font-family: var(--font-family-display);
   transition: all 0.3s ease;
 
 }
 
 .btnLogout:hover {
-  background: var(--primary);
+  background: var(--admin-primary);
 }
 
 .btnLogout .icon {
-  font-size: 22px;
+  font-size: var(--font-size-3xl);
   flex-shrink: 0;
 }
 
@@ -273,7 +289,7 @@
 .content {
   flex: 1;
   padding: 24px;
-  background: var(--bg-light);
+  background: var(--admin-page);
   overflow-y: auto;
 }
 
@@ -292,7 +308,7 @@
     inset: 0 auto 0 0;
     z-index: 5;
     width: min(220px, 72vw);
-    box-shadow: 8px 0 24px rgba(20, 15, 15, 0.16);
+    box-shadow: 8px 0 24px var(--admin-shadow-color-strong);
   }
 
   .aside.mini {
