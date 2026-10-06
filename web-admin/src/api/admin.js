@@ -165,3 +165,58 @@ export const updateDomain = async (id, payload) => {
   const { data } = await apiClient.put(`/admin/domains/${id}`, payload);
   return data;
 };
+
+
+export const getAdminOverview = async (params) => {
+  const { data } = await apiClient.get('/admin/analytics/overview', { params });
+  return data;
+};
+
+export const getAdminUserActivity = async (params) => {
+  const { data } = await apiClient.get('/admin/analytics/users', { params });
+  return data;
+};
+
+export const getAdminRequestAnalytics = async (params) => {
+  const { data } = await apiClient.get('/admin/analytics/requests', { params });
+  return data;
+};
+
+export const getAdminLoginSecurity = async (params) => {
+  const { data } = await apiClient.get('/admin/analytics/login-security', { params });
+  return data;
+};
+
+export const getAdminRiskSummary = async () => {
+  const { data } = await apiClient.get('/admin/analytics/risk-summary');
+  return data;
+};
+
+export const getAdminUserRisk = async (userId) => {
+  const { data } = await apiClient.get(`/admin/analytics/risk/users/${userId}`);
+  return data;
+};
+
+// type: 'account-code' | 'profile-change'
+export const getRequestRecommendation = async (type, id) => {
+  const { data } = await apiClient.get(`/admin/analytics/recommendations/requests/${type}/${id}`);
+  return data;
+};
+
+// ── Audit logs ──
+// params: { admin_id, user_id, action_type (comma list), entity_table, entity_id,
+//           actor_type, severity, from, to, search, page, limit }
+export const getAuditLogs = async (params) => {
+  const { data } = await apiClient.get('/admin/audit-logs', { params });
+  return data;
+};
+
+export const getAuditLogSummary = async (params) => {
+  const { data } = await apiClient.get('/admin/audit-logs/summary', { params });
+  return data;
+};
+
+export const getAuditActionTypes = async () => {
+  const { data } = await apiClient.get('/admin/audit-logs/action-types');
+  return data;
+};
