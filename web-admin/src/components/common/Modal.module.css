@@ -1,7 +1,7 @@
 .overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--admin-backdrop);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -9,14 +9,14 @@
 }
 
 .modal {
-  background: white;
+  background: var(--admin-surface);
   border-radius: 12px;
   padding: 24px;
   width: 90%;
   max-width: 500px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 10px 25px var(--admin-shadow-color-medium);
 }
 
 .header {
@@ -28,13 +28,13 @@
 
 .header h2 {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: var(--font-size-2xl);
 }
 
 .closeBtn {
   background: none;
   border: none;
-  font-size: 24px;
+  font-size: var(--font-size-3xl);
   cursor: pointer;
-  color: #666;
+  color: var(--admin-muted);
 }
