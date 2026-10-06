@@ -11,6 +11,14 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 const q = (sql, replacements = {}) => sequelize.query(sql, { replacements, type: QueryTypes.SELECT });
 const num = v => Number(v) || 0;
 
+function parseDateBound(value, endOfDay = false) {
+  const date = new Date(value);
+  if (endOfDay && /^\d{4}-\d{2}-\d{2}$/.test(String(value)) && !isNaN(date)) {
+    date.setUTCHours(23, 59, 59, 999);
+  }
+  return date;
+}
+
 function buildWhere(query) {
   const { admin_id, user_id, action_type, entity_table, entity_id, actor_type, severity, from, to, search } = query;
   const where = {};
@@ -26,8 +34,8 @@ function buildWhere(query) {
   if (severity && SEVERITIES.includes(severity)) where.severity = severity;
   if (from || to) {
     where.created_at = {};
-    if (from) where.created_at[Op.gte] = new Date(from);
-    if (to) where.created_at[Op.lte] = new Date(to);
+    if (from) where.created_at[Op.gte] = parseDateBound(from);
+    if (to) where.created_at[Op.lte] = parseDateBound(to, true);
   }
   if (search) where.description = { [Op.like]: `%${String(search).slice(0, 100)}%` };
   return where;
@@ -96,8 +104,8 @@ exports.listAuditLogs = async (req, res) => {
 // ─── GET /admin/audit-logs/summary?from&to ─────────────
 exports.getAuditSummary = async (req, res) => {
   try {
-    const to = req.query.to ? new Date(req.query.to) : new Date();
-    const from = req.query.from ? new Date(req.query.from) : new Date(to.getTime() - 30 * 86400000);
+    const to = req.query.to ? parseDateBound(req.query.to, true) : new Date();
+    const from = req.query.from ? parseDateBound(req.query.from) : new Date(to.getTime() - 30 * 86400000);
     if (isNaN(to) || isNaN(from) || from > to) return res.status(400).json({ ok: false, message: 'Invalid date range.' });
     const rep = { from, to };
 
