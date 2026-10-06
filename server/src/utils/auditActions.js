@@ -46,6 +46,7 @@ const ACTIONS = Object.freeze({
   ADMIN_POSITION_ASSIGNMENT_REMOVED: 'admin_position_assignment_removed',
   ADMIN_CODE_EMAIL_SENT: 'admin_code_email_sent',
   ADMIN_API_MUTATION: 'admin_api_mutation',
+  ADMIN_PASSWORD_CHANGED: 'admin_password_changed',
   // security
   SUSPICIOUS_ACTIVITY: 'suspicious_activity_detected',
 });
@@ -68,6 +69,7 @@ const CATEGORIES = Object.freeze({
     'admin_positions_reordered', 'admin_positions_combined', 'admin_position_assignment_removed',
     'admin_code_email_sent',
     'admin_api_mutation',
+    'admin_password_changed',
   ],
   security: ['suspicious_activity_detected'],
 });
