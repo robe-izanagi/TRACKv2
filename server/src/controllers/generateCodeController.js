@@ -11,6 +11,8 @@ const {
   getActionBlock,
   deactivateStaleCodes,
 } = require('../utils/accCodeLifeCycle');
+const A = require('../utils/auditActions');
+const { logAudit } = require('../utils/auditLogger');
 
 function makePrefix(name) {
   if (!name) return 'NON';
@@ -87,6 +89,15 @@ exports.generateAccountCode = async (req, res) => {
     if (!created) {
       return res.status(500).json({ ok: false, message: 'Failed to generate unique account code.' });
     }
+
+    await logAudit({
+      req, actionType: A.ADMIN_GENERATED_CODE, entityTable: 'account_codes',
+      entityId: created.id, description: 'Admin generated an account code',
+      metadata: {
+        is_admin: !!created.is_admin, department_id: created.department_id,
+        office_id: created.office_id, role_id: created.role_id, position_id: created.position_id,
+      },
+    });
 
     res.status(201).json({ ok: true, account_code: created });
   } catch (error) {
@@ -219,6 +230,11 @@ exports.deactivateCode = async (req, res) => {
       return res.status(409).json({ ok: false, message: 'This account code is no longer unused.' });
     }
 
+    await logAudit({
+      req, actionType: A.ADMIN_DEACTIVATED_CODE, entityTable: 'account_codes',
+      entityId: code.id, description: 'Admin deactivated an unused account code',
+    });
+
     res.json({ ok: true, message: 'Account code deactivated.', id: code.id, status: 'inactive' });
   } catch (error) {
     console.error('Deactivate code error:', error);
@@ -246,6 +262,12 @@ exports.deleteCode = async (req, res) => {
     if (!deleted) {
       return res.status(409).json({ ok: false, message: 'This account code was just used and cannot be deleted.' });
     }
+
+    await logAudit({
+      req, actionType: A.ADMIN_DELETED_CODE, entityTable: 'account_codes',
+      entityId: code.id, description: 'Admin deleted an account code',
+      metadata: { status: code.status, is_admin: !!code.is_admin },
+    });
 
     res.json({ ok: true, message: 'Account code deleted.' });
   } catch (error) {
