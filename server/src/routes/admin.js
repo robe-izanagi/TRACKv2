@@ -1,10 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const { requireAdmin } = require('../middleware/auth');
+const { User } = require('../models');
 const adminAnalyticsRoutes = require('./adminAnalytics');
 const adminAuditLogsRoutes = require('./adminAuditLogs');
 const { adminRegisterLimiter } = require('../middleware/rateLimiter');
-const { registerAdmin } = require('../controllers/adminAuthController');
+const { registerAdmin, changeAdminPassword } = require('../controllers/adminAuthController');
 const {
   generateAccountCode,
   listCodes,
@@ -61,9 +62,23 @@ router.use('/audit-logs', requireAdmin, adminAuditLogsRoutes);
 router.post('/register', adminRegisterLimiter, registerAdmin);
 
 // --- Test ---
-router.get('/me', requireAdmin, (req, res) => {
-  res.json({ ok: true, message: 'You are an admin', adminId: req.adminId, userId: req.userId });
+router.get('/me', requireAdmin, async (req, res) => {
+  try {
+    const user = await User.findByPk(req.userId, { attributes: ['id', 'username', 'email'] });
+    if (!user) return res.status(404).json({ ok: false, message: 'Admin account not found.' });
+    res.json({
+      ok: true,
+      message: 'You are an admin',
+      adminId: req.adminId,
+      userId: req.userId,
+      user: { id: user.id, username: user.username, email: user.email },
+    });
+  } catch (error) {
+    console.error('Get admin profile error:', error);
+    res.status(500).json({ ok: false, message: 'Could not load admin account.' });
+  }
 });
+router.put('/change-password', requireAdmin, changeAdminPassword);
 
 // --- Account Codes ---
 router.post('/account-codes', requireAdmin, generateAccountCode);
