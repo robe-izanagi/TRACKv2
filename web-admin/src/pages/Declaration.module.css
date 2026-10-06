@@ -4,7 +4,7 @@
   width: 100%;
   max-width: none;
   margin: 0;
-  background: #f8fafc;
+  background: var(--admin-page);
   min-height: auto;
 }
 
@@ -19,15 +19,15 @@
 }
 
 .title {
-  font-size: 28px;
+  font-size: var(--font-size-4xl);
   font-weight: 700;
-  color: #111827;
+  color: var(--admin-text);
   margin: 0 0 4px 0;
 }
 
 .subtitle {
-  font-size: 16px;
-  color: #6b7280;
+  font-size: var(--font-size-lg);
+  color: var(--admin-muted);
   margin: 0;
 }
 
@@ -36,17 +36,17 @@
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
-  background: #fff;
-  border: 1px solid #d1d5db;
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border-strong);
   border-radius: 8px;
   cursor: pointer;
-  font-size: 14px;
-  color: #374151;
+  font-size: var(--font-size-base);
+  color: var(--admin-text-secondary);
   transition: all 0.2s;
 }
 
 .refreshBtn:hover {
-  background: #f3f4f6;
+  background: var(--admin-hover);
 }
 
 /* ─── Tabs ─────────────────────────────────────────────── */
@@ -54,45 +54,45 @@
   display: flex;
   gap: 8px;
   margin-bottom: 24px;
-  border-bottom: 2px solid #e5e7eb;
+  border-bottom: 2px solid var(--admin-border);
 }
 
 .tabs button {
   padding: 10px 20px;
   border: none;
-  background: transparent;
+  background: var(--admin-transparent);
   cursor: pointer;
   font-weight: 500;
-  font-size: 14px;
-  color: #6b7280;
-  border-bottom: 2px solid transparent;
+  font-size: var(--font-size-base);
+  color: var(--admin-muted);
+  border-bottom: 2px solid var(--admin-transparent);
   transition: all 0.2s;
 }
 
 .tabs button:hover {
-  color: #111827;
+  color: var(--admin-text);
 }
 
 .activeTab {
-  color: var(--primary-color, #800000) !important;
-  border-bottom-color: var(--primary-color, #800000) !important;
+  color: var(--admin-primary) !important;
+  border-bottom-color: var(--admin-primary) !important;
   font-weight: 600;
 }
 
 /* ─── Cards ────────────────────────────────────────────── */
 .card {
-  background: #fff;
+  background: var(--admin-surface);
   border-radius: 16px;
   padding: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  border: 1px solid #f0f0f0;
+  box-shadow: 0 2px 8px var(--admin-shadow-color-soft);
+  border: 1px solid var(--admin-border);
   margin-bottom: 20px;
 }
 
 .card h3 {
-  font-size: 16px;
+  font-size: var(--font-size-lg);
   font-weight: 600;
-  color: #111827;
+  color: var(--admin-text);
   margin: 0 0 12px 0;
 }
 
@@ -109,9 +109,9 @@
   flex: 1 1 auto;
   min-width: 150px;
   padding: 8px 12px;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--admin-border-strong);
   border-radius: 8px;
-  font-size: 14px;
+  font-size: var(--font-size-base);
   box-sizing: border-box;
 }
 
@@ -120,8 +120,8 @@
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
-  background: var(--primary-color, #800000);
-  color: #fff;
+  background: var(--admin-primary);
+  color: var(--admin-surface);
   border: none;
   border-radius: 8px;
   cursor: pointer;
@@ -132,7 +132,7 @@
 }
 
 .addForm .btn:hover {
-  background: #660000;
+  background: var(--admin-primary-hover);
 }
 
 /* ─── Controls (Search) ────────────────────────────────── */
@@ -152,14 +152,14 @@
 .searchBar input {
   width: 100%;
   padding: 8px 12px 8px 36px;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--admin-border-strong);
   border-radius: 8px;
-  font-size: 14px;
+  font-size: var(--font-size-base);
 }
 
 .searchBar input:focus {
   outline: none;
-  border-color: var(--primary-color, #800000);
+  border-color: var(--admin-primary);
 }
 
 .searchIcon {
@@ -167,7 +167,7 @@
   left: 10px;
   top: 50%;
   transform: translateY(-50%);
-  color: #9ca3af;
+  color: var(--admin-subtle);
 }
 
 /* ─── Tables ───────────────────────────────────────────── */
@@ -178,37 +178,37 @@
 .table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: var(--font-size-base);
 }
 
 .table th {
   text-align: left;
   padding: 10px 12px;
-  background: #666666;
+  background: var(--admin-muted);
   font-weight: 600;
-  color: #f4f5f7;
-  border-bottom: 1px solid #e5e7eb;
+  color: var(--admin-surface-muted);
+  border-bottom: 1px solid var(--admin-border);
 }
 
 .table td {
   padding: 10px 12px;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid var(--admin-hover);
   vertical-align: middle;
 }
 
 .table tr:hover td {
-  background: #fafafa;
+  background: var(--admin-surface-raised);
 }
 
 .noData {
   text-align: center;
-  color: #6b7280;
+  color: var(--admin-muted);
   padding: 20px 0 !important;
 }
 
 .loading {
   text-align: center;
-  color: #6b7280;
+  color: var(--admin-muted);
   padding: 20px 0;
 }
 
@@ -222,9 +222,9 @@
 
 .inlineInput {
   padding: 4px 8px;
-  border: 2px solid var(--primary-color, #800000);
+  border: 2px solid var(--admin-primary);
   border-radius: 4px;
-  font-size: 14px;
+  font-size: var(--font-size-base);
   width: 140px;
 }
 
@@ -235,87 +235,87 @@
 /* ─── Badges ───────────────────────────────────────────── */
 .badgeActive {
   display: inline-block;
-  background: #d1fae5;
-  color: #065f46;
+  background: var(--admin-success-bg);
+  color: var(--admin-success);
   padding: 2px 12px;
   border-radius: 12px;
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   font-weight: 500;
 }
 
 .badgeInactive {
   display: inline-block;
-  background: #fee2e2;
-  color: #991b1b;
+  background: var(--admin-danger-bg);
+  color: var(--admin-danger);
   padding: 2px 12px;
   border-radius: 12px;
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   font-weight: 500;
 }
 
 /* ─── Buttons ──────────────────────────────────────────── */
 .toggleBtn {
   padding: 4px 12px;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--admin-border-strong);
   border-radius: 6px;
-  background: #fff;
-  font-size: 12px;
+  background: var(--admin-surface);
+  font-size: var(--font-size-xs);
   cursor: pointer;
   transition: all 0.2s;
-  color: #374151;
+  color: var(--admin-text-secondary);
   margin-right: 4px;
 }
 
 .toggleBtn:hover {
-  background: #f3f4f6;
+  background: var(--admin-hover);
 }
 
 .dangerBtn {
   padding: 4px 10px;
   border: none;
   border-radius: 6px;
-  background: #dc2626;
-  color: #fff;
-  font-size: 12px;
+  background: var(--admin-danger);
+  color: var(--admin-surface);
+  font-size: var(--font-size-xs);
   cursor: pointer;
   transition: background 0.2s;
   margin: 0 2px;
 }
 
 .dangerBtn:hover {
-  background: #b91c1c;
+  background: var(--admin-danger);
 }
 
 .editBtn {
   padding: 4px 8px;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--admin-border-strong);
   border-radius: 6px;
-  background: #fff;
-  font-size: 12px;
+  background: var(--admin-surface);
+  font-size: var(--font-size-xs);
   cursor: pointer;
   transition: all 0.2s;
-  color: #374151;
+  color: var(--admin-text-secondary);
 }
 
 .editBtn:hover {
-  background: #f3f4f6;
+  background: var(--admin-hover);
 }
 
 .combineBtn {
   padding: 4px 12px;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--admin-border-strong);
   border-radius: 6px;
-  background: #fff;
-  font-size: 12px;
+  background: var(--admin-surface);
+  font-size: var(--font-size-xs);
   cursor: pointer;
   transition: all 0.2s;
-  color: #7c3aed;
+  color: var(--admin-purple);
   margin-right: 4px;
 }
 
 .combineBtn:hover:not(:disabled) {
-  background: #f3f4f6;
-  border-color: #7c3aed;
+  background: var(--admin-hover);
+  border-color: var(--admin-purple);
 }
 
 .combineBtn:disabled {
@@ -327,28 +327,28 @@
   padding: 4px 14px;
   border: none;
   border-radius: 4px;
-  background: #16a34a;
-  color: #fff;
+  background: var(--admin-success);
+  color: var(--admin-surface);
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--font-size-xs);
 }
 
 .saveEditBtn:hover {
-  background: #15803d;
+  background: var(--admin-success);
 }
 
 .cancelEditBtn {
   padding: 4px 14px;
   border: none;
   border-radius: 4px;
-  background: #6b7280;
-  color: #fff;
+  background: var(--admin-muted);
+  color: var(--admin-surface);
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--font-size-xs);
 }
 
 .cancelEditBtn:hover {
-  background: #4b5563;
+  background: var(--admin-text-secondary);
 }
 
 /* ─── Right Panel Stats ────────────────────────────────── */
@@ -408,7 +408,7 @@
   width: 100%;
   min-width: 760px;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: var(--font-size-base);
 }
 
 .table th,
@@ -451,11 +451,11 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  background: #fff;
+  background: var(--admin-surface);
   border-radius: 16px;
   padding: 16px 18px;
-  border: 1px solid #f0f0f0;
-  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--admin-border);
+  box-shadow: 0 1px 6px var(--admin-shadow-color-soft);
   flex: 1 1 0;
   min-width: 0;
 }
@@ -468,23 +468,23 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  background: #eff6ff;
-  color: #1d4ed8;
+  background: var(--admin-info-bg);
+  color: var(--admin-info);
 }
 
 .summaryIconTotal {
-  background: #eef2ff;
-  color: #4338ca;
+  background: var(--admin-indigo-bg);
+  color: var(--admin-indigo);
 }
 
 .summaryIconActive {
-  background: #dcfce7;
-  color: #059669;
+  background: var(--admin-success-bg);
+  color: var(--admin-success);
 }
 
 .summaryIconInactive {
-  background: #fef3c7;
-  color: #b45309;
+  background: var(--admin-warning-bg);
+  color: var(--admin-warning);
 }
 
 .summaryInfo {
@@ -493,15 +493,15 @@
 }
 
 .summaryValue {
-  font-size: 20px;
+  font-size: var(--font-size-2xl);
   font-weight: 700;
-  color: #111827;
+  color: var(--admin-text);
   line-height: 1.2;
 }
 
 .summaryLabel {
-  font-size: 12px;
-  color: #6b7280;
+  font-size: var(--font-size-xs);
+  color: var(--admin-muted);
   font-weight: 500;
 }
 
@@ -554,22 +554,22 @@
   align-items: center;
   gap: 12px;
   padding: 12px 16px;
-  background: #f9fafb;
+  background: var(--admin-surface-raised);
   border-radius: 12px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--admin-border);
   transition: all 0.2s;
   flex-wrap: wrap;
 }
 
 .positionCard:hover {
-  background: #fff;
-  border-color: #d1d5db;
+  background: var(--admin-surface);
+  border-color: var(--admin-border-strong);
 }
 
 .positionCard.dragging {
-  background: #fff;
-  border-color: var(--primary-color, #800000);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  background: var(--admin-surface);
+  border-color: var(--admin-primary);
+  box-shadow: 0 4px 16px var(--admin-shadow-color-medium);
 }
 
 .cardDragHandle {
@@ -577,7 +577,7 @@
   align-items: center;
   gap: 8px;
   cursor: grab;
-  color: #9ca3af;
+  color: var(--admin-subtle);
   user-select: none;
 }
 
@@ -586,14 +586,14 @@
 }
 
 .dragIcon {
-  font-size: 20px;
+  font-size: var(--font-size-2xl);
   line-height: 1;
 }
 
 .positionOrder {
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   font-weight: 600;
-  color: #6b7280;
+  color: var(--admin-muted);
   min-width: 28px;
 }
 
@@ -606,18 +606,18 @@
 }
 
 .positionName {
-  font-size: 15px;
+  font-size: var(--font-size-md);
   font-weight: 600;
-  color: #111827;
+  color: var(--admin-text);
 }
 
 .positionBadge {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   font-weight: 500;
   padding: 2px 10px;
   border-radius: 12px;
-  background: #e5e7eb;
-  color: #4b5563;
+  background: var(--admin-border);
+  color: var(--admin-text-secondary);
 }
 
 .cardActions {
@@ -637,9 +637,9 @@
 
 .editInput {
   padding: 6px 10px;
-  border: 2px solid var(--primary-color, #800000);
+  border: 2px solid var(--admin-primary);
   border-radius: 6px;
-  font-size: 14px;
+  font-size: var(--font-size-base);
   flex: 1;
   min-width: 120px;
 }
@@ -652,8 +652,8 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 14px;
-  color: #374151;
+  font-size: var(--font-size-base);
+  color: var(--admin-text-secondary);
 }
 
 /* ─── Search Bar (Positions) ──────────────────────────── */
@@ -665,14 +665,14 @@
 .searchBarSmall input {
   width: 100%;
   padding: 6px 10px 6px 32px;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--admin-border-strong);
   border-radius: 6px;
-  font-size: 13px;
+  font-size: var(--font-size-sm);
 }
 
 .searchBarSmall .searchIcon {
   left: 8px;
-  font-size: 14px;
+  font-size: var(--font-size-base);
 }
 
 .cardHeader {
@@ -685,9 +685,9 @@
 }
 
 .cardHeader h3 {
-  font-size: 16px;
+  font-size: var(--font-size-lg);
   font-weight: 600;
-  color: #111827;
+  color: var(--admin-text);
   margin: 0;
 }
 
@@ -698,7 +698,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--admin-backdrop);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -707,7 +707,7 @@
 }
 
 .modal {
-  background: #fff;
+  background: var(--admin-surface);
   border-radius: 16px;
   padding: 24px;
   max-width: 480px;
@@ -735,18 +735,18 @@
 }
 
 .modalHeader h3 {
-  font-size: 20px;
+  font-size: var(--font-size-2xl);
   font-weight: 600;
-  color: #111827;
+  color: var(--admin-text);
   margin: 0;
 }
 
 .modalClose {
   background: none;
   border: none;
-  font-size: 20px;
+  font-size: var(--font-size-2xl);
   cursor: pointer;
-  color: #6b7280;
+  color: var(--admin-muted);
 }
 
 .modalBody {
@@ -755,28 +755,28 @@
 
 .modalBody p {
   margin: 8px 0;
-  color: #374151;
+  color: var(--admin-text-secondary);
 }
 
 .modalNote {
-  font-size: 14px;
-  color: #6b7280;
+  font-size: var(--font-size-base);
+  color: var(--admin-muted);
 }
 
 .modalWarning {
-  color: #dc2626;
-  font-size: 14px;
+  color: var(--admin-danger);
+  font-size: var(--font-size-base);
   padding: 8px 0;
 }
 
 .modalSelect {
   width: 100%;
   padding: 10px 14px;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--admin-border-strong);
   border-radius: 8px;
-  font-size: 14px;
+  font-size: var(--font-size-base);
   margin-top: 12px;
-  background: #fff;
+  background: var(--admin-surface);
 }
 
 .modalActions {
@@ -787,15 +787,15 @@
 .cancelBtn {
   flex: 1;
   padding: 10px;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--admin-border-strong);
   border-radius: 8px;
-  background: #fff;
+  background: var(--admin-surface);
   cursor: pointer;
   font-weight: 500;
 }
 
 .cancelBtn:hover {
-  background: #f3f4f6;
+  background: var(--admin-hover);
 }
 
 .combineConfirmBtn {
@@ -803,14 +803,14 @@
   padding: 10px;
   border: none;
   border-radius: 8px;
-  background: #7c3aed;
-  color: #fff;
+  background: var(--admin-purple);
+  color: var(--admin-surface);
   cursor: pointer;
   font-weight: 500;
 }
 
 .combineConfirmBtn:hover:not(:disabled) {
-  background: #6d28d9;
+  background: var(--admin-purple);
 }
 
 .combineConfirmBtn:disabled {
@@ -834,22 +834,22 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  background: #fff;
+  background: var(--admin-surface);
   border-radius: 12px;
   padding: 14px 20px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
-  border-left: 4px solid #16a34a;
+  box-shadow: 0 8px 32px var(--admin-shadow-color-strong);
+  border-left: 4px solid var(--admin-success);
   pointer-events: auto;
   animation: slideUp 0.3s ease;
   position: relative;
 }
 
 .feedbackError {
-  border-left-color: #dc2626;
+  border-left-color: var(--admin-danger);
 }
 
 .feedbackSuccess {
-  border-left-color: #16a34a;
+  border-left-color: var(--admin-success);
 }
 
 @keyframes slideUp {
@@ -868,30 +868,30 @@
   background: none;
   border: none;
   cursor: pointer;
-  color: #6b7280;
+  color: var(--admin-muted);
   padding: 4px;
   margin-left: auto;
   flex-shrink: 0;
 }
 
 .feedbackClose:hover {
-  color: #374151;
+  color: var(--admin-text-secondary);
 }
 
 .feedbackIcon {
-  font-size: 18px;
+  font-size: var(--font-size-xl);
   flex-shrink: 0;
 }
 
 .feedbackText {
-  font-size: 14px;
-  color: #111827;
+  font-size: var(--font-size-base);
+  color: var(--admin-text);
   flex: 1;
 }
 
 /* ─── Skeleton Loading ────────────────────────────────── */
 .skeleton {
-  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 37%, #e5e7eb 63%);
+  background: linear-gradient(90deg, var(--admin-border) 25%, var(--admin-hover) 37%, var(--admin-border) 63%);
   background-size: 400% 100%;
   animation: skeletonShimmer 1.4s ease infinite;
   border-radius: 6px;
@@ -973,28 +973,28 @@
 
   .addForm .btn {
     padding: 8px 14px;
-    font-size: 13px;
+    font-size: var(--font-size-sm);
   }
 }
 
 /* ─── Taken position indicator ───────────────────────── */
 .positionCard.taken {
   opacity: 0.8;
-  background: #fef2f2;
-  border-color: #fecaca;
+  background: var(--admin-danger-bg);
+  border-color: var(--admin-danger-border);
 }
 
 .positionCard.taken .positionName {
-  color: #991b1b;
+  color: var(--admin-danger);
 }
 
 .takenBadge {
   display: inline-block;
-  background: #dc2626;
-  color: #fff;
+  background: var(--admin-danger);
+  color: var(--admin-surface);
   padding: 1px 10px;
   border-radius: 12px;
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   font-weight: 600;
 }
 
@@ -1010,16 +1010,16 @@
   }
 
   .title {
-    font-size: 18px;
+    font-size: var(--font-size-xl);
   }
 
   .subtitle {
-    font-size: 12px;
+    font-size: var(--font-size-xs);
   }
 
   .refreshBtn {
     padding: 6px 12px;
-    font-size: 12px;
+    font-size: var(--font-size-xs);
   }
 
   .tabs {
@@ -1030,7 +1030,7 @@
 
   .tabs button {
     padding: 8px 12px;
-    font-size: 12px;
+    font-size: var(--font-size-xs);
   }
 
   .card {
@@ -1040,7 +1040,7 @@
   }
 
   .card h3 {
-    font-size: 14px;
+    font-size: var(--font-size-base);
     margin-bottom: 8px;
   }
 
@@ -1055,7 +1055,7 @@
   }
 
   .searchBar input {
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     padding: 6px 10px 6px 30px;
   }
 
@@ -1077,11 +1077,11 @@
   }
 
   .summaryValue {
-    font-size: 16px;
+    font-size: var(--font-size-lg);
   }
 
   .summaryLabel {
-    font-size: 10px;
+    font-size: var(--font-size-2xs);
   }
 
   .topRow {
@@ -1119,11 +1119,11 @@
   }
 
   .positionName {
-    font-size: 13px;
+    font-size: var(--font-size-sm);
   }
 
   .positionBadge {
-    font-size: 10px;
+    font-size: var(--font-size-2xs);
   }
 
   .cardContent {
@@ -1140,7 +1140,7 @@
   .dangerBtn,
   .combineBtn {
     padding: 4px 8px;
-    font-size: 11px;
+    font-size: var(--font-size-xs);
   }
 
   .editForm {
@@ -1150,7 +1150,7 @@
 
   .editInput {
     width: 100%;
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     padding: 6px 8px;
   }
 
@@ -1160,12 +1160,12 @@
   }
 
   .searchBarSmall input {
-    font-size: 11px;
+    font-size: var(--font-size-xs);
     padding: 6px 8px 6px 28px;
   }
 
   .checkboxRow {
-    font-size: 12px;
+    font-size: var(--font-size-xs);
   }
 
   .modal {
@@ -1179,20 +1179,20 @@
   }
 
   .modalHeader h3 {
-    font-size: 16px;
+    font-size: var(--font-size-lg);
   }
 
   .modalClose {
-    font-size: 18px;
+    font-size: var(--font-size-xl);
   }
 
   .modalBody {
-    font-size: 13px;
+    font-size: var(--font-size-sm);
   }
 
   .modalSelect {
     padding: 8px 10px;
-    font-size: 12px;
+    font-size: var(--font-size-xs);
   }
 
   .modalActions {
@@ -1202,21 +1202,21 @@
   .cancelBtn,
   .combineConfirmBtn {
     padding: 8px;
-    font-size: 12px;
+    font-size: var(--font-size-xs);
   }
 
   .feedbackModal {
     padding: 10px 12px;
-    font-size: 12px;
+    font-size: var(--font-size-xs);
   }
 
   .feedbackIcon {
-    font-size: 16px;
+    font-size: var(--font-size-lg);
   }
 
   .badgeActive,
   .badgeInactive {
-    font-size: 11px;
+    font-size: var(--font-size-xs);
     padding: 1px 8px;
   }
 
@@ -1239,7 +1239,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     margin-top: 4px;
   }
 
@@ -1264,12 +1264,12 @@
   }
 
   .positionOrder {
-    font-size: 11px;
+    font-size: var(--font-size-xs);
     min-width: 24px;
   }
 
   .dragIcon {
-    font-size: 16px;
+    font-size: var(--font-size-lg);
   }
 
   .cardContent {
@@ -1279,12 +1279,12 @@
   }
 
   .positionName {
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     font-weight: 600;
   }
 
   .positionBadge {
-    font-size: 9px;
+    font-size: var(--font-size-2xs);
     padding: 1px 8px;
   }
 
@@ -1299,13 +1299,13 @@
   .editBtn,
   .dangerBtn {
     padding: 4px 6px;
-    font-size: 10px;
+    font-size: var(--font-size-2xs);
     border-radius: 4px;
   }
 
   /* Position List - Horizontal Scroll for All Positions */
   .card h3 {
-    font-size: 14px;
+    font-size: var(--font-size-base);
     margin-bottom: 10px;
   }
 
@@ -1329,12 +1329,12 @@
     width: 100%;
     min-width: auto;
     padding: 8px 10px;
-    font-size: 12px;
+    font-size: var(--font-size-xs);
   }
 
   /* Checkbox styling */
   .checkboxRow {
-    font-size: 12px;
+    font-size: var(--font-size-xs);
   }
 
   .checkboxRow input[type="checkbox"] {
@@ -1357,7 +1357,7 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 11px;
-  color: #6b7280;
+  font-size: var(--font-size-xs);
+  color: var(--admin-muted);
   margin-left: 8px;
 }
