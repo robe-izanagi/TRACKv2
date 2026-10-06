@@ -13,7 +13,7 @@
 }
 
 .campusBadge {
-  font-size: 0.75rem;
+  font-size: var(--font-size-xs);
   font-weight: 700;
   letter-spacing: 1px;
   color: var(--primary-color);
@@ -29,7 +29,7 @@
 }
 
 .trackLogo {
-  font-size: 3rem;
+  font-size: var(--font-size-hero);
   font-weight: 800;
   color: var(--primary-color);
   margin: 0;
@@ -41,14 +41,14 @@
   display: block;
   width: 96px;
   height: 4px;
-  background: #fed65b;
+  background: var(--admin-gold);
   border-radius: 999px;
   margin: 0.65rem auto 0;
 }
 
 .tagline {
   margin: 0;
-  font-size: 0.95rem;
-  color: #333333;
+  font-size: var(--font-size-md);
+  color: var(--admin-text);
   line-height: 1.4;
 }
