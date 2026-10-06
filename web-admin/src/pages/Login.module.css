@@ -3,7 +3,7 @@
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: #f1f5f9;
+  background: var(--admin-surface-muted);
 }
 
 .loginPage {
@@ -14,7 +14,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 2rem;
-  background: #f1f5f9;
+  background: var(--admin-surface-muted);
 }
 
 .pageContent {
@@ -28,35 +28,35 @@
 
 .loginCard {
   width: 100%;
-  background: var(--background-color, white);
+  background: var(--background-color, var(--admin-surface));
   border-radius: 16px;
-  border: 1px solid rgba(0, 0, 0, 0.07);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--admin-shadow-color-soft);
+  box-shadow: 0 4px 12px var(--admin-shadow-color-soft);
   padding: 1.5rem 1.25rem;
 }
 
 
 .card {
-  background: white;
+  background: var(--admin-surface);
   padding: 32px;
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px var(--admin-shadow-color-medium);
   width: 100%;
   max-width: 400px;
 }
 
 .title {
-  font-size: 2rem;
+  font-size: var(--font-size-display);
   font-weight: 800;
-  color: var(--primary-color, #a80202);
+  color: var(--primary-color, var(--admin-primary));
   margin: 0;
   text-align: center;
 }
 
 .subTitle {
   margin: 0 0 1.5rem 0;
-  font-size: clamp(14px, 4vw, 16px);
-  color: #555;
+  font-size: var(--font-size-lg);
+  color: var(--admin-muted);
   text-align: center;
 }
 
@@ -68,7 +68,7 @@
 }
 
 .inputContainer label {
-  font-size: 14px;
+  font-size: var(--font-size-base);
   font-weight: 500;
 }
 
@@ -76,9 +76,9 @@
 .input {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid #ddd;
+  border: 1px solid var(--admin-border);
   border-radius: 8px;
-  font-size: 16px;
+  font-size: var(--font-size-lg);
   font-family: inherit;
   transition: border-color 0.2s, box-shadow 0.2s;
   box-sizing: border-box;
@@ -86,12 +86,12 @@
 
 .input:focus {
   outline: none;
-  border-color: #a80202;
-  box-shadow: 0 0 0 2px rgba(168, 2, 2, 0.1);
+  border-color: var(--admin-primary);
+  box-shadow: 0 0 0 2px var(--admin-focus-ring);
 }
 
 .input:disabled {
-  background-color: #f5f5f5;
+  background-color: var(--admin-surface-muted);
   cursor: not-allowed;
 }
 
@@ -102,19 +102,19 @@
   border: none;
   font-weight: 700;
   cursor: pointer;
-  background: var(--primary-color, #a80202);
-  color: var(--tertiary-color, white);
+  background: var(--primary-color, var(--admin-primary));
+  color: var(--tertiary-color, var(--admin-surface));
   text-decoration: none;
   display: inline-block;
   text-align: center;
-  font-size: 16px;
+  font-size: var(--font-size-lg);
   min-height: 48px;
   transition: background-color 0.2s;
   margin-top: 0.5rem;
 }
 
 .button:hover:not(:disabled) {
-  background: var(--secondary-color, #8a0101);
+  background: var(--secondary-color, var(--admin-primary-hover));
 }
 
 .button:active:not(:disabled) {
@@ -122,20 +122,20 @@
 }
 
 .button:disabled {
-  background: #93c5fd;
+  background: var(--admin-info);
   cursor: not-allowed;
   opacity: 0.6;
 }
 
 .error {
-  color: red;
+  color: var(--admin-danger);
   margin-top: 0.75rem;
-  font-size: 14px;
+  font-size: var(--font-size-base);
   text-align: center;
 }
 
 a {
-  color: var(--primary-color, #a80202);
+  color: var(--primary-color, var(--admin-primary));
   font-weight: 600;
   text-decoration: none;
   transition: text-decoration 0.2s;
@@ -157,7 +157,7 @@ a:hover {
   }
 
   .subTitle {
-    font-size: clamp(15px, 3.5vw, 18px);
+    font-size: var(--font-size-xl);
     margin-bottom: 2rem;
   }
 }
@@ -171,16 +171,16 @@ a:hover {
   .loginCard {
     padding: 2.5rem 2rem;
     border-radius: 24px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 8px 24px var(--admin-shadow-color-medium);
   }
 
   .subTitle {
-    font-size: 16px;
+    font-size: var(--font-size-lg);
   }
 
   .input {
     padding: 0.875rem 1rem;
-    font-size: 15px;
+    font-size: var(--font-size-md);
   }
 
   .button {
