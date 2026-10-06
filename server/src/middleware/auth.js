@@ -19,6 +19,10 @@ exports.authenticate = async (req, res, next) => {
       return res.status(401).json({ ok: false, message: 'Session expired.' });
     }
 
+    if (decoded.isAdmin === true) {
+      return res.status(403).json({ ok: false, message: 'Admin accounts are restricted to management features.' });
+    }
+
     req.userId = decoded.userId;
     req.isAdmin = decoded.isAdmin;
     next();
