@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const { requireAdmin } = require('../middleware/auth');
+const adminAnalyticsRoutes = require('./adminAnalytics');
+const adminAuditLogsRoutes = require('./adminAuditLogs');
 const { adminRegisterLimiter } = require('../middleware/rateLimiter');
 const { registerAdmin } = require('../controllers/adminAuthController');
 const {
@@ -51,6 +53,9 @@ const {
   approveChangeRequest,
   rejectChangeRequest,
 } = require('../controllers/adminProfileRequestsController');
+
+router.use('/analytics', requireAdmin, adminAnalyticsRoutes);
+router.use('/audit-logs', requireAdmin, adminAuditLogsRoutes);
 
 // --- Admin Registration (public — gated by account code + rate limit, no token required) ---
 router.post('/register', adminRegisterLimiter, registerAdmin);
