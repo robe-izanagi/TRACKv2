@@ -170,3 +170,49 @@ exports.loginAdmin = async (req, res) => {
     res.status(500).json({ ok: false, message: 'Server error.' });
   }
 };
+
+exports.changeAdminPassword = async (req, res) => {
+  try {
+    const { current_password, new_password, confirm_password } = req.body || {};
+    if ([current_password, new_password, confirm_password].some(
+      value => typeof value !== 'string' || value.length === 0,
+    )) {
+      return res.status(400).json({
+        ok: false,
+        message: 'Current password, new password, and confirmation are required.',
+      });
+    }
+    if (new_password.length < 8) {
+      return res.status(400).json({ ok: false, message: 'New password must be at least 8 characters.' });
+    }
+    if (new_password !== confirm_password) {
+      return res.status(400).json({ ok: false, message: 'New password confirmation does not match.' });
+    }
+    if (new_password === current_password) {
+      return res.status(400).json({ ok: false, message: 'New password must be different from the current password.' });
+    }
+
+    const user = await User.findByPk(req.userId);
+    if (!user) return res.status(404).json({ ok: false, message: 'Admin account not found.' });
+    if (!user.password_hash || !(await bcrypt.compare(current_password, user.password_hash))) {
+      return res.status(400).json({ ok: false, message: 'Current password is incorrect.' });
+    }
+
+    user.password_hash = await bcrypt.hash(new_password, 10);
+    await user.save({ fields: ['password_hash'] });
+    await logAudit({
+      req,
+      targetUserId: user.id,
+      actionType: A.ADMIN_PASSWORD_CHANGED,
+      entityTable: 'users',
+      entityId: user.id,
+      description: 'Admin changed their account password',
+      metadata: { username: user.username },
+    });
+
+    return res.json({ ok: true, message: 'Password changed. You are still signed in.' });
+  } catch (error) {
+    console.error('Admin password change error:', error);
+    return res.status(500).json({ ok: false, message: 'Could not change password.' });
+  }
+};
