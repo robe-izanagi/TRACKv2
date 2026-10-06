@@ -3,6 +3,8 @@ const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const { User, Admin, UserSession, AccountCode, UserProfile, AllowedDomain, PositionAssignment, sequelize } = require('../models');
 const { getUsabilityError } = require('../utils/accCodeLifeCycle');
+const A = require('../utils/auditActions');
+const { logAudit, recordLoginAttempt } = require('../utils/auditLogger');
 
 const client = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
@@ -28,8 +30,12 @@ exports.googleLoginUrl = (req, res) => {
 exports.googleCallback = async (req, res) => {
   const { code, state } = req.query;
   const mode = state || 'login';
+  let emailForAudit = null;
 
   if (!code) {
+    if (mode === 'login') {
+      await recordLoginAttempt({ req, method: 'google', success: false, reason: 'auth_failed' });
+    }
     return res.redirect(`${process.env.FRONTEND_URL}/login?error=missing_code`);
   }
 
@@ -41,10 +47,14 @@ exports.googleCallback = async (req, res) => {
     });
     const payload = ticket.getPayload();
     const email = payload.email;
+    emailForAudit = email;
     const name = payload.name || '';
 
-    const domain = email.split('@')[1];
+    const domain = typeof email === 'string' ? email.split('@')[1] : null;
     if (!domain) {
+      if (mode === 'login') {
+        await recordLoginAttempt({ req, email, method: 'google', success: false, reason: 'auth_failed' });
+      }
       return res.redirect(`${process.env.FRONTEND_URL}/login?error=invalid_email`);
     }
 
@@ -52,6 +62,9 @@ exports.googleCallback = async (req, res) => {
       where: { domain, is_active: true }
     });
     if (!allowed) {
+      if (mode === 'login') {
+        await recordLoginAttempt({ req, email, method: 'google', success: false, reason: 'domain_not_allowed' });
+      }
       return res.redirect(`${process.env.FRONTEND_URL}/login?error=domain_not_allowed`);
     }
 
@@ -60,6 +73,9 @@ exports.googleCallback = async (req, res) => {
     // ─── Existing User ──────────────────────────────
     if (user) {
       if (user.status === 'blocked' || user.status === 'suspended') {
+        if (mode === 'login') {
+          await recordLoginAttempt({ req, user, email, method: 'google', success: false, reason: 'blocked' });
+        }
         return res.redirect(`${process.env.FRONTEND_URL}/login?error=blocked`);
       }
 
@@ -82,6 +98,7 @@ exports.googleCallback = async (req, res) => {
           `${process.env.FRONTEND_URL}/request-account-code?token=${token}`
         );
       }
+      await recordLoginAttempt({ req, user, email, method: 'google', success: true });
       if (!user) {
         return res.redirect(`${process.env.FRONTEND_URL}/login?error=${encodeURIComponent("Can't find your account or your account has been deleted.")}`);
       }
@@ -109,6 +126,11 @@ exports.googleCallback = async (req, res) => {
     );
   } catch (error) {
     console.error('Google callback error:', error);
+    if (mode === 'login') {
+      await recordLoginAttempt({
+        req, email: emailForAudit, method: 'google', success: false, reason: 'auth_failed',
+      });
+    }
     return res.redirect(`${process.env.FRONTEND_URL}/login?error=auth_failed`);
   }
 };
@@ -196,6 +218,16 @@ exports.completeGoogleRegistration = async (req, res) => {
         status: 'active',
         expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000)
       });
+
+      await Promise.all([
+        recordLoginAttempt({ req, user, email, method: 'google', success: true }),
+        logAudit({
+          req, actorType: 'user', targetUserId: user.id,
+          actionType: A.USER_REGISTERED, entityTable: 'users', entityId: user.id,
+          description: 'User registered with Google and signed in',
+          metadata: { method: 'google' },
+        }),
+      ]);
 
       res.json({
         ok: true,
