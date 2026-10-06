@@ -3,7 +3,8 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { sequelize, User, Admin, AccountCode, UserSession } = require('../models');
 const { getUsabilityError } = require('../utils/accCodeLifeCycle');
-const { recordLoginAttempt } = require('../utils/auditLogger');
+const A = require('../utils/auditActions');
+const { logAudit, recordLoginAttempt } = require('../utils/auditLogger');
 
 exports.registerAdmin = async (req, res) => {
   const t = await sequelize.transaction();
@@ -74,6 +75,12 @@ exports.registerAdmin = async (req, res) => {
     await codeRecord.save({ transaction: t });
 
     await t.commit();
+    await logAudit({
+      req, actorType: 'anonymous', targetUserId: newUser.id,
+      actionType: A.ADMIN_REGISTERED, entityTable: 'admins', entityId: admin.id,
+      description: 'Admin account registered',
+      metadata: { username: newUser.username },
+    });
 
     res.status(201).json({
       ok: true,
