@@ -4,6 +4,8 @@ const { v4: uuidv4 } = require('uuid');
 const { generateUniqueCode } = require('../utils/codeGenerator');
 const { getUsabilityError } = require('../utils/accCodeLifeCycle');
 const { sendAccountCodeEmail } = require('../services/emailService');
+const A = require('../utils/auditActions');
+const { logAudit, detectRequestSpam, maskEmail } = require('../utils/auditLogger');
 
 // ─── Public – Create request ──────────────────────────
 exports.createRequest = async (req, res) => {
@@ -51,6 +53,16 @@ exports.createRequest = async (req, res) => {
       description: description || null,
       status: 'pending'
     });
+
+    await Promise.all([
+      logAudit({
+        req, actorType: 'anonymous', actionType: A.ACCOUNT_CODE_REQUESTED,
+        entityTable: 'account_code_requests', entityId: request.id,
+        description: 'Account code request submitted',
+        metadata: { requester_email: maskEmail(normalizedEmail) },
+      }),
+      detectRequestSpam({ req, email: normalizedEmail, requestId: request.id }),
+    ]);
 
     res.status(201).json({ ok: true, request });
   } catch (error) {
@@ -168,6 +180,12 @@ exports.approveRequest = async (req, res) => {
           request.reviewed_by_admin_id = req.adminId;
           request.reviewed_at = new Date();
           await request.save();
+          await logAudit({
+            req, targetUserId: null, actionType: A.ACCOUNT_CODE_REJECTED,
+            entityTable: 'account_code_requests', entityId: request.id,
+            description: 'Admin auto-rejected an account code request because its position was occupied',
+            metadata: { requester_email: maskEmail(request.email), reason: 'position_occupied' },
+          });
 
           return res.json({
             ok: true,
@@ -195,6 +213,12 @@ exports.approveRequest = async (req, res) => {
     request.reviewed_at = new Date();
     request.generated_code = code.code;
     await request.save();
+    await logAudit({
+      req, actionType: A.ACCOUNT_CODE_APPROVED,
+      entityTable: 'account_code_requests', entityId: request.id,
+      description: 'Admin approved an account code request and generated a code',
+      metadata: { requester_email: maskEmail(request.email), account_code_id: code.id },
+    });
 
     res.json({
       ok: true,
@@ -227,6 +251,12 @@ exports.rejectRequest = async (req, res) => {
     request.reviewed_by_admin_id = req.adminId;
     request.reviewed_at = new Date();
     await request.save();
+    await logAudit({
+      req, actionType: A.ACCOUNT_CODE_REJECTED,
+      entityTable: 'account_code_requests', entityId: request.id,
+      description: 'Admin rejected an account code request',
+      metadata: { requester_email: maskEmail(request.email) },
+    });
 
     res.json({ ok: true, request });
   } catch (error) {
