@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { FiAlertTriangle, FiChevronLeft, FiChevronRight, FiRefreshCw, FiSearch } from "react-icons/fi";
+import { FiAlertTriangle, FiChevronLeft, FiChevronRight, FiFilter, FiRefreshCw, FiSearch } from "react-icons/fi";
 import { getAuditActionTypes, getAuditLogSummary, getAuditLogs } from "../api/admin";
 import styles from "./AuditLogs.module.css";
 
@@ -165,26 +165,27 @@ export default function AuditLogs() {
         <div className={styles.filterHeader}>
           <div>
             <span className={styles.filterKicker}>LOG QUERY</span>
-            <h2>Find an event</h2>
+            <h2>Filter activity</h2>
+            <p>Choose a date range or narrow by action, actor, and severity.</p>
           </div>
           <button type="button" className={styles.clearButton} onClick={resetFilters}>Reset</button>
         </div>
-        <label>
+        <label className={styles.dateFilter}>
           <span>From</span>
           <input type="date" value={draft.from} onChange={(event) => setDraft({ ...draft, from: event.target.value })} />
         </label>
-        <label>
+        <label className={styles.dateFilter}>
           <span>To</span>
           <input type="date" value={draft.to} onChange={(event) => setDraft({ ...draft, to: event.target.value })} />
         </label>
-        <label>
+        <label className={styles.actionFilter}>
           <span>Action</span>
           <select value={draft.action_type} onChange={(event) => setDraft({ ...draft, action_type: event.target.value })}>
             <option value="">All actions</option>
             {actionTypes.map((action) => <option value={action} key={action}>{action.replaceAll("_", " ")}</option>)}
           </select>
         </label>
-        <label>
+        <label className={styles.actorFilter}>
           <span>Actor</span>
           <select value={draft.actor_type} onChange={(event) => setDraft({ ...draft, actor_type: event.target.value })}>
             <option value="">All actors</option>
@@ -194,7 +195,7 @@ export default function AuditLogs() {
             <option value="anonymous">Anonymous</option>
           </select>
         </label>
-        <label>
+        <label className={styles.severityFilter}>
           <span>Severity</span>
           <select value={draft.severity} onChange={(event) => setDraft({ ...draft, severity: event.target.value })}>
             <option value="">All levels</option>
@@ -207,12 +208,12 @@ export default function AuditLogs() {
           <span>Search description</span>
           <div className={styles.searchInput}>
             <FiSearch aria-hidden="true" />
-            <input type="search" value={draft.search} placeholder="Search log descriptions" onChange={(event) => setDraft({ ...draft, search: event.target.value })} />
+            <input type="search" value={draft.search} placeholder="Descriptions, users, or record IDs" onChange={(event) => setDraft({ ...draft, search: event.target.value })} />
           </div>
         </label>
         <div className={styles.filterActions}>
           {filterError && <span role="alert">{filterError}</span>}
-          <button type="submit" className={styles.applyButton}>Apply filters</button>
+          <button type="submit" className={styles.applyButton}><FiFilter /> Apply filters</button>
         </div>
       </form>
 
