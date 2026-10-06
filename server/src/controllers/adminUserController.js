@@ -5,6 +5,8 @@ const {
   TaskChecklistComment, TaskChecklistItem, PositionAssignment,
   Notification, AccountCode, Admin, UserSession,
 } = require('../models');
+const A = require('../utils/auditActions');
+const { logAudit, maskEmail } = require('../utils/auditLogger');
 
 // ─── GET ALL USERS WITH FILTERS ──────────────────────
 exports.getAllUsers = async (req, res) => {
@@ -113,6 +115,11 @@ exports.toggleBlockUser = async (req, res) => {
     if (user.status === 'blocked') {
       user.status = 'active';
       await user.save();
+      await logAudit({
+        req, targetUserId: user.id, actionType: A.USER_UNBLOCKED,
+        entityTable: 'users', entityId: user.id, description: 'Admin unblocked a user',
+        metadata: { target_username: user.username, target_email: maskEmail(user.email) },
+      });
       return res.json({ ok: true, message: 'User has been unblocked.', status: 'active' });
     }
 
@@ -127,6 +134,12 @@ exports.toggleBlockUser = async (req, res) => {
     } catch (sessionErr) {
       console.error('Failed to revoke sessions on block (non-fatal):', sessionErr);
     }
+
+    await logAudit({
+      req, targetUserId: user.id, actionType: A.USER_BLOCKED,
+      entityTable: 'users', entityId: user.id, description: 'Admin blocked a user',
+      metadata: { target_username: user.username, target_email: maskEmail(user.email) },
+    });
 
     res.json({ ok: true, message: 'User has been blocked.', status: 'blocked' });
   } catch (error) {
@@ -180,6 +193,13 @@ exports.deleteUser = async (req, res) => {
         console.error('Failed to clear sessions on delete (non-fatal):', sessionErr);
       }
     }
+
+    await logAudit({
+      req, targetUserId: user.id, actionType: A.ADMIN_DELETED_USER,
+      entityTable: 'users', entityId: user.id, description: 'Admin permanently deleted a user',
+      metadata: { target_username: user.username, target_email: maskEmail(user.email) },
+      transaction: t,
+    });
 
     await UserProfile.destroy({ where: { user_id: id }, transaction: t });
     await user.destroy({ transaction: t });
