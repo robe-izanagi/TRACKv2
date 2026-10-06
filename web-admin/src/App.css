@@ -2,26 +2,179 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: 'Segoe UI';
+  font-family: var(--font-family-body);
 }
 
 :root {
-  --bg-dark: #404040;
-  --bg-light: #f1f5f9;
-  --border-1: #500000;
-  --border-2: #cacd83;
-  --text: #000;
-  --text-1: #fff;
-  --primary-color: #a80202;
-  --secondary-color: #500000;
-  --tertiary-color: #FFFFFF;
-  --fourth-color: #212121;
-  --fifth-color: #000000;
-  --hyperlink-color: #001479;
-  --radio-button-background: #E1E3E4;
-  --page-background-color: #F8F9FA;
-  --input-background-color: #E1E3E4;
-  --input-focus-color: #500000;
-  --text-color: #000000;
-  --background-color: #fff;
+  color-scheme: light;
+
+  --font-family-body: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  --font-family-display: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  --font-family-mono: "Cascadia Code", Consolas, monospace;
+  --font-size-2xs: 0.6875rem;
+  --font-size-3xs: 0.5rem;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.8125rem;
+  --font-size-base: 0.875rem;
+  --font-size-md: 0.9375rem;
+  --font-size-lg: 1rem;
+  --font-size-xl: 1.125rem;
+  --font-size-2xl: 1.25rem;
+  --font-size-3xl: 1.5rem;
+  --font-size-4xl: 1.75rem;
+  --font-size-display: 2rem;
+  --font-size-display-lg: 2.25rem;
+  --font-size-hero: 2.5rem;
+  --line-height-body: 1.5;
+  --line-height-heading: 1.2;
+
+  --admin-page: #f8fafc;
+  --admin-surface: #ffffff;
+  --admin-surface-muted: #f1f5f9;
+  --admin-surface-raised: #f9fafb;
+  --admin-sidebar: #404040;
+  --admin-sidebar-active: #2d2d2d;
+  --admin-sidebar-text: #f8fafc;
+  --admin-text: #111827;
+  --admin-text-secondary: #374151;
+  --admin-muted: #6b7280;
+  --admin-subtle: #9ca3af;
+  --admin-border: #e5e7eb;
+  --admin-border-strong: #d1d5db;
+  --admin-hover: #f3f4f6;
+  --admin-primary: #a80202;
+  --admin-primary-hover: #800000;
+  --admin-primary-strong: #500000;
+  --admin-primary-soft: #fef2f2;
+  --admin-danger: #b91c1c;
+  --admin-danger-bg: #fee2e2;
+  --admin-danger-border: #fecaca;
+  --admin-success: #15803d;
+  --admin-success-bg: #dcfce7;
+  --admin-success-soft: #ecfdf5;
+  --admin-warning: #92400e;
+  --admin-warning-bg: #fef3c7;
+  --admin-warning-soft: #fffbeb;
+  --admin-gold: #b17a22;
+  --admin-gold-bg: #fbf1dc;
+  --admin-info: #1d4ed8;
+  --admin-info-bg: #dbeafe;
+  --admin-info-soft: #eff6ff;
+  --admin-indigo: #4338ca;
+  --admin-indigo-bg: #eef2ff;
+  --admin-purple: #6d28d9;
+  --admin-purple-bg: #ede9fe;
+  --admin-pink: #be185d;
+  --admin-pink-bg: #fce7f3;
+  --admin-cyan: #0284c7;
+  --admin-cyan-bg: #e0f2fe;
+  --admin-olive: #68712b;
+  --admin-olive-bg: #f1f3d8;
+  --admin-transparent: transparent;
+  --admin-current-color: currentColor;
+  --admin-focus-ring: rgb(168 2 2 / 12%);
+  --admin-overlay: rgb(255 255 255 / 6%);
+  --admin-overlay-strong: rgb(255 255 255 / 30%);
+  --admin-divider-inverse: rgb(255 255 255 / 10%);
+  --admin-backdrop: rgb(17 24 39 / 52%);
+  --admin-shadow-color-soft: rgb(15 23 42 / 8%);
+  --admin-shadow-color-medium: rgb(15 23 42 / 16%);
+  --admin-shadow-color-strong: rgb(15 23 42 / 24%);
+  --admin-shadow-soft: 0 1px 3px rgb(15 23 42 / 8%);
+  --admin-shadow-card: 0 2px 10px rgb(15 23 42 / 7%);
+  --admin-shadow-popover: 0 12px 32px rgb(15 23 42 / 16%);
+
+  --bg-dark: var(--admin-sidebar);
+  --bg-light: var(--admin-page);
+  --border-1: var(--admin-primary-strong);
+  --border-2: var(--admin-olive);
+  --text: var(--admin-text);
+  --text-1: var(--admin-sidebar-text);
+  --primary-color: var(--admin-primary);
+  --secondary-color: var(--admin-primary-strong);
+  --tertiary-color: var(--admin-surface);
+  --fourth-color: var(--admin-text-secondary);
+  --fifth-color: var(--admin-text);
+  --hyperlink-color: var(--admin-info);
+  --radio-button-background: var(--admin-surface-muted);
+  --page-background-color: var(--admin-page);
+  --input-background-color: var(--admin-surface);
+  --input-focus-color: var(--admin-primary);
+  --text-color: var(--admin-text);
+  --background-color: var(--admin-surface);
+  --sidebar-width: 220px;
+  --sidebar-mini-width: 70px;
+}
+
+[data-admin-theme="dark"] {
+  color-scheme: dark;
+
+  --admin-page: #111827;
+  --admin-surface: #1f2937;
+  --admin-surface-muted: #273449;
+  --admin-surface-raised: #243143;
+  --admin-sidebar: #151b25;
+  --admin-sidebar-active: #303b4c;
+  --admin-sidebar-text: #f3f4f6;
+  --admin-text: #f3f4f6;
+  --admin-text-secondary: #d1d5db;
+  --admin-muted: #aab4c2;
+  --admin-subtle: #8491a2;
+  --admin-border: #394658;
+  --admin-border-strong: #526174;
+  --admin-hover: #2b384a;
+  --admin-primary: #ef6b70;
+  --admin-primary-hover: #ff8589;
+  --admin-primary-strong: #b63b43;
+  --admin-primary-soft: #382328;
+  --admin-danger: #fb7185;
+  --admin-danger-bg: #44252e;
+  --admin-danger-border: #713944;
+  --admin-success: #6ee7b7;
+  --admin-success-bg: #1c3b35;
+  --admin-success-soft: #18332f;
+  --admin-warning: #fbbf24;
+  --admin-warning-bg: #40351f;
+  --admin-warning-soft: #352d20;
+  --admin-gold: #f2c66d;
+  --admin-gold-bg: #3b321f;
+  --admin-info: #93c5fd;
+  --admin-info-bg: #23364d;
+  --admin-info-soft: #1b2b40;
+  --admin-indigo: #a5b4fc;
+  --admin-indigo-bg: #302d4a;
+  --admin-purple: #c4b5fd;
+  --admin-purple-bg: #382e4c;
+  --admin-pink: #f9a8d4;
+  --admin-pink-bg: #432b3c;
+  --admin-cyan: #7dd3fc;
+  --admin-cyan-bg: #1f3949;
+  --admin-olive: #d5d98b;
+  --admin-olive-bg: #373b2b;
+  --admin-focus-ring: rgb(239 107 112 / 22%);
+  --admin-overlay: rgb(255 255 255 / 7%);
+  --admin-overlay-strong: rgb(255 255 255 / 24%);
+  --admin-divider-inverse: rgb(255 255 255 / 12%);
+  --admin-backdrop: rgb(0 0 0 / 68%);
+  --admin-shadow-color-soft: rgb(0 0 0 / 24%);
+  --admin-shadow-color-medium: rgb(0 0 0 / 36%);
+  --admin-shadow-color-strong: rgb(0 0 0 / 50%);
+  --admin-shadow-soft: 0 1px 3px rgb(0 0 0 / 24%);
+  --admin-shadow-card: 0 2px 10px rgb(0 0 0 / 24%);
+  --admin-shadow-popover: 0 12px 32px rgb(0 0 0 / 42%);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--admin-page);
+  color: var(--admin-text);
+  font-family: var(--font-family-body);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-body);
 }
