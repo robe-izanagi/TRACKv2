@@ -11,12 +11,22 @@ import {
 import { FaCode } from "react-icons/fa";
 import { BiAtom, BiMenu, BiLogOut } from "react-icons/bi";
 import { useState } from "react";
+import { FiMoon, FiSun } from "react-icons/fi";
 import logo from "../assets/pup_logo.png";
 
 export default function Layout() {
   const { logout } = useAuth();
   const navigate = useNavigate();
   const [menuActive, setMenuActive] = useState(() => window.innerWidth > 720);
+  const [theme, setTheme] = useState(() =>
+    localStorage.getItem("track-admin-theme") === "dark" ? "dark" : "light",
+  );
+
+  const toggleTheme = () => {
+    const nextTheme = theme === "dark" ? "light" : "dark";
+    localStorage.setItem("track-admin-theme", nextTheme);
+    setTheme(nextTheme);
+  };
 
   const handleLogout = () => {
     logout();
@@ -24,7 +34,7 @@ export default function Layout() {
   };
 
   return (
-    <div className={styles.mainContainer}>
+    <div className={styles.mainContainer} data-admin-theme={theme}>
       <header className={styles.screenTop}>
         <div className={styles.menuContainer}>
           <BiMenu
@@ -39,10 +49,16 @@ export default function Layout() {
             <img src={logo} alt="pup logo" width={30} height={30} />
             <h1>TRACK</h1>
           </div>
-
-          {/* <div className={styles.topModules}>
-            <BiSolidUser className={styles.userIcon} title="account" />
-          </div> */}
+          <button
+            type="button"
+            className={styles.themeToggle}
+            onClick={toggleTheme}
+            aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+            aria-pressed={theme === "dark"}
+            title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+          >
+            {theme === "dark" ? <FiSun /> : <FiMoon />}
+          </button>
         </div>
       </header>
 
