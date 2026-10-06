@@ -6,8 +6,8 @@
   align-items: center;
   gap: 0.5rem;
   margin-top: 1.5rem;
-  color: #555555;
-  font-size: 0.85rem;
+  color: var(--admin-muted);
+  font-size: var(--font-size-sm);
   text-align: center;
 }
 
@@ -24,7 +24,7 @@
 }
 
 .footerLinks a {
-  color: #555555;
+  color: var(--admin-muted);
   text-decoration: none;
   font-weight: 400;
 }
@@ -34,5 +34,5 @@
 }
 
 .copyright {
-  color: #777777;
+  color: var(--admin-muted);
 }
