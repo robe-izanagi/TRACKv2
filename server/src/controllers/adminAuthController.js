@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { sequelize, User, Admin, AccountCode, UserSession } = require('../models');
 const { getUsabilityError } = require('../utils/accCodeLifeCycle');
+const { recordLoginAttempt } = require('../utils/auditLogger');
 
 exports.registerAdmin = async (req, res) => {
   const t = await sequelize.transaction();
@@ -94,25 +95,45 @@ exports.loginAdmin = async (req, res) => {
     const { username, password } = req.body;
 
     if (!username || !password) {
+      await recordLoginAttempt({
+        req, username, method: 'local', success: false,
+        reason: 'auth_failed', isAdminLogin: true,
+      });
       return res.status(400).json({ ok: false, message: 'Username and password are required.' });
     }
 
     const user = await User.findOne({ where: { username: username.trim() } });
     if (!user) {
+      await recordLoginAttempt({
+        req, username: username.trim(), method: 'local', success: false,
+        reason: 'user_not_found', isAdminLogin: true,
+      });
       return res.status(404).json({ ok: false, message: "Can't find your account or your account has been deleted." });
     }
 
     const admin = await Admin.findOne({ where: { user_id: user.id, is_active: true } });
     if (!admin) {
+      await recordLoginAttempt({
+        req, user, username: user.username, email: user.email, method: 'local',
+        success: false, reason: 'not_admin', isAdminLogin: true,
+      });
       return res.status(404).json({ ok: false, message: "Can't find your account or your account has been deleted." });
     }
 
-    if (user.status === 'blocked') {
+    if (user.status === 'blocked' || user.status === 'suspended') {
+      await recordLoginAttempt({
+        req, user, username: user.username, email: user.email, method: 'local',
+        success: false, reason: 'blocked', isAdminLogin: true,
+      });
       return res.status(403).json({ ok: false, message: 'Your account has been blocked. Please contact the admin office for restoring your account.' });
     }
 
     const validPassword = await bcrypt.compare(password, user.password_hash);
     if (!validPassword) {
+      await recordLoginAttempt({
+        req, user, username: user.username, email: user.email, method: 'local',
+        success: false, reason: 'invalid_password', isAdminLogin: true,
+      });
       return res.status(401).json({ ok: false, message: 'Invalid username or password.' });
     }
 
@@ -125,6 +146,11 @@ exports.loginAdmin = async (req, res) => {
       token,
       status: 'active',
       expires_at,
+    });
+
+    await recordLoginAttempt({
+      req, user, username: user.username, email: user.email, method: 'local',
+      success: true, isAdminLogin: true, adminId: admin.id,
     });
 
     res.json({
