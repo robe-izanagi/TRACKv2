@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const { UserSession, Admin } = require('../models');
+const { watchAdminMutation } = require('../utils/auditLogger');
 
 exports.authenticate = async (req, res, next) => {
   try {
@@ -52,6 +53,7 @@ exports.requireAdmin = async (req, res, next) => {
 
     req.userId = decoded.userId;
     req.adminId = admin.id;
+    watchAdminMutation(req, res);
     next();
   } catch (error) {
     return res.status(401).json({ ok: false, message: 'Invalid token.' });
