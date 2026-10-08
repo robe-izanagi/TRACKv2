@@ -58,13 +58,13 @@ export default function CreateTask() {
     department_id: template?.department_id || "",
     office_id: template?.office_id || "",
     deadlineDate: "",
-    deadlineTime: "",
+    deadlineTime: template?.deadline_time || "",
     description: template?.description || "",
     remind_before_minutes: template?.remind_before_minutes || "",
   });
 
   const [assigneeIds, setAssigneeIds] = useState(template?.assignee_ids || []);
-  const [collaboratorIds, setCollaboratorIds] = useState(template?.collaborator_ids || []);
+  const [collaboratorIds, setCollaboratorIds] = useState([]);
   const [showAssigneeModal, setShowAssigneeModal] = useState(false);
   const [showCollaboratorModal, setShowCollaboratorModal] = useState(false);
   const [attachments, setAttachments] = useState([]);
