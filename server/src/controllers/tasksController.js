@@ -21,6 +21,12 @@ const {
   buildTaskReminderEmail, buildTaskEditedEmail, buildTaskDeletedEmail
 } = require("../services/taskEmailTemplates");
 const { createNotification } = require("../services/notificationService");
+const {
+  cancelPendingReminders,
+  cancelUserReminder,
+  getTaskParticipantIds,
+  uniqueIds,
+} = require("../services/notificationRecipients");
 
 const getUserProfileSummary = async (userId) => {
   const user = await User.findByPk(userId, {
@@ -72,16 +78,17 @@ exports.createTask = async (req, res) => {
       assignee_ids, collaborator_ids, checklist_items,
     } = req.body;
 
-    if (!title || !visibility || !deadline_datetime) {
+    const missingFields = [!title && 'title', !visibility && 'visibility', !deadline_datetime && 'deadline date and time'].filter(Boolean);
+    if (missingFields.length > 0) {
       await t.rollback();
-      return res.status(400).json({ ok: false, message: "Missing required fields." });
+      return res.status(400).json({ ok: false, message: `Please complete the following required fields: ${missingFields.join(', ')}.` });
     }
 
     let finalDepartmentId = null;
     if (visibility === "department") {
       if (!department_id) {
         await t.rollback();
-        return res.status(400).json({ ok: false, message: "department_id is required for department tasks." });
+        return res.status(400).json({ ok: false, message: "Select your department before creating a department task." });
       }
       const profile = await UserProfile.findOne({ where: { user_id: req.userId } });
       if (!profile || profile.department_id !== department_id) {
@@ -405,10 +412,16 @@ exports.updateTask = async (req, res) => {
     const isCollaborator = await TaskCollaborator.findOne({ where: { task_id: id, user_id: req.userId } });
     if (!isCreator && !isCollaborator) {
       await t.rollback();
-      return res.status(403).json({ ok: false, message: "Not authorized to edit." });
+      return res.status(403).json({ ok: false, message: "You can edit this task only if you created it or were added as a collaborator." });
     }
 
     const isCollaboratorEdit = !isCreator;
+
+    const missingFields = [!title && 'title', !visibility && 'visibility', !deadline_datetime && 'deadline date and time'].filter(Boolean);
+    if (missingFields.length > 0) {
+      await t.rollback();
+      return res.status(400).json({ ok: false, message: `Please complete the following required fields: ${missingFields.join(', ')}.` });
+    }
 
     let finalVisibility = visibility;
     let finalDepartmentId = null;
@@ -420,7 +433,7 @@ exports.updateTask = async (req, res) => {
       if (visibility === "department") {
         if (!department_id) {
           await t.rollback();
-          return res.status(400).json({ ok: false, message: "department_id is required for department tasks." });
+          return res.status(400).json({ ok: false, message: "Select your department before saving a department task." });
         }
         const profile = await UserProfile.findOne({ where: { user_id: req.userId } });
         if (!profile || profile.department_id !== department_id) {
@@ -456,7 +469,7 @@ exports.updateTask = async (req, res) => {
     const existingMap = {};
     existingAssignees.forEach((a) => { existingMap[a.user_id] = a.response; });
 
-    const submittedAssigneeIds = assignee_ids || [];
+    const submittedAssigneeIds = [...new Set((assignee_ids || []).filter(Boolean))];
 
     const toRemove = existingAssignees
       .filter((a) => a.user_id !== task.creator_id && !submittedAssigneeIds.includes(a.user_id))
@@ -473,7 +486,11 @@ exports.updateTask = async (req, res) => {
       );
     }
 
-    const submittedCollabIds = collaborator_ids || [];
+    const existingCollaborators = await TaskCollaborator.findAll({ where: { task_id: id }, attributes: ['user_id'] });
+    const existingCollaboratorIds = existingCollaborators.map((collaborator) => collaborator.user_id);
+    const submittedCollabIds = [...new Set((collaborator_ids || []).filter(Boolean))];
+    const addedCollaboratorIds = submittedCollabIds.filter((userId) => !existingCollaboratorIds.includes(userId));
+    const removedCollaboratorIds = existingCollaboratorIds.filter((userId) => !submittedCollabIds.includes(userId));
     await TaskCollaborator.destroy({ where: { task_id: id }, transaction: t });
     if (submittedCollabIds.length > 0) {
       await TaskCollaborator.bulkCreate(
@@ -531,15 +548,22 @@ exports.updateTask = async (req, res) => {
             const { subject, body } = buildTaskEditedEmail(taskForEmail, contact.full_name, priorResponse);
             await queueEmail({ recipient_email: contact.email, subject, body, task_id: id, email_type: 'edited' });
           }
-          await createNotification({
-            userId,
-            type: 'task_update',
-            title: 'Task Updated',
-            message: `"${task.title}" has been updated`,
-            entityType: 'task',
-            entityId: id,
-          });
         }
+      }
+      const updateRecipients = uniqueIds([
+        ...continuingIds.filter((userId) => ['pending', 'accepted'].includes(existingMap[userId])),
+        task.creator_id,
+        ...submittedCollabIds.filter((userId) => existingCollaboratorIds.includes(userId)),
+      ], [req.userId]);
+      for (const userId of updateRecipients) {
+        await createNotification({
+          userId,
+          type: 'task_update',
+          title: 'Task Updated',
+          message: `"${task.title}" has been updated. Review the latest details.`,
+          entityType: 'task',
+          entityId: id,
+        });
       }
       for (const userId of toAdd) {
         const contact = await getUserContact(userId);
@@ -556,9 +580,44 @@ exports.updateTask = async (req, res) => {
           entityId: id,
         });
       }
+      for (const userId of addedCollaboratorIds) {
+        await createNotification({
+          userId,
+          type: 'task_collaborator',
+          title: 'Added as Collaborator',
+          message: `You can now edit the task "${task.title}".`,
+          entityType: 'task',
+          entityId: id,
+        });
+      }
+      for (const userId of toRemove) {
+        await createNotification({
+          userId,
+          type: 'task_assignee_removed',
+          title: 'Removed from Task',
+          message: `You are no longer assigned to "${task.title}".`,
+        });
+      }
+      for (const userId of removedCollaboratorIds) {
+        await createNotification({
+          userId,
+          type: 'task_collaborator_removed',
+          title: 'Collaborator Access Removed',
+          message: `You can no longer edit the task "${task.title}".`,
+        });
+      }
+      await cancelPendingReminders({
+        entityId: id,
+        entityType: 'task',
+        reason: 'Task details changed; a new reminder schedule was created.',
+      });
       if (remind_before_minutes) {
         const reminderTime = new Date(new Date(task.deadline_datetime).getTime() - Number(remind_before_minutes) * 60000);
-        const recipientIds = [...new Set([task.creator_id, ...submittedAssigneeIds, ...submittedCollabIds])];
+        const recipientIds = uniqueIds([
+          task.creator_id,
+          ...submittedAssigneeIds.filter((userId) => existingMap[userId] !== 'declined'),
+          ...submittedCollabIds,
+        ]);
         for (const userId of recipientIds) {
           const contact = await getUserContact(userId);
           if (!contact?.email) continue;
@@ -593,11 +652,11 @@ exports.toggleChecklistItem = async (req, res) => {
     const isAssignee = await TaskAssignee.findOne({ where: { task_id: task.id, user_id: req.userId } });
     const isCollaborator = await TaskCollaborator.findOne({ where: { task_id: task.id, user_id: req.userId } });
     if (!isAssignee && !isCollaborator && task.creator_id !== req.userId) {
-      return res.status(403).json({ ok: false, message: "Not authorized." });
+      return res.status(403).json({ ok: false, message: "You can update this checklist item only if you are the task creator, an assignee, or a collaborator." });
     }
 
     if (is_completed === undefined) {
-      return res.status(400).json({ ok: false, message: "is_completed is required." });
+      return res.status(400).json({ ok: false, message: "Choose whether this checklist item is complete before saving." });
     }
 
     item.is_completed = !!is_completed;
@@ -609,6 +668,24 @@ exports.toggleChecklistItem = async (req, res) => {
       item.completed_at = null;
     }
     await item.save();
+
+    try {
+      const actor = await getUserProfileSummary(req.userId);
+      const collaborators = await TaskCollaborator.findAll({ where: { task_id: task.id }, attributes: ['user_id'] });
+      const recipients = uniqueIds([task.creator_id, ...collaborators.map((collaborator) => collaborator.user_id)], [req.userId]);
+      for (const userId of recipients) {
+        await createNotification({
+          userId,
+          type: item.is_completed ? 'task_checklist_completed' : 'task_checklist_reopened',
+          title: item.is_completed ? 'Checklist Item Completed' : 'Checklist Item Reopened',
+          message: `${actor?.full_name || 'Someone'} ${item.is_completed ? 'completed' : 'reopened'} “${item.text}” in "${task.title}".`,
+          entityType: 'task',
+          entityId: task.id,
+        });
+      }
+    } catch (notificationError) {
+      console.error('Failed to create checklist notification:', notificationError);
+    }
 
     res.json({ ok: true, item });
   } catch (error) {
@@ -624,7 +701,7 @@ exports.addChecklistComment = async (req, res) => {
     const { comment_text } = req.body;
 
     if (!comment_text || !comment_text.trim()) {
-      return res.status(400).json({ ok: false, message: "Comment text required." });
+      return res.status(400).json({ ok: false, message: "Enter a comment before submitting it." });
     }
 
     const item = await TaskChecklistItem.findByPk(itemId);
@@ -636,7 +713,7 @@ exports.addChecklistComment = async (req, res) => {
     const isAssignee = await TaskAssignee.findOne({ where: { task_id: task.id, user_id: req.userId } });
     const isCollaborator = await TaskCollaborator.findOne({ where: { task_id: task.id, user_id: req.userId } });
     if (!isAssignee && !isCollaborator && task.creator_id !== req.userId) {
-      return res.status(403).json({ ok: false, message: "Not authorized." });
+      return res.status(403).json({ ok: false, message: "You can comment only if you are the task creator, an assignee, or a collaborator." });
     }
 
     const comment = await TaskChecklistComment.create({
@@ -647,6 +724,23 @@ exports.addChecklistComment = async (req, res) => {
     });
 
     const authorProfile = await getUserProfileSummary(req.userId);
+
+    try {
+      const participants = await getTaskParticipantIds(task.id);
+      const recipients = uniqueIds([task.creator_id, ...participants], [req.userId]);
+      for (const userId of recipients) {
+        await createNotification({
+          userId,
+          type: 'task_checklist_comment',
+          title: 'New Checklist Comment',
+          message: `${authorProfile?.full_name || 'Someone'} commented on “${item.text}” in "${task.title}".`,
+          entityType: 'task',
+          entityId: task.id,
+        });
+      }
+    } catch (notificationError) {
+      console.error('Failed to create checklist comment notification:', notificationError);
+    }
 
     res.status(201).json({
       ok: true,
@@ -665,7 +759,7 @@ exports.respondToTask = async (req, res) => {
     const { response } = req.body;
 
     if (!["accepted", "declined"].includes(response)) {
-      return res.status(400).json({ ok: false, message: "Invalid response." });
+      return res.status(400).json({ ok: false, message: "Choose either accept or decline to respond to this task assignment." });
     }
 
     const task = await Task.findByPk(taskId);
@@ -681,16 +775,43 @@ exports.respondToTask = async (req, res) => {
     await assignee.save();
 
     try {
-      if (task.creator_id !== req.userId) {
+      if (task) {
         const responderProfile = await getUserProfileSummary(req.userId);
-        await createNotification({
-          userId: task.creator_id,
-          type: 'task_response',
-          title: 'Task Response',
-          message: `${responderProfile?.full_name || 'Someone'} ${response} the task "${task.title}"`,
-          entityType: 'task',
-          entityId: task.id,
-        });
+        const collaborators = await TaskCollaborator.findAll({ where: { task_id: task.id }, attributes: ['user_id'] });
+        const recipients = uniqueIds([task.creator_id, ...collaborators.map((collaborator) => collaborator.user_id)], [req.userId]);
+        for (const userId of recipients) {
+          await createNotification({
+            userId,
+            type: 'task_response',
+            title: 'Task Response',
+            message: `${responderProfile?.full_name || 'Someone'} ${response} the task "${task.title}".`,
+            entityType: 'task',
+            entityId: task.id,
+          });
+        }
+        const contact = await getUserContact(req.userId);
+        if (contact?.email) {
+          await cancelUserReminder({
+            entityId: task.id,
+            entityType: 'task',
+            email: contact.email,
+            reason: `Task response changed to ${response}.`,
+          });
+          if (response === 'accepted' && task.remind_before_minutes) {
+            const reminderTime = new Date(
+              new Date(task.deadline_datetime).getTime() - Number(task.remind_before_minutes) * 60000,
+            );
+            const { subject, body } = buildTaskReminderEmail(task, contact.full_name);
+            await queueEmail({
+              recipient_email: contact.email,
+              subject,
+              body,
+              scheduled_for: reminderTime,
+              task_id: task.id,
+              email_type: 'reminder',
+            });
+          }
+        }
       }
     } catch (notifErr) {
       console.error('Failed to create response notification:', notifErr);
@@ -752,7 +873,7 @@ exports.deleteTask = async (req, res) => {
     const task = await Task.findByPk(id);
     if (!task || task.is_deleted) return res.status(404).json({ ok: false, message: "Task not found." });
     if (task.creator_id !== req.userId) {
-      return res.status(403).json({ ok: false, message: "Only creator can delete." });
+      return res.status(403).json({ ok: false, message: "Only the task creator can delete this task. Collaborators can edit it but cannot delete it." });
     }
     const assigneeRows = await TaskAssignee.findAll({ where: { task_id: task.id }, attributes: ["user_id"] });
     const collaboratorRows = await TaskCollaborator.findAll({ where: { task_id: task.id }, attributes: ["user_id"] });
@@ -808,10 +929,21 @@ exports.archiveTask = async (req, res) => {
   try {
     const task = await Task.findByPk(req.params.id);
     if (!task || task.is_deleted) return res.status(404).json({ ok: false, message: 'Task not found.' });
-    if (task.creator_id !== req.userId) return res.status(403).json({ ok: false, message: 'Only creator can archive.' });
+    if (task.creator_id !== req.userId) return res.status(403).json({ ok: false, message: 'Only the task creator can archive this task.' });
     task.is_archived = true;
     task.updated_at = new Date();
     await task.save();
+    await cancelPendingReminders({ entityId: task.id, entityType: 'task', reason: 'Task archived.' });
+    const assignees = await TaskAssignee.findAll({ where: { task_id: task.id }, attributes: ['user_id'] });
+    const collaborators = await TaskCollaborator.findAll({ where: { task_id: task.id }, attributes: ['user_id'] });
+    for (const userId of uniqueIds([...assignees, ...collaborators].map((row) => row.user_id), [req.userId])) {
+      await createNotification({
+        userId,
+        type: 'task_archived',
+        title: 'Task Archived',
+        message: `The task "${task.title}" was archived by its creator and is no longer active.`,
+      });
+    }
     res.json({ ok: true, message: 'Task archived.' });
   } catch (error) {
     console.error('Archive task error:', error);
