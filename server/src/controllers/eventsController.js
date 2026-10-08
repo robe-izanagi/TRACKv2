@@ -1326,20 +1326,46 @@ exports.listArchivedEvents = async (req, res) => {
     });
     const result = [];
     for (const event of events) {
-      const attendees = await EventAttendee.findAll({ where: { event_id: event.id } });
-      const collaborators = await EventCollaborator.findAll({ where: { event_id: event.id } });
+      const attendees = await EventAttendee.findAll({
+        where: { event_id: event.id, user_id: { [Op.ne]: event.creator_id } },
+        attributes: ['user_id', 'response'],
+      });
+      const attendeeIds = attendees.map((attendee) => attendee.user_id);
+      const [users, profiles] = attendeeIds.length > 0
+        ? await Promise.all([
+          User.findAll({ where: { id: { [Op.in]: attendeeIds } }, attributes: ['id', 'username', 'email'] }),
+          UserProfile.findAll({ where: { user_id: { [Op.in]: attendeeIds } }, attributes: ['user_id', 'full_name'] }),
+        ])
+        : [[], []];
+      const userById = new Map(users.map((user) => [user.id, user]));
+      const profileByUserId = new Map(profiles.map((profile) => [profile.user_id, profile]));
+      const toManilaTime = (date) => new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Asia/Manila',
+        hour: '2-digit',
+        minute: '2-digit',
+        hourCycle: 'h23',
+      }).format(date);
       const venue = event.venue_id ? await Venue.findByPk(event.venue_id, { attributes: ['name'] }) : null;
       const location = event.location_id ? await Location.findByPk(event.location_id, { attributes: ['map_location'] }) : null;
       result.push({
         id: event.id, title: event.title, color: event.color, method: event.method,
-        link: event.link, start_datetime: event.start_datetime, end_datetime: event.end_datetime,
+        start_time: toManilaTime(event.start_datetime),
+        end_time: toManilaTime(event.end_datetime),
         hierarchy: event.hierarchy, event_type: event.event_type, visibility: event.visibility,
         venue: venue?.name || null, venue_id: event.venue_id,
         location: location?.map_location || null, map_location: location?.map_location || null,
         location_id: event.location_id, department_id: event.department_id, office_id: event.office_id,
         description: event.description, remind_before_minutes: event.remind_before_minutes,
-        attendee_ids: attendees.filter(a => a.user_id !== req.userId).map(a => a.user_id),
-        collaborator_ids: collaborators.map(c => c.user_id)
+        attendee_ids: attendeeIds,
+        attendees: attendees.map((attendee) => {
+          const user = userById.get(attendee.user_id);
+          const profile = profileByUserId.get(attendee.user_id);
+          return {
+            id: attendee.user_id,
+            name: profile?.full_name || user?.username || user?.email || 'Unknown attendee',
+            response: attendee.response,
+          };
+        }),
       });
     }
     res.json({ ok: true, events: result });
