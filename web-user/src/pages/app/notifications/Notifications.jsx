@@ -20,9 +20,6 @@ import {
   getNotificationFeed,
   markNotificationRead,
   markAllNotificationsRead,
-  getPushPublicKey,
-  savePushSubscription,
-  removePushSubscription,
 } from "../../../api/notifications";
 import styles from "./Notifications.module.css";
 
@@ -57,12 +54,6 @@ const TYPE_CONFIG = {
   system: { icon: FiBell, className: "iconSystem" },
 };
 
-const decodeVapidKey = (key) => {
-  const base64 = key.replace(/-/g, "+").replace(/_/g, "/");
-  const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, "=");
-  return Uint8Array.from(atob(padded), (character) => character.charCodeAt(0));
-};
-
 const formatRelativeTime = (dateStr) => {
   const date = new Date(dateStr);
   const now = new Date();
@@ -89,40 +80,7 @@ export default function Notifications() {
   const [hasMore, setHasMore] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [pushStatus, setPushStatus] = useState("checking");
-  const [pushMessage, setPushMessage] = useState("");
   const [actionError, setActionError] = useState("");
-
-  useEffect(() => {
-    let active = true;
-    const checkPushStatus = async () => {
-      if (
-        !window.isSecureContext
-        || !("Notification" in window)
-        || !("serviceWorker" in navigator)
-        || !("PushManager" in window)
-      ) {
-        if (active) setPushStatus("unsupported");
-        return;
-      }
-      if (Notification.permission === "denied") {
-        if (active) setPushStatus("blocked");
-        return;
-      }
-      try {
-        const registration = await navigator.serviceWorker.getRegistration();
-        const subscription = await registration?.pushManager.getSubscription();
-        if (active) setPushStatus(subscription ? "enabled" : "disabled");
-      } catch (checkError) {
-        console.error("Could not check browser push status:", checkError);
-        if (active) setPushStatus("error");
-      }
-    };
-    checkPushStatus();
-    return () => {
-      active = false;
-    };
-  }, []);
 
   const fetchFeed = useCallback(
     async (reset = true) => {
@@ -211,68 +169,6 @@ export default function Notifications() {
     else if (notif.entity_type === "task") navigate("/tasks");
   };
 
-  const handlePushToggle = async () => {
-    setPushMessage("");
-    const previousStatus = pushStatus;
-    setPushStatus("working");
-    try {
-      if (previousStatus === "enabled") {
-        const registration = await navigator.serviceWorker.getRegistration();
-        const subscription = await registration?.pushManager.getSubscription();
-        if (subscription) {
-          await removePushSubscription(subscription.endpoint);
-          await subscription.unsubscribe();
-        }
-        setPushStatus("disabled");
-        setPushMessage("Browser push notifications are off on this device.");
-        return;
-      }
-
-      if (Notification.permission === "denied") {
-        setPushStatus("blocked");
-        setPushMessage("Notifications are blocked by your browser. Allow them for this site in browser settings, then try again.");
-        return;
-      }
-      const keyResponse = await getPushPublicKey();
-      const permission = Notification.permission === "granted"
-        ? "granted"
-        : await Notification.requestPermission();
-      if (permission !== "granted") {
-        setPushStatus(permission === "denied" ? "blocked" : "disabled");
-        setPushMessage(permission === "denied"
-          ? "Notifications are blocked by your browser. Allow them for this site in browser settings, then try again."
-          : "Browser permission was not granted. TRACK will continue to show notifications in the app.");
-        return;
-      }
-
-      const registration = await navigator.serviceWorker.register("/sw.js");
-      let subscription = await registration.pushManager.getSubscription();
-      if (!subscription) {
-        subscription = await registration.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: decodeVapidKey(keyResponse.publicKey),
-        });
-      }
-      await savePushSubscription(subscription.toJSON());
-      setPushStatus("enabled");
-      setPushMessage("Browser push notifications are enabled on this device.");
-    } catch (pushError) {
-      console.error("Could not update browser push settings:", pushError);
-      setPushStatus(previousStatus === "enabled" ? "enabled" : "disabled");
-      setPushMessage(pushError.response?.data?.message || pushError.message || "We could not update browser notification settings. Please try again.");
-    }
-  };
-
-  const pushStatusText = {
-    checking: "Checking this browser's notification settings...",
-    enabled: "Enabled on this browser. TRACK can show notifications even when the app is not open.",
-    disabled: "Disabled on this browser. Notifications will still appear in the TRACK app.",
-    blocked: "Blocked by your browser. Allow notifications for this site in browser settings to enable push.",
-    unsupported: "Browser push requires a supported browser and a secure (HTTPS) connection.",
-    error: "We could not check this browser's notification settings. You can try again below.",
-    working: "Updating browser notification settings...",
-  }[pushStatus];
-
   return (
     <div className={styles.mainContainer}>
       <div className={styles.headerRow}>
@@ -287,24 +183,6 @@ export default function Notifications() {
           </button>
         )}
       </div>
-
-      <section className={styles.pushSettings} aria-label="Browser push notifications">
-        <div className={styles.pushCopy}>
-          <h2>Browser push notifications</h2>
-          <p>{pushStatusText}</p>
-          {pushMessage && <p className={styles.pushMessage} role="status">{pushMessage}</p>}
-        </div>
-        {pushStatus !== "unsupported" && pushStatus !== "checking" && pushStatus !== "working" && (
-          <button
-            type="button"
-            className={styles.pushButton}
-            onClick={handlePushToggle}
-            aria-pressed={pushStatus === "enabled"}
-          >
-            {pushStatus === "enabled" ? "Turn off" : pushStatus === "blocked" ? "Check again" : pushStatus === "error" ? "Try again" : "Enable"}
-          </button>
-        )}
-      </section>
 
       {actionError && <p className={styles.actionError} role="alert">{actionError}</p>}
 
