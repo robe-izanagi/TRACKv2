@@ -19,4 +19,35 @@
   --input-focus-color: #500000;
   --text-color: #000000;
   --background-color: #fff;
-} 
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  background: #edf0f2;
+}
+
+.appCanvas {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: #edf0f2;
+}
+
+.appFrame {
+  position: relative;
+  width: min(100%, 430px);
+  height: 100vh;
+  height: 100dvh;
+  margin: 0 auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background: var(--page-background-color, #f9fafb);
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.08);
+  transform: translateZ(0);
+  overscroll-behavior-y: contain;
+}
