@@ -12,6 +12,7 @@ const {
 const { buildConflictMap } = require('../services/conflictService');
 const { createNotification } = require('../services/notificationService');
 const { logVenueConflictAttempt } = require('../services/analyticsService');
+const { cancelPendingReminders, uniqueIds } = require('../services/notificationRecipients');
 
 const EMPTY_CONFLICT = { isConflicted: false, isPriority: false, conflictsWith: [], reason: null };
 
@@ -114,9 +115,14 @@ exports.createEvent = async (req, res) => {
       event_type
     } = req.body;
 
-    if (!title || !visibility || !hierarchy || !start_datetime || !end_datetime || !method || !description || !color) {
+    const missingFields = [
+      !title && 'title', !visibility && 'visibility', !hierarchy && 'hierarchy',
+      !start_datetime && 'start date and time', !end_datetime && 'end date and time',
+      !method && 'event method', !description && 'description', !color && 'color',
+    ].filter(Boolean);
+    if (missingFields.length > 0) {
       await t.rollback();
-      return res.status(400).json({ ok: false, message: 'Missing required fields.' });
+      return res.status(400).json({ ok: false, message: `Please complete the following required fields: ${missingFields.join(', ')}.` });
     }
 
     const startDT = new Date(start_datetime);
@@ -131,7 +137,7 @@ exports.createEvent = async (req, res) => {
     if (visibility === 'department') {
       if (!department_id) {
         await t.rollback();
-        return res.status(400).json({ ok: false, message: 'department_id is required for department events.' });
+        return res.status(400).json({ ok: false, message: 'Select your department before creating a department event.' });
       }
       const profile = await UserProfile.findOne({ where: { user_id: req.userId } });
       if (!profile || profile.department_id !== department_id) {
@@ -181,7 +187,7 @@ exports.createEvent = async (req, res) => {
           finalLocationId = newLoc.id;
         } else {
           await t.rollback();
-          return res.status(400).json({ ok: false, message: 'map_location is required for external events.' });
+          return res.status(400).json({ ok: false, message: 'Enter a location for this in-person event before saving it.' });
         }
       }
     }
@@ -353,9 +359,14 @@ exports.updateEvent = async (req, res) => {
       }
     }
 
-    if (!title || !visibility || !hierarchy || !start_datetime || !end_datetime || !method || !description || !color) {
+    const missingFields = [
+      !title && 'title', !visibility && 'visibility', !hierarchy && 'hierarchy',
+      !start_datetime && 'start date and time', !end_datetime && 'end date and time',
+      !method && 'event method', !description && 'description', !color && 'color',
+    ].filter(Boolean);
+    if (missingFields.length > 0) {
       await t.rollback();
-      return res.status(400).json({ ok: false, message: 'Missing required fields.' });
+      return res.status(400).json({ ok: false, message: `Please complete the following required fields: ${missingFields.join(', ')}.` });
     }
 
     const startDT = new Date(start_datetime);
@@ -376,7 +387,7 @@ exports.updateEvent = async (req, res) => {
       if (visibility === 'department') {
         if (!department_id) {
           await t.rollback();
-          return res.status(400).json({ ok: false, message: 'department_id is required for department events.' });
+          return res.status(400).json({ ok: false, message: 'Select your department before saving a department event.' });
         }
         const profile = await UserProfile.findOne({ where: { user_id: req.userId } });
         if (!profile || profile.department_id !== department_id) {
@@ -432,7 +443,7 @@ exports.updateEvent = async (req, res) => {
           finalLocationId = existingLocation.id;
         } else {
           await t.rollback();
-          return res.status(400).json({ ok: false, message: 'map_location is required for external events.' });
+          return res.status(400).json({ ok: false, message: 'Enter a location for this in-person event before saving it.' });
         }
       }
     }
@@ -465,6 +476,11 @@ exports.updateEvent = async (req, res) => {
       existingMap[a.user_id] = { response: a.response, is_original: a.is_original };
     });
     const originalIds = existingAttendees.filter(a => a.is_original).map(a => a.user_id);
+    const existingCollaborators = await EventCollaborator.findAll({
+      where: { event_id: id },
+      attributes: ['user_id'],
+    });
+    const existingCollaboratorIds = existingCollaborators.map((collaborator) => collaborator.user_id);
 
     await EventAttendee.destroy({
       where: {
@@ -501,11 +517,16 @@ exports.updateEvent = async (req, res) => {
 
     const validCollaboratorIds = (collaborator_ids || [])
       .filter(cid => cid && typeof cid === 'string' && cid.trim() !== '');
+    const finalCollaboratorIds = [...new Set(validCollaboratorIds)];
+    const addedCollaboratorIds = finalCollaboratorIds.filter((userId) => !existingCollaboratorIds.includes(userId));
+    const removedCollaboratorIds = existingCollaboratorIds.filter((userId) => !finalCollaboratorIds.includes(userId));
+    const removedAttendeeIds = existingAttendees
+      .filter((attendee) => !attendee.is_original && !finalAttendeeIds.includes(attendee.user_id))
+      .map((attendee) => attendee.user_id);
 
-    if (validCollaboratorIds.length > 0) {
-      const uniqueCollaborators = [...new Set(validCollaboratorIds)];
+    if (finalCollaboratorIds.length > 0) {
       await EventCollaborator.bulkCreate(
-        uniqueCollaborators.map(userId => ({ id: uuidv4(), event_id: id, user_id: userId, permission: 'edit' })),
+        finalCollaboratorIds.map(userId => ({ id: uuidv4(), event_id: id, user_id: userId, permission: 'edit' })),
         { transaction: t }
       );
     }
@@ -522,6 +543,7 @@ exports.updateEvent = async (req, res) => {
         link: event.link
       };
 
+      const updateRecipientIds = [];
       for (const record of attendeeRecordsToCreate) {
         const wasExisting = !!existingMap[record.user_id];
         const contact = await getUserContact(record.user_id);
@@ -535,14 +557,7 @@ exports.updateEvent = async (req, res) => {
                 event_id: id, entity_type: 'event', email_type: 'edited'
               });
             }
-            await createNotification({
-              userId: record.user_id,
-              type: 'event_update',
-              title: 'Event Updated',
-              message: `"${event.title}" has been updated`,
-              entityType: 'event',
-              entityId: id
-            });
+            updateRecipientIds.push(record.user_id);
           }
         } else {
           if (contact?.email) {
@@ -559,6 +574,67 @@ exports.updateEvent = async (req, res) => {
             message: `You've been invited to "${event.title}"`,
             entityType: 'event',
             entityId: id
+          });
+        }
+      }
+
+      updateRecipientIds.push(event.creator_id, ...finalCollaboratorIds.filter((userId) => existingCollaboratorIds.includes(userId)));
+      for (const userId of uniqueIds(updateRecipientIds, [req.userId])) {
+        await createNotification({
+          userId,
+          type: 'event_update',
+          title: 'Event Updated',
+          message: `"${event.title}" has been updated. Review the latest details.`,
+          entityType: 'event',
+          entityId: id,
+        });
+      }
+      for (const userId of addedCollaboratorIds) {
+        await createNotification({
+          userId,
+          type: 'event_collaborator',
+          title: 'Added as Collaborator',
+          message: `You can now edit the event "${event.title}".`,
+          entityType: 'event',
+          entityId: id,
+        });
+      }
+      for (const userId of removedAttendeeIds) {
+        await createNotification({
+          userId,
+          type: 'event_attendee_removed',
+          title: 'Removed from Event',
+          message: `You are no longer an attendee of "${event.title}".`,
+        });
+      }
+      for (const userId of removedCollaboratorIds) {
+        await createNotification({
+          userId,
+          type: 'event_collaborator_removed',
+          title: 'Collaborator Access Removed',
+          message: `You can no longer edit the event "${event.title}".`,
+        });
+      }
+
+      await cancelPendingReminders({
+        entityId: id,
+        entityType: 'event',
+        reason: 'Event details changed; a new reminder schedule was created.',
+      });
+      if (remind_before_minutes) {
+        const reminderTime = new Date(new Date(event.start_datetime).getTime() - Number(remind_before_minutes) * 60000);
+        const reminderIds = uniqueIds([
+          event.creator_id,
+          ...attendeeRecordsToCreate.filter((record) => record.response !== 'declined').map((record) => record.user_id),
+          ...finalCollaboratorIds,
+        ]);
+        for (const userId of reminderIds) {
+          const contact = await getUserContact(userId);
+          if (!contact?.email) continue;
+          const { subject, body } = buildReminderEmail(eventForEmail, contact.full_name);
+          await queueEmail({
+            recipient_email: contact.email, subject, body, scheduled_for: reminderTime,
+            event_id: id, entity_type: 'event', email_type: 'reminder',
           });
         }
       }
@@ -585,7 +661,10 @@ exports.updateEvent = async (req, res) => {
   } catch (error) {
     await t.rollback();
     console.error('Update event error:', error);
-    res.status(500).json({ ok: false, message: error.message || 'Server error.' });
+    res.status(500).json({
+      ok: false,
+      message: 'We could not save the event. Check the required fields, event time, and venue details, then try again.',
+    });
   }
 };
 
@@ -1278,6 +1357,15 @@ exports.archiveEvent = async (req, res) => {
     event.is_archived = true;
     event.updated_at = new Date();
     await event.save();
+    await cancelPendingReminders({ entityId: event.id, entityType: 'event', reason: 'Event archived.' });
+    const attendees = await EventAttendee.findAll({ where: { event_id: event.id }, attributes: ['user_id'] });
+    const collaborators = await EventCollaborator.findAll({ where: { event_id: event.id }, attributes: ['user_id'] });
+    for (const userId of uniqueIds([...attendees, ...collaborators].map((row) => row.user_id), [req.userId])) {
+      await createNotification({
+        userId, type: 'event_archived', title: 'Event Archived',
+        message: `The event "${event.title}" was archived by its creator and is no longer active.`,
+      });
+    }
     res.json({ ok: true, message: 'Event archived.' });
   } catch (error) {
     console.error('Archive event error:', error);
