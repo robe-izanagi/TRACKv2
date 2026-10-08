@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Modal from "../common/Modal";
 import { respondToInvitation } from "../../api/notifications";
+import { downloadAttachment } from "../../utils/downloadAttachment";
 import {
   FiCalendar,
   FiClock,
@@ -200,8 +201,12 @@ export default function InvitationModal({ isOpen, event, onClose, onRespond }) {
             {event.attachments.map((file) => (
               <a
                 key={file.id}
-                href={file.file_url}
+                href="#"
                 download
+                onClick={(clickEvent) => {
+                  clickEvent.preventDefault();
+                  downloadAttachment(file);
+                }}
                 className={styles.attachItem}
               >
                 <FiDownload size={14} /> {file.file_name}
