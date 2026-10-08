@@ -13,6 +13,7 @@ import {
   FiTrash2,
 } from "react-icons/fi";
 import apiClient from "../../api/client";
+import { downloadAttachment } from "../../utils/downloadAttachment";
 import styles from "./TaskCardView.module.css";
 
 const AVATAR_COLORS = [
@@ -265,11 +266,13 @@ export default function TaskCardView({
               {task.attachments.map((file) => (
                 <a
                   key={file.id}
-                  href={`/attachments/download/${file.id}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href="#"
                   className={styles.attachmentItem}
                   download
+                  onClick={(clickEvent) => {
+                    clickEvent.preventDefault();
+                    downloadAttachment(file);
+                  }}
                 >
                   <FiPaperclip size={14} />
                   <span className={styles.attachmentName}>
