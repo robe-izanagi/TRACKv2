@@ -429,22 +429,62 @@
   display: flex;
   justify-content: flex-end;
   gap: 10px;
-  padding: 0 20px 16px;
+  padding: 12px 20px 18px;
+  border-top: 1px solid #f0e9e9;
 }
 
 .archiveAction, .deleteAction {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 7px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  padding: 8px 12px;
-  background: #fff;
-  color: #374151;
-  font-weight: 600;
+  min-height: 40px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 9px 14px;
+  font-size: 13px;
+  font-weight: 700;
   cursor: pointer;
+  transition: background-color 160ms ease, border-color 160ms ease, transform 160ms ease;
 }
 
-.deleteAction { color: #b91c1c; border-color: #fecaca; }
-.archiveAction:hover { background: #f3f4f6; }
-.deleteAction:hover { background: #fef2f2; }
+.archiveAction {
+  color: #6b2020;
+  background: #fff8f5;
+  border-color: #ead3ce;
+}
+
+.deleteAction {
+  color: #991b1b;
+  background: #fff5f5;
+  border-color: #fecaca;
+}
+
+.archiveAction:hover {
+  background: #f7eae6;
+  border-color: #d9b8b0;
+  transform: translateY(-1px);
+}
+
+.deleteAction:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  transform: translateY(-1px);
+}
+
+.archiveAction:focus-visible,
+.deleteAction:focus-visible {
+  outline: 3px solid rgba(128, 0, 0, 0.2);
+  outline-offset: 2px;
+}
+
+@media (max-width: 480px) {
+  .managementActions {
+    flex-direction: column;
+  }
+
+  .archiveAction,
+  .deleteAction {
+    width: 100%;
+  }
+}
