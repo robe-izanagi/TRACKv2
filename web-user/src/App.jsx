@@ -38,48 +38,52 @@ const RoleRedirect = () => {
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <Routes>
-          {/* Public */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/auth/callback" element={<AuthCallback />} />
-          <Route
-            path="/request-account-code"
-            element={<RequestAccountCode />}
-          />
+    <div className="appCanvas">
+      <div className="appFrame">
+        <BrowserRouter>
+          <AuthProvider>
+            <Routes>
+              {/* Public */}
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/auth/callback" element={<AuthCallback />} />
+              <Route
+                path="/request-account-code"
+                element={<RequestAccountCode />}
+              />
 
-          {/* Protected layout */}
-          <Route
-            element={
-              <RequireAuth>
-                <AppLayout />
-              </RequireAuth>
-            }
-          >
-            <Route index element={<RoleRedirect />} />
-            {/* <Route path="/officials/home" element={<OfficialsHome />} /> */}
-            <Route path="/heads/home" element={<OfficialsHome />} />
-            <Route path="/staff/home" element={<StaffHome />} />
-            <Route path="/faculty/home" element={<FacultyHome />} />
-            <Route path="/calendar" element={<CalendarView />} />
-            <Route path="/tasks" element={<Tasks />} />
-            <Route path="/venues" element={<VenuesList />} />
-            <Route path="/events" element={<Events />} />
-            <Route path="/notifications" element={<Notifications />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/create-event" element={<CreateEvent />} />
-            <Route path="/create-task" element={<CreateTask />} />
-            <Route path="/edit-event/:id" element={<EditEvent />} />
-            <Route path="/edit-task/:id" element={<EditTask />} />
-            <Route path="*" element={<RoleRedirect />} />
-          </Route>
+              {/* Protected layout */}
+              <Route
+                element={
+                  <RequireAuth>
+                    <AppLayout />
+                  </RequireAuth>
+                }
+              >
+                <Route index element={<RoleRedirect />} />
+                {/* <Route path="/officials/home" element={<OfficialsHome />} /> */}
+                <Route path="/heads/home" element={<OfficialsHome />} />
+                <Route path="/staff/home" element={<StaffHome />} />
+                <Route path="/faculty/home" element={<FacultyHome />} />
+                <Route path="/calendar" element={<CalendarView />} />
+                <Route path="/tasks" element={<Tasks />} />
+                <Route path="/venues" element={<VenuesList />} />
+                <Route path="/events" element={<Events />} />
+                <Route path="/notifications" element={<Notifications />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/create-event" element={<CreateEvent />} />
+                <Route path="/create-task" element={<CreateTask />} />
+                <Route path="/edit-event/:id" element={<EditEvent />} />
+                <Route path="/edit-task/:id" element={<EditTask />} />
+                <Route path="*" element={<RoleRedirect />} />
+              </Route>
 
-          {/* Catch‑all → login */}
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
-      </AuthProvider>
-    </BrowserRouter>
+              {/* Catch‑all → login */}
+              <Route path="*" element={<Navigate to="/login" replace />} />
+            </Routes>
+          </AuthProvider>
+        </BrowserRouter>
+      </div>
+    </div>
   );
 }
