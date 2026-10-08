@@ -45,7 +45,6 @@ app.use('/api/venues', venueRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/attachments', attachmentRoutes);
 app.use('/api/notifications', notificationsRoutes);
-app.use('/api/push-notifications', require('./routes/pushNotifications'));
 app.use('/api/events', conflictRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/analytics', analyticsRoutes);
