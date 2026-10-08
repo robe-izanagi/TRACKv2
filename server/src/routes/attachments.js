@@ -76,7 +76,7 @@ router.post(
 
     Entity.findByPk(entity_id)
       .then((entity) => {
-        if (!entity) {
+        if (!entity || entity.is_archived || entity.is_deleted) {
           return res.status(404).json({
             ok: false,
             message: `${entity_type} not found`,
@@ -182,6 +182,12 @@ router.get("/download/:id", authenticate, async (req, res) => {
         ok: false,
         message: "Attachment not found.",
       });
+    }
+
+    const Entity = attachment.entity_type === "event" ? Event : Task;
+    const entity = await Entity.findByPk(attachment.entity_id);
+    if (!entity || entity.is_archived || entity.is_deleted) {
+      return res.status(404).json({ ok: false, message: "Attachment not found." });
     }
 
     let storedFilename = "";

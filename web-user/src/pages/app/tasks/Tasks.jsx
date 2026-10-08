@@ -11,6 +11,7 @@ import {
   FiUser,
   FiUsers,
   FiEye,
+  FiArchive,
 } from "react-icons/fi";
 import styles from "./Tasks.module.css";
 import FeedbackModal from "../../../components/common/FeedbackModal";
@@ -77,6 +78,7 @@ export default function Tasks() {
   const [allPriorityFilter, setAllPriorityFilter] = useState("all");
 
   const [tasks, setTasks] = useState([]);
+  const [archivedTasks, setArchivedTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -111,6 +113,20 @@ export default function Tasks() {
   useEffect(() => {
     fetchTasks();
   }, [fetchTasks]);
+
+  const fetchArchivedTasks = useCallback(async () => {
+    try {
+      const res = await apiClient.get("/tasks/archived");
+      setArchivedTasks(res.data.tasks || []);
+    } catch (err) {
+      console.error("Failed to fetch archived tasks:", err);
+      setArchivedTasks([]);
+    }
+  }, []);
+
+  useEffect(() => { fetchArchivedTasks(); }, [fetchArchivedTasks]);
+
+  const refreshTaskViews = () => { fetchTasks(); fetchArchivedTasks(); };
 
   const sortByDefaultOrder = (list) => {
     return [...list].sort((a, b) => {
@@ -350,6 +366,37 @@ export default function Tasks() {
     if (loading) return <p className={styles.loading}>Loading tasks...</p>;
     if (error) return <p className={styles.error}>{error}</p>;
 
+    if (activeTab === "archived") {
+      return archivedTasks.length === 0 ? (
+        <div className={eventsPageStyles.emptyStateBox}><FiArchive size={28} /><p>No archived tasks.</p></div>
+      ) : (
+        <div className={styles.archiveList}>
+          {archivedTasks.map((task) => (
+            <article
+              className={styles.archiveCard}
+              key={task.id}
+              style={{ borderLeftColor: task.color || "#3B82F6" }}
+            >
+              <div>
+                <h3>{task.title}</h3>
+                <p>{task.description || "No description"}</p>
+                <span>
+                  {task.priority} priority | {task.checklist_items?.length || 0} checklist items
+                </span>
+              </div>
+              <button
+                type="button"
+                className={styles.createBtn}
+                onClick={() => navigate("/create-task", { state: { template: task } })}
+              >
+                Use as template
+              </button>
+            </article>
+          ))}
+        </div>
+      );
+    }
+
     if (activeTab === "invited") {
       const invitedAll = tasks.filter((t) => !t.isCreator);
       return (
@@ -477,6 +524,12 @@ export default function Tasks() {
           <FiUsers size={16} />
           Collaboration
         </button>
+        <button
+          className={`${styles.tab} ${activeTab === "archived" ? styles.activeTab : ""}`}
+          onClick={() => setActiveTab("archived")}
+        >
+          <FiArchive size={16} /> Archived
+        </button>
       </div>
 
       <div className={styles.content}>{renderContent()}</div>
@@ -491,6 +544,7 @@ export default function Tasks() {
         onChecklistToggle={handleChecklistToggle}
         onAddComment={handleAddComment}
         currentUserId={user?.id}
+        onActionSuccess={refreshTaskViews}
       />
 
       <TaskInvitation

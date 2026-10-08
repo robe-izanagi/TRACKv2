@@ -10,10 +10,12 @@ const {
   addChecklistComment,
   respondToTask,
   getInvitedTasks,
-  deleteTask
+  deleteTask, listArchivedTasks, archiveTask
 } = require('../controllers/tasksController');
 
 router.get('/', authenticate, listTasks);
+router.get('/archived', authenticate, listArchivedTasks);
+router.patch('/:id/archive', authenticate, archiveTask);
 router.post('/', authenticate, createTask);
 router.get('/invited', authenticate, getInvitedTasks);
 router.get('/:id', authenticate, getTaskById);

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 import apiClient from "../../../api/client";
 import InputField from "../../../components/common/InputField";
@@ -35,6 +35,15 @@ import styles from "./CreateTask.module.css";
 export default function CreateTask() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const template = location.state?.template || null;
+  const templateChecklistGroups = (template?.checklist_items || []).reduce((groups, item) => {
+    const key = item.card_id || 'default';
+    let group = groups.find((entry) => entry.key === key);
+    if (!group) { group = { key, title: item.card_title || 'Checklist', items: [] }; groups.push(group); }
+    group.items.push({ id: `${key}-${groups.length}-${group.items.length}`, text: item.text, done: false });
+    return groups;
+  }, []);
 
   const role = user?.role || "faculty";
   const hasDepartment = !!user?.department;
@@ -42,25 +51,28 @@ export default function CreateTask() {
   const [currentProfile, setCurrentProfile] = useState(null);
 
   const [formData, setFormData] = useState({
-    title: "",
-    color: "#3B82F6",
-    priority: "medium",
-    visibility: "personal",
-    department_id: "",
+    title: template?.title || "",
+    color: template?.color || "#3B82F6",
+    priority: template?.priority || "medium",
+    visibility: template?.visibility || "personal",
+    department_id: template?.department_id || "",
+    office_id: template?.office_id || "",
     deadlineDate: "",
     deadlineTime: "",
-    description: "",
-    remind_before_minutes: "",
+    description: template?.description || "",
+    remind_before_minutes: template?.remind_before_minutes || "",
   });
 
-  const [assigneeIds, setAssigneeIds] = useState([]);
-  const [collaboratorIds, setCollaboratorIds] = useState([]);
+  const [assigneeIds, setAssigneeIds] = useState(template?.assignee_ids || []);
+  const [collaboratorIds, setCollaboratorIds] = useState(template?.collaborator_ids || []);
   const [showAssigneeModal, setShowAssigneeModal] = useState(false);
   const [showCollaboratorModal, setShowCollaboratorModal] = useState(false);
   const [attachments, setAttachments] = useState([]);
-  const [checklistCards, setChecklistCards] = useState([
-    { id: 1, title: "Checklist", items: [], newItemText: "" },
-  ]);
+  const [checklistCards, setChecklistCards] = useState(
+    templateChecklistGroups.length
+      ? templateChecklistGroups.map((group, index) => ({ id: index + 1, title: group.title, items: group.items, newItemText: "" }))
+      : [{ id: 1, title: "Checklist", items: [], newItemText: "" }],
+  );
   const [loading, setLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
 
@@ -246,6 +258,7 @@ export default function CreateTask() {
         formData.visibility === "department"
           ? formData.department_id
           : undefined,
+      office_id: formData.office_id || undefined,
       deadline_datetime,
       description: formData.description.trim(),
       remind_before_minutes: formData.remind_before_minutes || null,

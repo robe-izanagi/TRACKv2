@@ -26,6 +26,7 @@ async function getUserConflicts(userId, start, end, excludeEventId = null) {
       { id: { [Op.in]: eventIds } }
     ],
     is_archived: false,
+    is_deleted: false,
     start_datetime: { [Op.lt]: end },
     end_datetime: { [Op.gt]: start }
   };
@@ -49,6 +50,7 @@ async function getVenueConflicts(venueId, start, end, excludeEventId = null) {
   const whereClause = {
     venue_id: venueId,
     is_archived: false,
+    is_deleted: false,
     start_datetime: { [Op.lt]: end },
     end_datetime: { [Op.gt]: start }
   };
@@ -221,6 +223,7 @@ async function generateRecommendations({ venue_id, attendee_ids, creator_id, sta
   const allEventsInWindow = await Event.findAll({
     where: {
       is_archived: false,
+    is_deleted: false,
       [Op.or]: [
         { creator_id: { [Op.in]: attendee_ids } },
         { venue_id: venue_id || null },
@@ -248,6 +251,7 @@ async function generateRecommendations({ venue_id, attendee_ids, creator_id, sta
   const allRelatedEvents = await Event.findAll({
     where: {
       is_archived: false,
+    is_deleted: false,
       [Op.or]: [
         { id: { [Op.in]: attendeeEventIds } },
         { creator_id: { [Op.in]: attendee_ids } },

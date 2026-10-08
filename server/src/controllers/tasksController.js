@@ -14,10 +14,11 @@ const {
   Position,
   PositionAssignment,
   Attachment,
+  EmailQueue,
 } = require("../models");
 const {
   queueEmail, buildTaskAssignedEmail, buildTaskCollaboratorEmail,
-  buildTaskReminderEmail, buildTaskEditedEmail
+  buildTaskReminderEmail, buildTaskEditedEmail, buildTaskDeletedEmail
 } = require("../services/taskEmailTemplates");
 const { createNotification } = require("../services/notificationService");
 
@@ -106,6 +107,7 @@ exports.createTask = async (req, res) => {
         is_email_reminder: true,
         is_completed: false,
         is_archived: false,
+        is_deleted: false,
       },
       { transaction: t },
     );
@@ -224,6 +226,7 @@ exports.listTasks = async (req, res) => {
     const where = {
       [Op.or]: [{ creator_id: userId }, { id: { [Op.in]: allTaskIds } }],
       is_archived: false,
+      is_deleted: false,
     };
 
     if (status === "ongoing") {
@@ -291,7 +294,7 @@ exports.getTaskById = async (req, res) => {
     const userId = req.userId;
 
     const task = await Task.findByPk(id);
-    if (!task) return res.status(404).json({ ok: false, message: "Task not found." });
+    if (!task || task.is_archived || task.is_deleted) return res.status(404).json({ ok: false, message: "Task not found." });
 
     const assigneeRecords = await TaskAssignee.findAll({ where: { task_id: id } });
     const assignees = [];
@@ -393,7 +396,7 @@ exports.updateTask = async (req, res) => {
     } = req.body;
 
     const task = await Task.findByPk(id);
-    if (!task) {
+    if (!task || task.is_archived || task.is_deleted) {
       await t.rollback();
       return res.status(404).json({ ok: false, message: "Task not found." });
     }
@@ -585,7 +588,7 @@ exports.toggleChecklistItem = async (req, res) => {
     if (!item) return res.status(404).json({ ok: false, message: "Item not found." });
 
     const task = await Task.findByPk(item.task_id);
-    if (!task) return res.status(404).json({ ok: false, message: "Task not found." });
+    if (!task || task.is_archived || task.is_deleted) return res.status(404).json({ ok: false, message: "Task not found." });
 
     const isAssignee = await TaskAssignee.findOne({ where: { task_id: task.id, user_id: req.userId } });
     const isCollaborator = await TaskCollaborator.findOne({ where: { task_id: task.id, user_id: req.userId } });
@@ -628,7 +631,7 @@ exports.addChecklistComment = async (req, res) => {
     if (!item) return res.status(404).json({ ok: false, message: "Item not found." });
 
     const task = await Task.findByPk(item.task_id);
-    if (!task) return res.status(404).json({ ok: false, message: "Task not found." });
+    if (!task || task.is_archived || task.is_deleted) return res.status(404).json({ ok: false, message: "Task not found." });
 
     const isAssignee = await TaskAssignee.findOne({ where: { task_id: task.id, user_id: req.userId } });
     const isCollaborator = await TaskCollaborator.findOne({ where: { task_id: task.id, user_id: req.userId } });
@@ -665,6 +668,10 @@ exports.respondToTask = async (req, res) => {
       return res.status(400).json({ ok: false, message: "Invalid response." });
     }
 
+    const task = await Task.findByPk(taskId);
+    if (!task || task.is_archived || task.is_deleted) {
+      return res.status(404).json({ ok: false, message: "Task not found." });
+    }
     const assignee = await TaskAssignee.findOne({ where: { task_id: taskId, user_id: req.userId } });
     if (!assignee) {
       return res.status(404).json({ ok: false, message: "You are not assigned to this task." });
@@ -674,8 +681,7 @@ exports.respondToTask = async (req, res) => {
     await assignee.save();
 
     try {
-      const task = await Task.findByPk(taskId);
-      if (task && task.creator_id !== req.userId) {
+      if (task.creator_id !== req.userId) {
         const responderProfile = await getUserProfileSummary(req.userId);
         await createNotification({
           userId: task.creator_id,
@@ -717,7 +723,7 @@ exports.getInvitedTasks = async (req, res) => {
     const tasks = [];
     for (const a of assignees) {
       const task = await Task.findByPk(a.task_id);
-      if (!task || task.is_archived) continue;
+      if (!task || task.is_archived || task.is_deleted) continue;
       const creatorProfile = await getUserProfileSummary(task.creator_id);
       tasks.push({
         id: task.id,
@@ -744,15 +750,71 @@ exports.deleteTask = async (req, res) => {
   try {
     const { id } = req.params;
     const task = await Task.findByPk(id);
-    if (!task) return res.status(404).json({ ok: false, message: "Task not found." });
+    if (!task || task.is_deleted) return res.status(404).json({ ok: false, message: "Task not found." });
     if (task.creator_id !== req.userId) {
       return res.status(403).json({ ok: false, message: "Only creator can delete." });
     }
-    task.is_archived = true;
+    const assigneeRows = await TaskAssignee.findAll({ where: { task_id: task.id }, attributes: ["user_id"] });
+    const collaboratorRows = await TaskCollaborator.findAll({ where: { task_id: task.id }, attributes: ["user_id"] });
+    const recipientIds = [...new Set([...assigneeRows, ...collaboratorRows].map((row) => row.user_id).filter((id) => id !== req.userId))];
+    task.is_deleted = true;
+    task.updated_at = new Date();
     await task.save();
-    res.json({ ok: true, message: "Task archived." });
+    await EmailQueue.update({ status: 'failed', error_message: 'Task deleted.' }, { where: { event_id: task.id, entity_type: 'task', status: 'pending' } });
+    try {
+      for (const userId of recipientIds) {
+        const contact = await getUserContact(userId);
+        if (contact?.email) {
+          const { subject, body } = buildTaskDeletedEmail(task, contact.full_name);
+          await queueEmail({ recipient_email: contact.email, subject, body, task_id: task.id, email_type: 'deleted' });
+        }
+        await createNotification({ userId, type: 'task_deleted', title: 'Task Deleted', message: `The task \"${task.title}\" has been deleted by its creator.`, entityType: 'task', entityId: task.id });
+      }
+    } catch (notificationError) {
+      console.error("Failed to notify task participants about deletion:", notificationError);
+    }
+    res.json({ ok: true, message: "Task deleted." });
   } catch (error) {
     console.error("Delete task error:", error);
     res.status(500).json({ ok: false, message: "Server error." });
+  }
+};
+
+exports.listArchivedTasks = async (req, res) => {
+  try {
+    const tasks = await Task.findAll({ where: { creator_id: req.userId, is_archived: true, is_deleted: false }, order: [['updated_at', 'DESC']] });
+    const result = [];
+    for (const task of tasks) {
+      const assignees = await TaskAssignee.findAll({ where: { task_id: task.id }, attributes: ['user_id'] });
+      const collaborators = await TaskCollaborator.findAll({ where: { task_id: task.id }, attributes: ['user_id'] });
+      const checklist = await TaskChecklistItem.findAll({ where: { task_id: task.id }, order: [['sort_order', 'ASC']] });
+      result.push({
+        id: task.id, title: task.title, color: task.color, priority: task.priority,
+        visibility: task.visibility, department_id: task.department_id, office_id: task.office_id,
+        description: task.description, remind_before_minutes: task.remind_before_minutes,
+        assignee_ids: assignees.map(a => a.user_id).filter(id => id !== req.userId),
+        collaborator_ids: collaborators.map(c => c.user_id),
+        checklist_items: checklist.map(item => ({ card_id: item.card_id || 'default', card_title: item.card_title || 'Checklist', text: item.text }))
+      });
+    }
+    res.json({ ok: true, tasks: result });
+  } catch (error) {
+    console.error('List archived tasks error:', error);
+    res.status(500).json({ ok: false, message: 'Server error.' });
+  }
+};
+
+exports.archiveTask = async (req, res) => {
+  try {
+    const task = await Task.findByPk(req.params.id);
+    if (!task || task.is_deleted) return res.status(404).json({ ok: false, message: 'Task not found.' });
+    if (task.creator_id !== req.userId) return res.status(403).json({ ok: false, message: 'Only creator can archive.' });
+    task.is_archived = true;
+    task.updated_at = new Date();
+    await task.save();
+    res.json({ ok: true, message: 'Task archived.' });
+  } catch (error) {
+    console.error('Archive task error:', error);
+    res.status(500).json({ ok: false, message: 'Server error.' });
   }
 };

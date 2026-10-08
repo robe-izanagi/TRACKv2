@@ -1512,6 +1512,7 @@ function Home() {
           setSelectedEvent(null);
         }}
         event={selectedEvent}
+        onActionSuccess={() => { fetchTodayEvents(); fetchUpcomingEvents(true); }}
       />
       <AttendeesModal
         isOpen={showAttendeesModal}
@@ -1540,6 +1541,7 @@ function Home() {
         onChecklistToggle={handleTaskChecklistToggle}
         onAddComment={handleTaskAddComment}
         currentUserId={user?.id}
+        onActionSuccess={fetchOngoingTasks}
       />
     </div>
   );

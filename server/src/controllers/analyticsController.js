@@ -105,7 +105,7 @@ exports.getCampusOfficeStats = async (req, res) => {
 
     // ── Campus ──
     const campusEvents = await Event.findAll({
-      where: { visibility: 'campus', is_archived: false, start_datetime: { [Op.gte]: startDate } },
+      where: { visibility: 'campus', is_archived: false, is_deleted: false, start_datetime: { [Op.gte]: startDate } },
       order: [['start_datetime', 'ASC']]
     });
     const campusStats = await buildVisibilityStats(campusEvents, userId, startDate, now);
@@ -118,7 +118,7 @@ exports.getCampusOfficeStats = async (req, res) => {
       departmentEvents = await Event.findAll({
         where: {
           visibility: 'department', department_id: profile.department_id,
-          is_archived: false, start_datetime: { [Op.gte]: startDate }
+          is_archived: false, is_deleted: false, start_datetime: { [Op.gte]: startDate }
         },
         order: [['start_datetime', 'ASC']]
       });
@@ -129,7 +129,7 @@ exports.getCampusOfficeStats = async (req, res) => {
     let officeEvents = [];
     if (profile?.office_id) {
       const candidateEvents = await Event.findAll({
-        where: { is_archived: false, start_datetime: { [Op.gte]: startDate } }
+        where: { is_archived: false, is_deleted: false, start_datetime: { [Op.gte]: startDate } }
       });
       for (const ev of candidateEvents) {
         if (await eventBelongsToOffice(ev, profile.office_id)) officeEvents.push(ev);
@@ -151,7 +151,7 @@ exports.getDepartmentOfficePerformance = async (req, res) => {
     const startDate = getRangeStart(range);
 
     const events = await Event.findAll({
-      where: { is_archived: false, start_datetime: { [Op.gte]: startDate } }
+      where: { is_archived: false, is_deleted: false, start_datetime: { [Op.gte]: startDate } }
     });
 
     const deptCounts = {};
@@ -294,7 +294,7 @@ exports.getSchedulingConflicts = async (req, res) => {
     }
 
     const events = await Event.findAll({
-      where: { id: { [Op.in]: conflictedIds }, start_datetime: { [Op.gte]: startDate } }
+      where: { id: { [Op.in]: conflictedIds }, is_archived: false, is_deleted: false, start_datetime: { [Op.gte]: startDate } }
     });
 
     let campusOverlaps = 0, departmentOverlaps = 0, privateOverlaps = 0;
@@ -325,7 +325,7 @@ exports.getPersonalEvents = async (req, res) => {
     const eventIds = attendances.map(a => a.event_id);
     const events = eventIds.length
       ? await Event.findAll({
-        where: { id: { [Op.in]: eventIds }, is_archived: false, start_datetime: { [Op.gte]: startDate } }
+        where: { id: { [Op.in]: eventIds }, is_archived: false, is_deleted: false, start_datetime: { [Op.gte]: startDate } }
       })
       : [];
     const attendanceMap = {};
@@ -363,6 +363,7 @@ exports.getTaskStats = async (req, res) => {
       where: {
         [Op.or]: [{ creator_id: userId }, { id: { [Op.in]: taskIds } }],
         is_archived: false,
+        is_deleted: false,
         deadline_datetime: { [Op.gte]: startDate }
       }
     });

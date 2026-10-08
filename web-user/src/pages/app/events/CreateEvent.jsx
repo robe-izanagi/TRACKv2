@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { debounce } from "lodash";
 import InputField from "../../../components/common/InputField";
 import Button from "../../../components/common/Button";
@@ -41,6 +41,8 @@ import styles from "./CreateEvent.module.css";
 export default function CreateEvent() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const template = location.state?.template || null;
 
   const role = user?.role || "faculty";
   const hasDepartment = !!user?.department;
@@ -49,29 +51,30 @@ export default function CreateEvent() {
     role === "staff" || role === "faculty" ? "private" : "private";
 
   const [form, setForm] = useState({
-    title: "",
-    color: "#800000",
-    visibility: initialVisibility,
-    method: "face-to-face",
-    link: "",
-    hierarchy: "local",
-    department_id: "",
-    description: "",
+    title: template?.title || "",
+    color: template?.color || "#800000",
+    visibility: template?.visibility || initialVisibility,
+    method: template?.method || "face-to-face",
+    link: template?.link || "",
+    hierarchy: template?.hierarchy || "local",
+    department_id: template?.department_id || "",
+    office_id: template?.office_id || "",
+    description: template?.description || "",
     start_date: "",
     end_date: "",
     start_time: "",
     end_time: "",
-    venue_id: "",
+    venue_id: template?.venue_id || "",
     location_id: "",
     exact_location: "",
     street: "",
-    map_location: "",
-    remind_before_minutes: "",
-    event_type: "event",
+    map_location: template?.map_location || template?.location || "",
+    remind_before_minutes: template?.remind_before_minutes || "",
+    event_type: template?.event_type || "event",
   });
 
-  const [attendeeIds, setAttendeeIds] = useState([]);
-  const [collaboratorIds, setCollaboratorIds] = useState([]);
+  const [attendeeIds, setAttendeeIds] = useState(template?.attendee_ids || []);
+  const [collaboratorIds, setCollaboratorIds] = useState(template?.collaborator_ids || []);
   const [showAttendeeModal, setShowAttendeeModal] = useState(false);
   const [showCollabModal, setShowCollabModal] = useState(false);
   const [attachments, setAttachments] = useState([]);
@@ -129,11 +132,11 @@ export default function CreateEvent() {
           const ids = (res.data.users || [])
             .filter((u) => u.id !== user?.id)
             .map((u) => u.id);
-          setAttendeeIds(ids);
+          if (!template) setAttendeeIds(ids);
         })
         .catch(console.error);
     }
-  }, [form.department_id, form.visibility, user?.id]);
+  }, [form.department_id, form.visibility, user?.id, template]);
 
   const updateField = (field, value) =>
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -243,6 +246,7 @@ export default function CreateEvent() {
       end_datetime: buildLocalDateTimeISO(form.end_date, form.end_time),
       department_id:
         form.visibility === "department" ? form.department_id : undefined,
+      office_id: form.office_id || undefined,
       description: form.description,
       venue_id:
         form.method !== "online" && form.hierarchy === "local"

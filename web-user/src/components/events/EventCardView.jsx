@@ -14,7 +14,10 @@ import {
   FiLink,
   FiCopy,
   FiAlertTriangle,
+  FiArchive,
+  FiTrash2,
 } from "react-icons/fi";
+import apiClient from "../../api/client";
 import { getEventStatus, EVENT_STATUS_CONFIG } from "../../utils/eventStatus";
 import ConflictCardEvent from "./ConflictCardEvent";
 
@@ -106,7 +109,7 @@ const RESPONSE_CONFIG = {
   },
 };
 
-export default function EventCardView({ isOpen, onClose, event }) {
+export default function EventCardView({ isOpen, onClose, event, onActionSuccess }) {
   const [copied, setCopied] = useState(false);
   const [showConflictModal, setShowConflictModal] = useState(false);
 
@@ -143,6 +146,19 @@ export default function EventCardView({ isOpen, onClose, event }) {
 
   const status = getEventStatus(event);
   const statusCfg = EVENT_STATUS_CONFIG[status];
+
+  const handleManageEvent = async (action) => {
+    const verb = action === "archive" ? "archive" : "permanently delete";
+    if (!window.confirm(`Are you sure you want to ${verb} this event?`)) return;
+    try {
+      if (action === "archive") await apiClient.patch(`/events/${event.id}/archive`);
+      else await apiClient.delete(`/events/${event.id}`);
+      onClose?.();
+      onActionSuccess?.(action, event.id);
+    } catch (error) {
+      window.alert(error.response?.data?.message || `Unable to ${verb} this event.`);
+    }
+  };
 
   const handleCopyLink = () => {
     if (!event.link) return;
@@ -416,6 +432,17 @@ export default function EventCardView({ isOpen, onClose, event }) {
           </div>
         </div>
       </div>
+
+      {event.isCreator && (
+        <div className={styles.managementActions}>
+          <button type="button" className={styles.archiveAction} onClick={() => handleManageEvent("archive")}>
+            <FiArchive size={15} /> Archive event
+          </button>
+          <button type="button" className={styles.deleteAction} onClick={() => handleManageEvent("delete")}>
+            <FiTrash2 size={15} /> Delete event
+          </button>
+        </div>
+      )}
 
       <ConflictCardEvent
         isOpen={showConflictModal}

@@ -20,6 +20,7 @@ import {
   FiChevronRight,
   FiAlertTriangle,
   FiCopy,
+  FiArchive,
 } from "react-icons/fi";
 import EventNoteOutlinedIcon from "@mui/icons-material/EventNoteOutlined";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
@@ -104,6 +105,7 @@ export default function Events() {
   const [invitedEvents, setInvitedEvents] = useState([]);
   const [allEvents, setAllEvents] = useState([]);
   const [collaborationEvents, setCollaborationEvents] = useState([]);
+  const [archivedEvents, setArchivedEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -204,11 +206,29 @@ export default function Events() {
     }
   }, []);
 
+  const fetchArchivedEvents = useCallback(async () => {
+    try {
+      const res = await apiClient.get("/events/archived");
+      setArchivedEvents(res.data.events || []);
+    } catch (err) {
+      console.error("Failed to fetch archived events:", err);
+      setArchivedEvents([]);
+    }
+  }, []);
+
+  const refreshEventViews = () => {
+    fetchEvents();
+    fetchTodayEvents();
+    fetchCollaborationEvents();
+    fetchArchivedEvents();
+  };
+
   useEffect(() => {
     fetchTodayEvents();
     fetchEvents();
     fetchCollaborationEvents();
-  }, [fetchTodayEvents, fetchEvents, fetchCollaborationEvents]);
+    fetchArchivedEvents();
+  }, [fetchTodayEvents, fetchEvents, fetchCollaborationEvents, fetchArchivedEvents]);
 
   const filterEvents = useCallback(
     (events) => {
@@ -891,6 +911,39 @@ export default function Events() {
     if (loading) return <p className={styles.loading}>Loading events...</p>;
     if (error) return <p className={styles.error}>{error}</p>;
 
+    if (activeTab === "archived") {
+      return archivedEvents.length === 0 ? (
+        <div className={styles.emptyStateBox}><FiArchive size={28} /><p>No archived events.</p></div>
+      ) : (
+        <div className={styles.archiveList}>
+          {archivedEvents.map((event) => (
+            <article
+              className={styles.archiveCard}
+              key={event.id}
+              style={{ borderLeftColor: event.color || "#800000" }}
+            >
+              <div>
+                <h3>{event.title}</h3>
+                <p>{event.description || "No description"}</p>
+                <span>
+                  {event.method === "online"
+                    ? "Online"
+                    : event.venue || event.location || "Location undecided"}
+                </span>
+              </div>
+              <button
+                type="button"
+                className={styles.createBtn}
+                onClick={() => navigate("/create-event", { state: { template: event } })}
+              >
+                Use as template
+              </button>
+            </article>
+          ))}
+        </div>
+      );
+    }
+
     switch (activeTab) {
       case "all": {
         let filteredAll = filterEvents(allEvents);
@@ -1102,6 +1155,12 @@ export default function Events() {
         >
           <FiUsers size={16} /> Collaboration
         </button>
+        <button
+          className={`${styles.tab} ${activeTab === "archived" ? styles.activeTab : ""}`}
+          onClick={() => setActiveTab("archived")}
+        >
+          <FiArchive size={16} /> Archived
+        </button>
       </div>
 
       <div className={styles.content}>{renderContent()}</div>
@@ -1113,6 +1172,7 @@ export default function Events() {
           setSelectedEvent(null);
         }}
         event={selectedEvent}
+        onActionSuccess={refreshEventViews}
       />
 
       <EventInvitation

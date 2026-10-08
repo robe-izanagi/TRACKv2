@@ -27,6 +27,11 @@ const EmailQueue = sequelize.define('email_queue', {
     type: DataTypes.UUID,
     allowNull: true
   },
+  entity_type: {
+    type: DataTypes.STRING(50),
+    allowNull: true,
+    defaultValue: 'event'
+  },
   email_type: {
     type: DataTypes.STRING(50),
     allowNull: true // 'invitation' | 'collaborator' | 'reminder'

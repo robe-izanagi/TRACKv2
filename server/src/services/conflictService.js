@@ -45,6 +45,7 @@ async function getUserScheduleEvents(userId) {
   return Event.findAll({
     where: {
       is_archived: false,
+      is_deleted: false,
       [Op.or]: [
         { creator_id: userId },
         { id: { [Op.in]: eventIds } }

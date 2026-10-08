@@ -492,3 +492,27 @@
   color: #374151;
   cursor: pointer;
 }
+
+.managementActions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  padding: 0 20px 8px;
+}
+
+.archiveAction, .deleteAction {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 8px 12px;
+  background: #fff;
+  color: #374151;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.deleteAction { color: #b91c1c; border-color: #fecaca; }
+.archiveAction:hover { background: #f3f4f6; }
+.deleteAction:hover { background: #fef2f2; }

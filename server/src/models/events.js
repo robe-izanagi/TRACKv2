@@ -83,6 +83,10 @@ const Event = sequelize.define('events', {
     type: DataTypes.BOOLEAN,
     defaultValue: false
   },
+  is_deleted: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
+  },
   created_at: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW

@@ -3,11 +3,11 @@ const { Op } = require('sequelize');
 const {
   sequelize, Event, EventAttendee, EventCollaborator,
   Venue, Location, UserProfile, Department, Office, User, Position,
-  Attachment
+  Attachment, EmailQueue
 } = require('../models');
 const {
   queueEmail, buildInvitationEmail, buildCollaboratorEmail,
-  buildReminderEmail, buildEventEditedEmail
+  buildReminderEmail, buildEventEditedEmail, buildEventDeletedEmail
 } = require('../services/eventEmailTemplates');
 const { buildConflictMap } = require('../services/conflictService');
 const { createNotification } = require('../services/notificationService');
@@ -79,6 +79,7 @@ const getVenueConflict = async (venueId, start, end, excludeEventId = null) => {
   const where = {
     venue_id: venueId,
     is_archived: false,
+    is_deleted: false,
     start_datetime: { [Op.lt]: end },
     end_datetime: { [Op.gt]: start }
   };
@@ -201,7 +202,8 @@ exports.createEvent = async (req, res) => {
       description,
       remind_before_minutes: remind_before_minutes || null,
       is_email_reminder: true,
-      is_archived: false
+      is_archived: false,
+      is_deleted: false
     }, { transaction: t });
 
     await EventAttendee.create({
@@ -334,7 +336,7 @@ exports.updateEvent = async (req, res) => {
     } = req.body;
 
     const event = await Event.findByPk(id);
-    if (!event) {
+    if (!event || event.is_deleted || event.is_archived) {
       await t.rollback();
       return res.status(404).json({ ok: false, message: 'Event not found.' });
     }
@@ -593,7 +595,7 @@ exports.getEventById = async (req, res) => {
     const { id } = req.params;
 
     const event = await Event.findByPk(id);
-    if (!event) {
+    if (!event || event.is_deleted || event.is_archived) {
       return res.status(404).json({ ok: false, message: 'Event not found.' });
     }
 
@@ -768,6 +770,7 @@ exports.listEvents = async (req, res) => {
     const events = await Event.findAll({
       where: {
         is_archived: false,
+    is_deleted: false,
         [Op.or]: [
           { creator_id: req.userId },
           { id: { [Op.in]: myEventIds } }
@@ -892,6 +895,7 @@ exports.getEventStats = async (req, res) => {
     const events = await Event.findAll({
       where: {
         is_archived: false,
+    is_deleted: false,
         ...visibilityCondition
       }
     });
@@ -960,6 +964,7 @@ exports.getTodayEvent = async (req, res) => {
     const events = await Event.findAll({
       where: {
         is_archived: false,
+    is_deleted: false,
         [Op.or]: [
           { creator_id: userId },
           { id: { [Op.in]: eventIds } }
@@ -1113,6 +1118,7 @@ exports.getUpcomingEvents = async (req, res) => {
     const events = await Event.findAll({
       where: {
         is_archived: false,
+    is_deleted: false,
         [Op.or]: [
           { creator_id: userId },
           { id: { [Op.in]: eventIds } }
@@ -1169,7 +1175,8 @@ exports.getCollaborationEvents = async (req, res) => {
     const events = await Event.findAll({
       where: {
         id: { [Op.in]: eventIds },
-        is_archived: false
+        is_archived: false,
+        is_deleted: false
       },
       order: [['start_datetime', 'ASC']]
     });
@@ -1228,6 +1235,87 @@ exports.getCollaborationEvents = async (req, res) => {
     res.json({ ok: true, events: result });
   } catch (error) {
     console.error('Get collaboration events error:', error);
+    res.status(500).json({ ok: false, message: 'Server error.' });
+  }
+};
+
+exports.listArchivedEvents = async (req, res) => {
+  try {
+    const events = await Event.findAll({
+      where: { creator_id: req.userId, is_archived: true, is_deleted: false },
+      order: [['updated_at', 'DESC']]
+    });
+    const result = [];
+    for (const event of events) {
+      const attendees = await EventAttendee.findAll({ where: { event_id: event.id } });
+      const collaborators = await EventCollaborator.findAll({ where: { event_id: event.id } });
+      const venue = event.venue_id ? await Venue.findByPk(event.venue_id, { attributes: ['name'] }) : null;
+      const location = event.location_id ? await Location.findByPk(event.location_id, { attributes: ['map_location'] }) : null;
+      result.push({
+        id: event.id, title: event.title, color: event.color, method: event.method,
+        link: event.link, start_datetime: event.start_datetime, end_datetime: event.end_datetime,
+        hierarchy: event.hierarchy, event_type: event.event_type, visibility: event.visibility,
+        venue: venue?.name || null, venue_id: event.venue_id,
+        location: location?.map_location || null, map_location: location?.map_location || null,
+        location_id: event.location_id, department_id: event.department_id, office_id: event.office_id,
+        description: event.description, remind_before_minutes: event.remind_before_minutes,
+        attendee_ids: attendees.filter(a => a.user_id !== req.userId).map(a => a.user_id),
+        collaborator_ids: collaborators.map(c => c.user_id)
+      });
+    }
+    res.json({ ok: true, events: result });
+  } catch (error) {
+    console.error('List archived events error:', error);
+    res.status(500).json({ ok: false, message: 'Server error.' });
+  }
+};
+
+exports.archiveEvent = async (req, res) => {
+  try {
+    const event = await Event.findByPk(req.params.id);
+    if (!event || event.is_deleted) return res.status(404).json({ ok: false, message: 'Event not found.' });
+    if (event.creator_id !== req.userId) return res.status(403).json({ ok: false, message: 'Only the creator can archive this event.' });
+    event.is_archived = true;
+    event.updated_at = new Date();
+    await event.save();
+    res.json({ ok: true, message: 'Event archived.' });
+  } catch (error) {
+    console.error('Archive event error:', error);
+    res.status(500).json({ ok: false, message: 'Server error.' });
+  }
+};
+
+exports.deleteEvent = async (req, res) => {
+  try {
+    const event = await Event.findByPk(req.params.id);
+    if (!event || event.is_deleted) return res.status(404).json({ ok: false, message: 'Event not found.' });
+    if (event.creator_id !== req.userId) return res.status(403).json({ ok: false, message: 'Only the creator can delete this event.' });
+    const attendeeRows = await EventAttendee.findAll({ where: { event_id: event.id }, attributes: ['user_id'] });
+    const collaboratorRows = await EventCollaborator.findAll({ where: { event_id: event.id }, attributes: ['user_id'] });
+    const recipientIds = [...new Set([...attendeeRows, ...collaboratorRows].map(row => row.user_id).filter(id => id !== req.userId))];
+    event.is_deleted = true;
+    event.updated_at = new Date();
+    await event.save();
+    await EmailQueue.update({ status: 'failed', error_message: 'Event deleted.' }, { where: { event_id: event.id, entity_type: 'event', status: 'pending' } });
+    try {
+      for (const userId of recipientIds) {
+        const contact = await getUserContact(userId);
+        if (contact?.email) {
+          const { subject, body } = buildEventDeletedEmail(event, contact.full_name);
+          await queueEmail({ recipient_email: contact.email, subject, body, event_id: event.id, entity_type: 'event', email_type: 'deleted' });
+        }
+        await createNotification({
+          userId, type: 'event_deleted', title: 'Event Deleted',
+          message: `The event "${event.title}" has been deleted by its creator.`,
+          entityType: 'event', entityId: event.id
+        });
+      }
+    } catch (notificationError) {
+      console.error('Failed to notify event participants about deletion:', notificationError);
+    }
+    res.json({ ok: true, message: 'Event deleted.' });
+  } catch (error) {
+    console.error('Delete event error:', error);
     res.status(500).json({ ok: false, message: 'Server error.' });
   }
 };

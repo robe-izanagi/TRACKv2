@@ -10,10 +10,13 @@ const {
   getUpcomingEvents,
   getCollaborationEvents,
   getEventById,
-  updateEvent,
+  updateEvent, listArchivedEvents, archiveEvent, deleteEvent,
 } = require('../controllers/eventsController');
 
 router.get('/', authenticate, listEvents);
+router.get('/archived', authenticate, listArchivedEvents);
+router.patch('/:id/archive', authenticate, archiveEvent);
+router.delete('/:id', authenticate, deleteEvent);
 router.get('/stats', authenticate, getEventStats);
 router.get('/today', authenticate, getTodayEvent);
 router.get('/upcoming', authenticate, getUpcomingEvents);

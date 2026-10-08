@@ -88,3 +88,12 @@ exports.buildTaskEditedEmail = (task, recipientName, status) => {
   `;
   return { subject, body };
 };
+
+exports.buildTaskDeletedEmail = (task, recipientName) => ({
+  subject: `Task canceled: ${task.title}`,
+  body: `
+    <h2>Hello ${recipientName || 'there'},</h2>
+    <p>The task <strong>${task.title}</strong> has been deleted by its creator and is no longer available.</p>
+    <p>You do not need to take any further action.</p>
+  `
+});

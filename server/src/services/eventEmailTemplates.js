@@ -90,3 +90,12 @@ exports.buildEventEditedEmail = (event, recipientName, status) => {
   `;
   return { subject, body };
 };
+
+exports.buildEventDeletedEmail = (event, recipientName) => ({
+  subject: `Event canceled: ${event.title}`,
+  body: `
+    <h2>Hello ${recipientName || 'there'},</h2>
+    <p>The event <strong>${event.title}</strong> has been deleted by its creator and is no longer available.</p>
+    <p>You do not need to take any further action.</p>
+  `
+});

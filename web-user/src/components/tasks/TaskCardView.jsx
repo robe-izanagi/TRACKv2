@@ -9,7 +9,10 @@ import {
   FiDownload,
   FiPlus,
   FiSend,
+  FiArchive,
+  FiTrash2,
 } from "react-icons/fi";
+import apiClient from "../../api/client";
 import styles from "./TaskCardView.module.css";
 
 const AVATAR_COLORS = [
@@ -36,6 +39,7 @@ export default function TaskCardView({
   onChecklistToggle,
   onAddComment,
   currentUserId,
+  onActionSuccess,
 }) {
   const [commentInputs, setCommentInputs] = useState({});
   const [showCommentInput, setShowCommentInput] = useState({});
@@ -100,6 +104,19 @@ export default function TaskCardView({
     const b = parseInt(hexColor.slice(5, 7), 16);
     const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
     return luminance > 0.5 ? "#111827" : "#ffffff";
+  };
+
+  const handleManageTask = async (action) => {
+    const verb = action === "archive" ? "archive" : "permanently delete";
+    if (!window.confirm(`Are you sure you want to ${verb} this task?`)) return;
+    try {
+      if (action === "archive") await apiClient.patch(`/tasks/${task.id}/archive`);
+      else await apiClient.delete(`/tasks/${task.id}`);
+      onClose?.();
+      onActionSuccess?.(action, task.id);
+    } catch (error) {
+      window.alert(error.response?.data?.message || `Unable to ${verb} this task.`);
+    }
   };
 
   const handleToggle = (itemId, currentStatus) => {
@@ -416,6 +433,16 @@ export default function TaskCardView({
           )}
         </div>
 
+        {isCreator && (
+          <div className={styles.managementActions}>
+            <button type="button" className={styles.archiveAction} onClick={() => handleManageTask("archive")}>
+              <FiArchive size={15} /> Archive task
+            </button>
+            <button type="button" className={styles.deleteAction} onClick={() => handleManageTask("delete")}>
+              <FiTrash2 size={15} /> Delete task
+            </button>
+          </div>
+        )}
         <button className={styles.closeModalBtn} onClick={onClose}>
           Close
         </button>

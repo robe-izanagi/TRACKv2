@@ -27,7 +27,7 @@ router.get('/invitations', authenticate, async (req, res) => {
     const events = [];
     for (const record of attendeeRecords) {
       const ev = await Event.findByPk(record.event_id);
-      if (!ev || ev.is_archived) continue;
+      if (!ev || ev.is_archived || ev.is_deleted) continue;
       if (type && ['campus', 'department', 'private'].includes(type)) {
         if (ev.visibility !== type) continue;
       }
@@ -150,6 +150,11 @@ router.put('/:eventId/respond', authenticate, async (req, res) => {
     });
     if (!attendee) {
       return res.status(404).json({ ok: false, message: 'Not invited.' });
+    }
+
+    const linkedEvent = await Event.findByPk(eventId);
+    if (!linkedEvent || linkedEvent.is_deleted || linkedEvent.is_archived) {
+      return res.status(404).json({ ok: false, message: 'Event not found.' });
     }
 
     attendee.response = response;

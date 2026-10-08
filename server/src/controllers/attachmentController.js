@@ -18,7 +18,7 @@ exports.uploadAttachments = async (req, res) => {
     // Check if the event/task exists
     const Entity = entity_type === 'event' ? Event : Task;
     const entity = await Entity.findByPk(entity_id);
-    if (!entity) {
+    if (!entity || entity.is_archived || entity.is_deleted) {
       return res.status(404).json({ ok: false, message: `${entity_type} not found.` });
     }
 
