@@ -19,6 +19,7 @@ import {
 } from "react-icons/fi";
 import apiClient from "../../api/client";
 import { getEventStatus, EVENT_STATUS_CONFIG } from "../../utils/eventStatus";
+import { downloadAttachment } from "../../utils/downloadAttachment";
 import ConflictCardEvent from "./ConflictCardEvent";
 
 const formatDate = (dateStr) => {
@@ -408,10 +409,12 @@ export default function EventCardView({ isOpen, onClose, event, onActionSuccess 
                       {attachments.map((file) => (
                         <a
                           key={file.id}
-                          href={`/attachments/download/${file.id}`}
+                          href="#"
                           download
-                          target="_blank"
-                          rel="noreferrer"
+                          onClick={(clickEvent) => {
+                            clickEvent.preventDefault();
+                            downloadAttachment(file);
+                          }}
                           className={styles.attachItem}
                         >
                           <FiDownload size={14} />
