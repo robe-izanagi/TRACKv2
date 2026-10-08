@@ -398,10 +398,10 @@
 .table thead th {
   text-align: left;
   padding: clamp(10px 12px, 1.5vw 2vw, 12px 14px);
-  background: var(--admin-muted);
+  background: var(--admin-surface-raised);
   font-weight: 600;
-  color: var(--admin-surface-muted);
-  border-bottom: 2px solid var(--admin-muted);
+  color: var(--admin-text-secondary);
+  border-bottom: 2px solid var(--admin-border);
   white-space: nowrap;
   word-break: normal;
   font-size: var(--font-size-sm);
