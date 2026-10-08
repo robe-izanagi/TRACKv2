@@ -16,7 +16,7 @@ import { useAuth } from "../../../context/AuthContext";
 import { getReadableTextColor } from "../../../utils/colorUtils";
 import {
   validateAttachmentFiles,
-  ACCEPTED_ATTACHMENT_MIME_TYPES,
+  ACCEPTED_ATTACHMENT_INPUT_TYPES,
 } from "../../../utils/fileValidation";
 import {
   buildLocalDateTimeISO,
@@ -144,7 +144,7 @@ export default function CreateEvent() {
   const handleFileAdd = () => fileInputRef.current?.click();
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files || []);
-    const validation = validateAttachmentFiles(files);
+    const validation = validateAttachmentFiles(files, attachments.length);
 
     if (!validation.ok) {
       showFeedback(validation.message, "error");
@@ -666,7 +666,7 @@ export default function CreateEvent() {
         <input
           type="file"
           multiple
-          accept={`${ACCEPTED_ATTACHMENT_MIME_TYPES.join(",")},.pdf,.docx`}
+          accept={ACCEPTED_ATTACHMENT_INPUT_TYPES}
           ref={fileInputRef}
           style={{ display: "none" }}
           onChange={handleFileChange}
