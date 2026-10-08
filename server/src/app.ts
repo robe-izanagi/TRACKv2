@@ -52,7 +52,7 @@ app.use('/api/profile', require('./routes/profile'));
 app.use('/api/feedback', feedbackRoutes);
 
 // ─── Static files ───
-const uploadsPath = path.join(__dirname, '..', 'uploads');
+const uploadsPath = require('./config/uploads');
 
 if (!fs.existsSync(uploadsPath)) {
   fs.mkdirSync(uploadsPath, { recursive: true });
