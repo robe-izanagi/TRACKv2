@@ -14,6 +14,7 @@ import {
   FiAlertTriangle,
 } from "react-icons/fi";
 import { getReadableTextColor } from "../../utils/colorUtils";
+import { downloadAttachment } from "../../utils/downloadAttachment";
 import ConflictCardEvent from "./ConflictCardEvent";
 
 const formatDate = (dateStr) => {
@@ -314,10 +315,12 @@ export default function EventModalView({ isOpen, onClose, event }) {
                     {attachments.map((file) => (
                       <a
                         key={file.id}
-                        href={file.file_url}
+                        href="#"
                         download
-                        target="_blank"
-                        rel="noreferrer"
+                        onClick={(clickEvent) => {
+                          clickEvent.preventDefault();
+                          downloadAttachment(file);
+                        }}
                         className={styles.attachItem}
                       >
                         <FiDownload size={14} />
