@@ -1,16 +1,19 @@
 /* ─── Grid Layout ────────────────────────────────────── */
 .parent {
   display: grid;
-  /* Wider main column + sidebar */
-  grid-template-columns: 3fr 1fr;
+  /* Narrower main column so the Requests panel always fits.
+     minmax(0, …) stops wide tables from pushing the layout past the screen. */
+  grid-template-columns: minmax(0, 2.2fr) minmax(360px, 1fr);
   grid-template-rows: auto auto 1fr;
   gap: 20px;
   padding: 20px;
   width: 100%;
-  max-width: none;
+  max-width: 100%;
   margin: 0;
   background: var(--admin-page);
   min-height: 100vh;
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 /* Title + single Refresh button (same layout as Dashboard header) */
@@ -21,37 +24,45 @@
   align-items: flex-start;
   flex-wrap: wrap;
   gap: 12px;
+  min-width: 0;
 }
 
 .generateSection {
   grid-column: 1 / 2;
   grid-row: 2;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .codesSection {
   grid-column: 1 / 2;
   grid-row: 3 / 5;
+  min-width: 0;
+  max-width: 100%;
 }
 
+/* Requests panel: its height follows the left column (the card is absolutely
+   sized), so it can never grow past the container. The list scrolls inside. */
 .requestsSection {
   grid-column: 2 / 3;
   grid-row: 2 / 5;
-  height: 100%;
-}
-
-/* Ensure the requests panel and its card fill available height */
-.requestsSection {
-  display: flex;
-  align-items: stretch;
+  position: relative;
+  min-width: 0;
+  min-height: 560px;
+  max-width: 100%;
 }
 
 .requestsSection .card {
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-direction: column;
-  height: 98.5%;
+  height: auto;
   min-height: 0;
-  overflow: visible;
+  margin-bottom: 0;
+  overflow: hidden;
   width: 100%;
+  box-sizing: border-box;
 }
 
 /* ─── Page Title ──────────────────────────────────────── */
@@ -85,6 +96,7 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 16px;
+  flex-shrink: 0;
 }
 
 .cardTitle {
@@ -141,6 +153,7 @@
 .summaryInfo {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .summaryValue {
@@ -161,6 +174,7 @@
 .generateSection .card {
   overflow: visible;
   padding: 16px 20px;
+  margin-bottom: 0;
 }
 
 .generateSection .cardTitle {
@@ -435,12 +449,14 @@
   overflow-x: auto;
   overflow-y: auto;
   max-height: 480px;
+  max-width: 100%;
 }
 
 .codesSection .card {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  margin-bottom: 0;
 }
 
 .table {
@@ -469,6 +485,16 @@
   background: var(--admin-surface-raised);
 }
 
+/* Long values show as "sample@..." (full text on hover via title) */
+.cellTruncate {
+  display: block;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Flex lives on an inner div (not the <td>) so row borders stay aligned */
 .codeCell {
   display: flex;
   align-items: center;
@@ -561,7 +587,8 @@
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
+  flex-shrink: 0;
 }
 
 .searchBar {
@@ -590,6 +617,62 @@
   top: 50%;
   transform: translateY(-50%);
   color: var(--admin-subtle);
+}
+
+/* Status filter pills (same style as Profile Change Requests) */
+.subTabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+  flex-shrink: 0;
+}
+
+.subTab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--admin-border-strong);
+  background: var(--admin-surface);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--admin-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.subTab:hover {
+  background: var(--admin-hover);
+}
+
+.activeSubTab,
+.activeSubTab:hover {
+  background: var(--admin-primary-hover);
+  color: var(--admin-surface);
+  border-color: var(--admin-primary-hover);
+}
+
+/* Pending count beside the "Pending" pill */
+.tabCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: var(--admin-warning-bg);
+  color: var(--admin-warning);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.activeSubTab .tabCount {
+  background: var(--admin-surface);
+  color: var(--admin-primary-hover);
 }
 
 .statusFilter {
@@ -628,6 +711,7 @@
   border: 1px solid var(--admin-border);
   transition: all 0.2s;
   box-shadow: 0 1px 3px var(--admin-shadow-color-soft);
+  flex-shrink: 0;
 }
 
 .requestCard:hover {
@@ -669,7 +753,7 @@
 
 .requestDetails {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 4px 16px;
   margin-bottom: 12px;
   font-size: var(--font-size-sm);
@@ -680,6 +764,7 @@
   display: flex;
   gap: 4px;
   align-items: baseline;
+  min-width: 0;
 }
 
 .detailLabel {
@@ -691,7 +776,8 @@
 
 .detailValue {
   color: var(--admin-text);
-  word-break: break-word;
+  overflow-wrap: break-word;
+  min-width: 0;
 }
 
 .requestDesc {
@@ -1046,9 +1132,22 @@
   flex-shrink: 0;
 }
 
+.skeletonDetailLabel {
+  width: 60px;
+  height: 11px;
+  flex-shrink: 0;
+}
+
 .skeletonDetailValue {
-  width: 70%;
+  flex: 1;
+  min-width: 0;
   height: 12px;
+}
+
+.skeletonRequestAction {
+  width: 90px;
+  height: 28px;
+  border-radius: 8px;
 }
 
 /* Full-page skeleton (first load) */
@@ -1137,10 +1236,10 @@
   border-radius: 8px;
 }
 
-.skeletonFilter {
-  width: 110px;
-  height: 36px;
-  border-radius: 8px;
+.skeletonSubTab {
+  width: 72px;
+  height: 32px;
+  border-radius: 20px;
 }
 
 .skeletonTh {
@@ -1151,7 +1250,7 @@
 /* ─── Responsive ──────────────────────────────────────── */
 @media (min-width: 1025px) and (max-width: 1300px) {
   .parent {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 12px;
     padding: 12px;
   }
@@ -1172,6 +1271,7 @@
     grid-column: 1 / -1;
     grid-row: auto;
     height: 400px;
+    min-height: 0;
   }
 
   .requestsSection .card {
@@ -1209,11 +1309,6 @@
     min-width: 120px;
   }
 
-  .statusFilter {
-    padding: 6px 12px;
-    font-size: var(--font-size-sm);
-  }
-
   .requestDetails {
     grid-template-columns: 1fr;
     gap: 2px 12px;
@@ -1240,7 +1335,7 @@
 
 @media (min-width: 1301px) and (max-width: 1600px) {
   .parent {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 16px;
     padding: 16px;
   }
@@ -1261,6 +1356,7 @@
     grid-column: 1 / -1;
     grid-row: auto;
     height: 450px;
+    min-height: 0;
   }
 
   .requestsSection .card {
@@ -1283,7 +1379,7 @@
 
 @media (max-width: 1300px) {
   .parent {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
 
   .titleSection {
@@ -1304,6 +1400,7 @@
     grid-column: 1 / -1;
     grid-row: 4;
     height: 450px;
+    min-height: 0;
   }
 
   .requestsSection .card {
@@ -1311,7 +1408,7 @@
   }
 
   .requestDetails {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
 }
 
