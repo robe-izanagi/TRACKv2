@@ -45,7 +45,6 @@ const FeedbackRating = require('./feedback_ratings');
 const FeedbackKeyword = require('./feedback_keywords');
 const Notification = require('./notifications');
 const EmailQueue = require('./email_queue');
-const PushSubscription = require('./push_subscriptions');
 const UserFeedback = require('./user_feedback');
 
 // =====================
@@ -142,8 +141,6 @@ FeedbackRating.belongsTo(User, { foreignKey: 'user_id' });
 
 // --- notifications ---
 Notification.belongsTo(User, { foreignKey: 'user_id', onDelete: 'CASCADE' });
-PushSubscription.belongsTo(User, { foreignKey: 'user_id', onDelete: 'CASCADE' });
-User.hasMany(PushSubscription, { foreignKey: 'user_id', onDelete: 'CASCADE' });
 
 // --- positions ---
 Position.hasMany(PositionAssignment, { foreignKey: 'position_id' });
@@ -201,6 +198,5 @@ module.exports = {
   Notification,
   VenueConflictLog,
   EmailQueue,
-  PushSubscription,
   UserFeedback
 };
