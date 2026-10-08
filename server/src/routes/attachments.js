@@ -6,6 +6,8 @@ const upload = require("../config/upload");
 const { Attachment, Event, Task } = require("../models");
 const { authenticate } = require("../middleware/auth");
 const { v4: uuidv4 } = require("uuid");
+const { createNotification } = require('../services/notificationService');
+const { getEventParticipantIds, getTaskParticipantIds, uniqueIds } = require('../services/notificationRecipients');
 
 const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15 MiB per file
 
@@ -68,7 +70,7 @@ router.post(
     if (!["event", "task"].includes(entity_type)) {
       return res.status(400).json({
         ok: false,
-        message: "Invalid entity type",
+        message: "Attachments can only be added to an event or task.",
       });
     }
 
@@ -79,7 +81,7 @@ router.post(
         if (!entity || entity.is_archived || entity.is_deleted) {
           return res.status(404).json({
             ok: false,
-            message: `${entity_type} not found`,
+            message: `This ${entity_type} is no longer available. It may have been archived or deleted.`,
           });
         }
 
@@ -101,7 +103,7 @@ router.post(
         console.error("Entity lookup error:", err);
         res.status(500).json({
           ok: false,
-          message: "Server error",
+          message: "We could not verify the item for this upload. Please try again.",
         });
       });
   },
@@ -112,7 +114,7 @@ router.post(
       if (files.length === 0) {
         return res.status(400).json({
           ok: false,
-          message: "No files uploaded",
+          message: "Choose at least one PDF or DOCX file to upload.",
         });
       }
 
@@ -155,6 +157,31 @@ router.post(
         records.push(record);
       }
 
+      try {
+        const isEvent = req.params.entity_type === 'event';
+        const Entity = isEvent ? Event : Task;
+        const entity = await Entity.findByPk(req.params.entity_id);
+        if (entity) {
+          const participantIds = isEvent
+            ? await getEventParticipantIds(entity.id)
+            : await getTaskParticipantIds(entity.id);
+          const recipients = uniqueIds([entity.creator_id, ...participantIds], [req.userId]);
+          const fileLabel = records.length === 1 ? `the attachment “${records[0].file_name}”` : `${records.length} attachments`;
+          for (const userId of recipients) {
+            await createNotification({
+              userId,
+              type: isEvent ? 'event_attachment_added' : 'task_attachment_added',
+              title: records.length === 1 ? 'Attachment Added' : 'Attachments Added',
+              message: `${fileLabel} ${records.length === 1 ? 'was' : 'were'} added to "${entity.title}".`,
+              entityType: isEvent ? 'event' : 'task',
+              entityId: entity.id,
+            });
+          }
+        }
+      } catch (notificationError) {
+        console.error('Failed to create attachment notifications:', notificationError);
+      }
+
       res.status(201).json({
         ok: true,
         attachments: records,
@@ -163,7 +190,7 @@ router.post(
       console.error("Attachment save error:", error);
       res.status(500).json({
         ok: false,
-        message: "Server error",
+        message: "Your files could not be saved. Please try uploading them again.",
       });
     }
   },
@@ -237,7 +264,7 @@ router.get("/download/:id", authenticate, async (req, res) => {
     console.error("Attachment download lookup error:", error);
     res.status(500).json({
       ok: false,
-      message: "Server error.",
+      message: "We could not find this attachment. Please refresh and try again.",
     });
   }
 });
