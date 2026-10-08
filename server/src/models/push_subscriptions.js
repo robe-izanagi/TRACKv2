@@ -14,7 +14,6 @@ const PushSubscription = sequelize.define('push_subscriptions', {
   endpoint_hash: {
     type: DataTypes.STRING(64),
     allowNull: false,
-    unique: true,
   },
   endpoint: {
     type: DataTypes.TEXT,
@@ -39,7 +38,10 @@ const PushSubscription = sequelize.define('push_subscriptions', {
 }, {
   timestamps: false,
   tableName: 'push_subscriptions',
-  indexes: [{ fields: ['user_id'] }],
+  indexes: [
+    { name: 'endpoint_hash', unique: true, fields: ['endpoint_hash'] },
+    { name: 'idx_push_subscriptions_user_id', fields: ['user_id'] },
+  ],
 });
 
 module.exports = PushSubscription;
