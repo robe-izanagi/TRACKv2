@@ -59,7 +59,7 @@ export default function EditTaskModal({
   const [collaboratorIds, setCollaboratorIds] = useState([]);
   const [attachments, setAttachments] = useState([]);
   const [existingAttachments, setExistingAttachments] = useState([]);
-  const [originalAttachmentCount, setOriginalAttachmentCount] = useState(0);
+  const [removedAttachmentIds, setRemovedAttachmentIds] = useState([]);
 
   const [checklistCards, setChecklistCards] = useState([
     { id: 1, title: "Checklist", items: [], newItemText: "" },
@@ -115,7 +115,7 @@ export default function EditTaskModal({
           }
 
           setExistingAttachments(task.attachments || []);
-          setOriginalAttachmentCount(task.attachments?.length || 0);
+          setRemovedAttachmentIds([]);
         } else {
           setError(res.data?.message || "The server did not return this task's details. Refresh the page and try again.");
         }
@@ -199,7 +199,7 @@ export default function EditTaskModal({
     const files = Array.from(e.target.files || []);
     const validation = validateAttachmentFiles(
       files,
-      originalAttachmentCount + attachments.length,
+      existingAttachments.length + attachments.length,
     );
     if (!validation.ok) {
       setStatusMessage(validation.message);
@@ -223,6 +223,7 @@ export default function EditTaskModal({
 
   const handleRemoveExistingFile = (fileId) => {
     setExistingAttachments((prev) => prev.filter((f) => f.id !== fileId));
+    setRemovedAttachmentIds((prev) => [...new Set([...prev, fileId])]);
   };
 
   const handleSubmit = async (e) => {
@@ -269,6 +270,12 @@ export default function EditTaskModal({
     try {
       const res = await apiClient.put(`/tasks/${taskId}`, payload);
       if (res.data.ok) {
+        await Promise.all(
+          removedAttachmentIds.map((attachmentId) =>
+            apiClient.delete(`/attachments/${encodeURIComponent(attachmentId)}`),
+          ),
+        );
+
         if (attachments.length > 0) {
           const formDataObj = new FormData();
           attachments.forEach(({ file }) => formDataObj.append("files", file));
