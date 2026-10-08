@@ -22,6 +22,7 @@ export default function InviteAttendeesModal({
   const { user: currentUser } = useAuth();
 
   const [users, setUsers] = useState([]);
+  const [loadError, setLoadError] = useState("");
   const [search, setSearch] = useState("");
   const [tempSelected, setTempSelected] = useState([...selectedIds]);
 
@@ -50,6 +51,7 @@ export default function InviteAttendeesModal({
           apiClient.get("/lookups/departments"),
           apiClient.get("/lookups/offices"),
         ]);
+        setLoadError("");
         const allUsers = usersRes.data.users || [];
         const filteredOutSelf = allUsers.filter(
           (u) => u.id !== currentUser?.id,
@@ -59,6 +61,7 @@ export default function InviteAttendeesModal({
         setOffices(officeRes.data.items || []);
       } catch (err) {
         console.error("Failed to load data", err);
+        setLoadError(err.response?.data?.message || err.message || "We could not load people to invite. Check your connection and try again.");
       }
     };
     fetchData();
@@ -139,6 +142,7 @@ export default function InviteAttendeesModal({
       }
     >
       <div className={styles.wrapper}>
+        {loadError && <p className={styles.error} role="alert">{loadError}</p>}
         <div className={styles.controls}>
           <div className={styles.controlsRow}>
             <div className={styles.searchBar}>
