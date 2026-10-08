@@ -38,7 +38,7 @@ export default function Login() {
     } catch (err) {
       setFeedback({
         message:
-          err?.response?.data?.message || "Could not initiate Google login.",
+          err?.response?.data?.message || err?.message || "TRACK could not start Google sign-in. Try again or use another sign-in method.",
         type: "error",
       });
     } finally {
