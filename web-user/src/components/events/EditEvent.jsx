@@ -76,7 +76,7 @@ export default function EditEvent() {
   const [showCollabModal, setShowCollabModal] = useState(false);
   const [attachments, setAttachments] = useState([]);
   const [existingAttachments, setExistingAttachments] = useState([]);
-  const [originalAttachmentCount, setOriginalAttachmentCount] = useState(0);
+  const [removedAttachmentIds, setRemovedAttachmentIds] = useState([]);
 
   const [departments, setDepartments] = useState([]);
   const [venues, setVenues] = useState([]);
@@ -151,7 +151,7 @@ export default function EditEvent() {
 
         setIsEventCreator(!!event.isCreator);
         setExistingAttachments(event.attachments || []);
-        setOriginalAttachmentCount(event.attachments?.length || 0);
+        setRemovedAttachmentIds([]);
 
         setDepartments(deptRes.data.items || []);
         setVenues(venueRes.data.venues || []);
@@ -174,7 +174,7 @@ export default function EditEvent() {
     const files = Array.from(e.target.files || []);
     const validation = validateAttachmentFiles(
       files,
-      originalAttachmentCount + attachments.length,
+      existingAttachments.length + attachments.length,
     );
 
     if (!validation.ok) {
@@ -196,6 +196,7 @@ export default function EditEvent() {
   };
   const handleRemoveExistingFile = (fileId) => {
     setExistingAttachments((prev) => prev.filter((f) => f.id !== fileId));
+    setRemovedAttachmentIds((prev) => [...new Set([...prev, fileId])]);
   };
 
   const checkConflicts = useCallback(async () => {
@@ -306,16 +307,18 @@ export default function EditEvent() {
         return;
       }
 
+      await Promise.all(
+        removedAttachmentIds.map((attachmentId) =>
+          apiClient.delete(`/attachments/${encodeURIComponent(attachmentId)}`),
+        ),
+      );
+
       if (attachments.length > 0) {
         const formData = new FormData();
         attachments.forEach(({ file }) => formData.append("files", file));
-        try {
-          await apiClient.post(`/attachments/event/${id}`, formData, {
-            headers: { "Content-Type": "multipart/form-data" },
-          });
-        } catch (uploadErr) {
-          console.error("File upload failed:", uploadErr);
-        }
+        await apiClient.post(`/attachments/event/${id}`, formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
       }
 
       showFeedback("Event updated successfully!", "success");
