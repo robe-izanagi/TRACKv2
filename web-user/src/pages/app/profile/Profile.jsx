@@ -224,10 +224,10 @@ export default function Profile() {
           setProfile(data.user);
           setEditName(data.user.full_name || "");
         } else {
-          setError("Failed to load profile.");
+          setError(data.message || "The server did not return your profile details. Refresh the page and try again.");
         }
       } catch (err) {
-        setError("Unable to load profile. Please try again later.");
+        setError(err.response?.data?.message || err.message || "We could not load your profile. Check your connection and try again.");
         console.error("Profile fetch error:", err);
       } finally {
         setLoading(false);
@@ -276,7 +276,7 @@ export default function Profile() {
         showFeedback(data.message || "Update failed.", "error");
       }
     } catch (err) {
-      const msg = err.response?.data?.message || "Server error.";
+      const msg = err.response?.data?.message || err.message || "We could not update your profile. Review the information and try again.";
       setEditMessage(msg);
       showFeedback(msg, "error");
     } finally {
@@ -477,7 +477,7 @@ export default function Profile() {
       }
     } catch (err) {
       const msg =
-        err.response?.data?.message || "Server error. Please try again.";
+        err.response?.data?.message || err.message || "We could not submit your profile change request. Review the information and try again.";
       setRequestMessage(msg);
       showFeedback(msg, "error");
     } finally {
