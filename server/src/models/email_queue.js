@@ -51,6 +51,10 @@ const EmailQueue = sequelize.define('email_queue', {
   sent_at: {
     type: DataTypes.DATE,
     allowNull: true
+  },
+  in_app_notified_at: {
+    type: DataTypes.DATE,
+    allowNull: true
   }
 }, {
   timestamps: false,
