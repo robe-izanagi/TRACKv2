@@ -21,6 +21,16 @@ export const downloadAttachment = async (attachment) => {
       `/attachments/download/${encodeURIComponent(attachment.id)}`,
       { responseType: "blob" },
     );
+    const contentType = response.headers["content-type"]?.toLowerCase() || "";
+    if (
+      contentType.includes("text/html") ||
+      contentType.includes("application/json")
+    ) {
+      throw new Error(
+        "The server returned a web page instead of the attachment. Refresh the website and try again. If this continues, the web-user deployment may still be using an older build.",
+      );
+    }
+
     const objectUrl = URL.createObjectURL(response.data);
     const link = document.createElement("a");
     link.href = objectUrl;
