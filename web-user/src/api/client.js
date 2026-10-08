@@ -1,7 +1,15 @@
 import axios from 'axios';
 
+const configuredApiUrl = import.meta.env.VITE_API_URL?.replace(/\/+$/, '');
+const defaultApiUrl = import.meta.env.DEV
+  ? 'http://localhost:3001/api'
+  : 'https://trackv2-68rg.onrender.com/api';
+const apiBaseURL = configuredApiUrl
+  ? (/\/api$/i.test(configuredApiUrl) ? configuredApiUrl : `${configuredApiUrl}/api`)
+  : defaultApiUrl;
+
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3001/api',
+  baseURL: apiBaseURL,
   headers: { 'Content-Type': 'application/json' }
 });
 
