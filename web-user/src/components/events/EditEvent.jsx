@@ -155,7 +155,7 @@ export default function EditEvent() {
         setVenues(venueRes.data.venues || []);
       } catch (err) {
         console.error("Failed to fetch event:", err);
-        setError("Failed to load event data. Please try again.");
+        setError(err.response?.data?.message || err.message || "We could not load this event. Check your connection and try again.");
       } finally {
         setFetchingEvent(false);
       }
@@ -318,7 +318,7 @@ export default function EditEvent() {
     } catch (err) {
       console.error("Update error:", err);
       const errorMsg =
-        err.response?.data?.message || err.message || "Server error";
+        err.response?.data?.message || err.message || "We could not save the event. Review the required fields and try again.";
       setMessage(errorMsg);
       showFeedback(errorMsg, "error");
       setLoading(false);
