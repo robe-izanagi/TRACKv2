@@ -16,7 +16,7 @@ import { useAuth } from "../../context/AuthContext";
 import { getReadableTextColor } from "../../utils/colorUtils";
 import {
   validateAttachmentFiles,
-  ACCEPTED_ATTACHMENT_MIME_TYPES,
+  ACCEPTED_ATTACHMENT_INPUT_TYPES,
 } from "../../utils/fileValidation";
 import {
   buildLocalDateTimeISO,
@@ -76,6 +76,7 @@ export default function EditEvent() {
   const [showCollabModal, setShowCollabModal] = useState(false);
   const [attachments, setAttachments] = useState([]);
   const [existingAttachments, setExistingAttachments] = useState([]);
+  const [originalAttachmentCount, setOriginalAttachmentCount] = useState(0);
 
   const [departments, setDepartments] = useState([]);
   const [venues, setVenues] = useState([]);
@@ -150,6 +151,7 @@ export default function EditEvent() {
 
         setIsEventCreator(!!event.isCreator);
         setExistingAttachments(event.attachments || []);
+        setOriginalAttachmentCount(event.attachments?.length || 0);
 
         setDepartments(deptRes.data.items || []);
         setVenues(venueRes.data.venues || []);
@@ -170,7 +172,10 @@ export default function EditEvent() {
   const handleFileAdd = () => fileInputRef.current?.click();
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files || []);
-    const validation = validateAttachmentFiles(files);
+    const validation = validateAttachmentFiles(
+      files,
+      originalAttachmentCount + attachments.length,
+    );
 
     if (!validation.ok) {
       showFeedback(validation.message, "error");
@@ -725,7 +730,7 @@ export default function EditEvent() {
         <input
           type="file"
           multiple
-          accept={`${ACCEPTED_ATTACHMENT_MIME_TYPES.join(",")},.pdf,.docx`}
+          accept={ACCEPTED_ATTACHMENT_INPUT_TYPES}
           ref={fileInputRef}
           style={{ display: "none" }}
           onChange={handleFileChange}
