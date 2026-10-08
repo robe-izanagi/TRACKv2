@@ -194,6 +194,7 @@
   padding: 10px 12px;
   border-bottom: 1px solid var(--admin-hover);
   vertical-align: middle;
+  color: var(--admin-text-secondary);
 }
 
 .table tr:hover td {
@@ -395,6 +396,13 @@
   width: 100%;
 }
 
+.departmentStatsSection h3 {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--admin-text);
+  margin: 0;
+}
+
 .tableSection {
   width: 100%;
 }
@@ -428,10 +436,16 @@
 
 .summaryGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(0, 1.35fr);
   gap: 20px;
   margin-top: 16px;
   width: 100%;
+}
+
+@media (max-width: 1200px) {
+  .summaryGrid {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
 }
 
 .departmentStatsSection {
@@ -442,8 +456,13 @@
 
 .departmentStatsGrid {
   display: flex;
+  flex-wrap: wrap;
   gap: 18px;
   width: 100%;
+}
+
+.departmentStatsGrid .summaryCard {
+  min-width: 200px;
 }
 
 .summaryCard {
@@ -503,6 +522,58 @@
   font-size: var(--font-size-xs);
   color: var(--admin-muted);
   font-weight: 500;
+}
+
+/* ─── "Add" button card (4th / 5th card) ──────────────── */
+.addCard {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex: 1.4 1 0;
+  min-width: 240px;
+  padding: 16px 22px;
+  border: none;
+  border-radius: 16px;
+  background: var(--admin-primary);
+  color: var(--admin-surface);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  box-shadow: 0 1px 6px var(--admin-shadow-color-soft);
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+}
+
+.addCard:hover {
+  background: var(--admin-primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px var(--admin-shadow-color-medium);
+}
+
+.addCard:active {
+  transform: translateY(0);
+}
+
+.addCardIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: var(--admin-overlay-strong);
+  color: var(--admin-surface);
+}
+
+.addCardText {
+  white-space: nowrap;
+}
+
+.summaryGrid .addCard {
+  min-width: 0;
 }
 
 /* ─── Tab Content (Layouts) ───────────────────────────── */
@@ -691,7 +762,7 @@
   margin: 0;
 }
 
-/* ─── Combine Modal ────────────────────────────────────── */
+/* ─── Combine / Add Modal ──────────────────────────────── */
 .modalOverlay {
   position: fixed;
   top: 0;
@@ -747,6 +818,8 @@
   font-size: var(--font-size-2xl);
   cursor: pointer;
   color: var(--admin-muted);
+  display: flex;
+  align-items: center;
 }
 
 .modalBody {
@@ -756,6 +829,30 @@
 .modalBody p {
   margin: 8px 0;
   color: var(--admin-text-secondary);
+}
+
+.modalInput {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--admin-border-strong);
+  border-radius: 8px;
+  font-size: var(--font-size-base);
+  background: var(--admin-surface);
+  color: var(--admin-text);
+  box-sizing: border-box;
+}
+
+.modalInput::placeholder {
+  color: var(--admin-subtle);
+}
+
+.modalInput:focus {
+  outline: none;
+  border-color: var(--admin-primary);
+}
+
+.modalCheckbox {
+  margin-top: 12px;
 }
 
 .modalNote {
@@ -790,12 +887,33 @@
   border: 1px solid var(--admin-border-strong);
   border-radius: 8px;
   background: var(--admin-surface);
+  color: var(--admin-text-secondary);
   cursor: pointer;
   font-weight: 500;
 }
 
 .cancelBtn:hover {
   background: var(--admin-hover);
+}
+
+.modalSubmitBtn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  background: var(--admin-primary);
+  color: var(--admin-surface);
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.modalSubmitBtn:hover {
+  background: var(--admin-primary-hover);
 }
 
 .combineConfirmBtn {
@@ -932,6 +1050,71 @@
   width: 60px;
   height: 18px;
   border-radius: 10px;
+}
+
+/* Full-page skeleton (first load) */
+.skeletonTitle {
+  display: block;
+  width: 180px;
+  height: 30px;
+  margin-bottom: 8px;
+}
+
+.skeletonSubtitle {
+  display: block;
+  width: 320px;
+  max-width: 100%;
+  height: 16px;
+}
+
+.skeletonRefreshBtn {
+  width: 100px;
+  height: 36px;
+  border-radius: 8px;
+}
+
+.skeletonTab {
+  width: 100px;
+  height: 20px;
+  margin: 10px 20px;
+}
+
+.skeletonSectionTitle {
+  display: block;
+  width: 150px;
+  height: 18px;
+}
+
+.skeletonStatIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.skeletonStatLabel {
+  display: block;
+  width: 110px;
+  height: 11px;
+  margin-top: 6px;
+}
+
+.skeletonAddCard {
+  flex: 1.4 1 0;
+  min-width: 240px;
+  height: 82px;
+  border-radius: 16px;
+}
+
+.skeletonSearch {
+  flex: 1 1 200px;
+  height: 36px;
+  border-radius: 8px;
+}
+
+.skeletonTh {
+  width: 60%;
+  height: 11px;
 }
 
 /* ─── Responsive ───────────────────────────────────────── */
@@ -1084,6 +1267,18 @@
     font-size: var(--font-size-2xs);
   }
 
+  .addCard {
+    padding: 12px;
+    border-radius: 10px;
+    min-width: 0;
+    font-size: var(--font-size-base);
+  }
+
+  .addCardIcon {
+    width: 32px;
+    height: 32px;
+  }
+
   .topRow {
     gap: 12px;
   }
@@ -1190,6 +1385,11 @@
     font-size: var(--font-size-sm);
   }
 
+  .modalInput {
+    padding: 8px 10px;
+    font-size: var(--font-size-xs);
+  }
+
   .modalSelect {
     padding: 8px 10px;
     font-size: var(--font-size-xs);
@@ -1200,7 +1400,8 @@
   }
 
   .cancelBtn,
-  .combineConfirmBtn {
+  .combineConfirmBtn,
+  .modalSubmitBtn {
     padding: 8px;
     font-size: var(--font-size-xs);
   }
@@ -1223,6 +1424,11 @@
   .departmentStatsGrid {
     gap: 10px;
     flex-direction: column;
+  }
+
+  .skeletonAddCard {
+    min-width: 0;
+    height: 60px;
   }
 }
 
