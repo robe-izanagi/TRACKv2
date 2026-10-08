@@ -68,7 +68,7 @@ export default function VenuesList() {
       setModalOpen(false);
       load();
     } catch (err) {
-      setMessage(err.response?.data?.message || 'Failed to save venue.');
+      setMessage(err.response?.data?.message || err.message || 'We could not save the venue. Check your connection and try again.');
     }
   };
 
@@ -78,7 +78,7 @@ export default function VenuesList() {
       await archiveVenue(id);
       load();
     } catch (err) {
-      setMessage('Failed to archive venue.');
+      setMessage(err.response?.data?.message || err.message || 'We could not archive this venue. Check your connection and try again.');
     }
   };
 
