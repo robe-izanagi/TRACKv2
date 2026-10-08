@@ -552,54 +552,6 @@
 }
 
 
-/* ===== LOGOUT ===== */
-.btnLogout {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 16px;
-  margin-top: auto;
-  background: var(--admin-primary-strong);
-  color: var(--admin-sidebar-text);
-  border: none;
-  border-radius: 8px;
-  font-size: var(--font-size-lg);
-  cursor: pointer;
-  transition: background 0.2s;
-  white-space: nowrap;
-  overflow: hidden;
-  font-family: var(--font-family-display);
-  transition: all 0.3s ease;
-
-}
-
-.btnLogout:hover {
-  background: var(--admin-primary);
-}
-
-.btnLogout .icon {
-  font-size: var(--font-size-3xl);
-  flex-shrink: 0;
-}
-
-.btnLogout span {
-  opacity: 1;
-  overflow: hidden;
-  white-space: nowrap;
-  transition: all 0.3s ease;
-}
-
-.aside.mini .btnLogout {
-  padding: 10px 16px;
-}
-
-.aside.mini .btnLogout span {
-  opacity: 0;
-  width: 0;
-  margin: 0;
-  transition: all 0.3s ease;
-}
-
 /* ===== CONTENT ===== */
 .content {
   flex: 1;
@@ -631,8 +583,7 @@
     box-shadow: none;
   }
 
-  .aside.mini .navLink,
-  .aside.mini .btnLogout {
+  .aside.mini .navLink {
     justify-content: center;
     padding-right: 0;
     padding-left: 0;
