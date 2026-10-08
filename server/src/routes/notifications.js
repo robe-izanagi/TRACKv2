@@ -2,11 +2,13 @@ const express = require('express');
 const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const {
-  Event, EventAttendee, Venue, Location,
+  Event, EventAttendee, EventCollaborator, Venue, Location,
   User, UserProfile, Department, Office, Position,
   Attachment, Notification
 } = require('../models');
 const { createNotification } = require('../services/notificationService');
+const { cancelUserReminder, uniqueIds } = require('../services/notificationRecipients');
+const { queueEmail, buildReminderEmail } = require('../services/eventEmailTemplates');
 
 // ─── Event invitation listing (existing) ───────────────
 router.get('/invitations', authenticate, async (req, res) => {
@@ -142,7 +144,7 @@ router.put('/:eventId/respond', authenticate, async (req, res) => {
     const { response } = req.body;
 
     if (!['accepted', 'declined'].includes(response)) {
-      return res.status(400).json({ ok: false, message: 'Invalid response.' });
+      return res.status(400).json({ ok: false, message: 'Choose either accept or decline to respond to this event invitation.' });
     }
 
     const attendee = await EventAttendee.findOne({
@@ -162,18 +164,49 @@ router.put('/:eventId/respond', authenticate, async (req, res) => {
 
     try {
       const event = await Event.findByPk(eventId);
-      if (event && event.creator_id !== req.userId) {
+      if (event) {
         const responderProfile = await UserProfile.findOne({ where: { user_id: req.userId } });
         const responderUser = await User.findByPk(req.userId, { attributes: ['username', 'email'] });
         const responderName = responderProfile?.full_name || responderUser?.username || 'Someone';
-        await createNotification({
-          userId: event.creator_id,
-          type: 'event_response',
-          title: 'Invitation Response',
-          message: `${responderName} ${response} your invitation to "${event.title}"`,
-          entityType: 'event',
-          entityId: event.id,
-        });
+        const collaborators = await EventCollaborator.findAll({ where: { event_id: event.id }, attributes: ['user_id'] });
+        const recipients = uniqueIds([event.creator_id, ...collaborators.map((collaborator) => collaborator.user_id)], [req.userId]);
+        for (const userId of recipients) {
+          await createNotification({
+            userId,
+            type: 'event_response',
+            title: 'Invitation Response',
+            message: `${responderName} ${response} the invitation to "${event.title}".`,
+            entityType: 'event',
+            entityId: event.id,
+          });
+        }
+        if (responderUser?.email) {
+          await cancelUserReminder({
+            entityId: event.id,
+            entityType: 'event',
+            email: responderUser.email,
+            reason: `Invitation response changed to ${response}.`,
+          });
+          if (response === 'accepted' && event.remind_before_minutes) {
+            const contact = {
+              email: responderUser.email,
+              full_name: responderProfile?.full_name || responderUser.username || responderUser.email,
+            };
+            const reminderTime = new Date(
+              new Date(event.start_datetime).getTime() - Number(event.remind_before_minutes) * 60000,
+            );
+            const { subject, body } = buildReminderEmail(event, contact.full_name);
+            await queueEmail({
+              recipient_email: contact.email,
+              subject,
+              body,
+              scheduled_for: reminderTime,
+              event_id: event.id,
+              entity_type: 'event',
+              email_type: 'reminder',
+            });
+          }
+        }
       }
     } catch (notifErr) {
       console.error('Failed to create response notification:', notifErr);
