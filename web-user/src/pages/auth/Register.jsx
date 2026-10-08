@@ -27,10 +27,10 @@ export default function Register() {
         if (data.url) {
           window.location.href = data.url;
         } else {
-          setError("Could not initiate Google login.");
+          setError(data.message || "TRACK could not start Google sign-in. Try again or use another sign-in method.");
         }
       } catch (err) {
-        setError("Failed to connect to server.");
+        setError(err.response?.data?.message || err.message || "TRACK could not reach the server. Check your internet connection and try again.");
       } finally {
         setLoading(false);
       }
@@ -90,7 +90,7 @@ export default function Register() {
       }
     } catch (err) {
       console.error("Registration error:", err);
-      setError(err?.response?.data?.message || "Server error");
+      setError(err?.response?.data?.message || err?.message || "We could not complete your registration. Review your information and try again.");
     } finally {
       setLoading(false);
     }
