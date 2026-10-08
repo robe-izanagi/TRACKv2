@@ -156,7 +156,7 @@ export default function EventCardView({ isOpen, onClose, event, onActionSuccess 
       onClose?.();
       onActionSuccess?.(action, event.id);
     } catch (error) {
-      window.alert(error.response?.data?.message || `Unable to ${verb} this event.`);
+      window.alert(error.response?.data?.message || error.message || `We could not ${verb} this event. Please try again.`);
     }
   };
 
