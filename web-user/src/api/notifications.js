@@ -29,20 +29,3 @@ export const markAllNotificationsRead = async () => {
   const { data } = await apiClient.put('/notifications/read-all');
   return data;
 };
-
-export const getPushPublicKey = async () => {
-  const { data } = await apiClient.get('/push-notifications/public-key');
-  return data;
-};
-
-export const savePushSubscription = async (subscription) => {
-  const { data } = await apiClient.post('/push-notifications/subscriptions', subscription);
-  return data;
-};
-
-export const removePushSubscription = async (endpoint) => {
-  const { data } = await apiClient.delete('/push-notifications/subscriptions', {
-    data: { endpoint },
-  });
-  return data;
-};
