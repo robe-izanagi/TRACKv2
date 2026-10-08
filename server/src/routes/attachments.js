@@ -10,16 +10,26 @@ const { createNotification } = require('../services/notificationService');
 const { getEventParticipantIds, getTaskParticipantIds, uniqueIds } = require('../services/notificationRecipients');
 
 const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15 MiB per file
+const MAX_ATTACHMENT_COUNT = 5;
 
-const ALLOWED_MIME_TYPES = new Set([
-  "application/pdf",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-]);
-
-const ALLOWED_EXTENSIONS = new Set([".pdf", ".docx"]);
+const ALLOWED_MIME_TYPES_BY_EXTENSION = {
+  ".doc": new Set(["application/msword"]),
+  ".docx": new Set([
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ]),
+  ".txt": new Set(["text/plain"]),
+  ".pdf": new Set(["application/pdf"]),
+  ".png": new Set(["image/png"]),
+  ".jpg": new Set(["image/jpeg"]),
+  ".jpeg": new Set(["image/jpeg"]),
+  ".mp4": new Set(["video/mp4", "application/mp4"]),
+  ".mp3": new Set(["audio/mpeg", "audio/mp3"]),
+};
 
 const getExtension = (fileName = "") =>
   path.extname(fileName).toLowerCase();
+const getAllowedTypesMessage = () =>
+  "Only DOC, DOCX, TXT, PDF, PNG, JPG, MP4, and MP3 files are accepted.";
 
 const getStoredFilePath = (file) => {
   if (file?.path) return file.path;
@@ -46,16 +56,19 @@ const removeUploadedFiles = async (files = []) => {
 
 const validateUploadedFile = (file) => {
   const extension = getExtension(file.originalname);
+  const allowedMimeTypes = ALLOWED_MIME_TYPES_BY_EXTENSION[extension];
 
   if (file.size > MAX_FILE_SIZE) {
     return `"${file.originalname}" exceeds the 15 MB per-file limit.`;
   }
 
   if (
-    !ALLOWED_EXTENSIONS.has(extension) ||
-    !ALLOWED_MIME_TYPES.has(file.mimetype)
+    !allowedMimeTypes ||
+    (file.mimetype &&
+      file.mimetype !== "application/octet-stream" &&
+      !allowedMimeTypes.has(file.mimetype.toLowerCase()))
   ) {
-    return `"${file.originalname}" is not allowed. Only PDF and DOCX files are accepted.`;
+    return `"${file.originalname}" is not an allowed type. ${getAllowedTypesMessage()}`;
   }
 
   return null;
@@ -77,7 +90,7 @@ router.post(
     const Entity = entity_type === "event" ? Event : Task;
 
     Entity.findByPk(entity_id)
-      .then((entity) => {
+      .then(async (entity) => {
         if (!entity || entity.is_archived || entity.is_deleted) {
           return res.status(404).json({
             ok: false,
@@ -85,14 +98,27 @@ router.post(
           });
         }
 
-        // No total-size or file-count limit is applied here.
-        // Each file is validated independently after multer parses the upload.
-        upload.array("files")(req, res, (err) => {
+        const existingAttachmentCount = await Attachment.count({
+          where: { entity_type, entity_id },
+        });
+        if (existingAttachmentCount >= MAX_ATTACHMENT_COUNT) {
+          return res.status(400).json({
+            ok: false,
+            message: `This ${entity_type} already has the maximum of 5 attachments. Remove an attachment before adding another.`,
+          });
+        }
+
+        upload.array("files", MAX_ATTACHMENT_COUNT)(req, res, async (err) => {
           if (err) {
+            await removeUploadedFiles(req.files || []);
             console.error("Multer error:", err);
             return res.status(400).json({
               ok: false,
-              message: err.message,
+              message: err.code === "LIMIT_FILE_SIZE"
+                ? "Each attachment must be 15 MB or smaller."
+                : err.code === "LIMIT_UNEXPECTED_FILE"
+                  ? "You can upload no more than 5 files in one request."
+                  : err.message,
             });
           }
 
@@ -114,13 +140,24 @@ router.post(
       if (files.length === 0) {
         return res.status(400).json({
           ok: false,
-          message: "Choose at least one PDF or DOCX file to upload.",
+          message: `Choose at least one file. ${getAllowedTypesMessage()}`,
         });
       }
 
-      // Validate every file independently. There is intentionally NO
-      // combined-size validation: 10 MB + 10 MB is still valid because
-      // each file is under the 15 MB per-file limit.
+      const currentAttachmentCount = await Attachment.count({
+        where: {
+          entity_type: req.params.entity_type,
+          entity_id: req.params.entity_id,
+        },
+      });
+      if (currentAttachmentCount + files.length > MAX_ATTACHMENT_COUNT) {
+        await removeUploadedFiles(files);
+        return res.status(400).json({
+          ok: false,
+          message: `An event or task can have no more than 5 attachments. It currently has ${currentAttachmentCount}; remove an attachment before adding more.`,
+        });
+      }
+
       const invalidFiles = files
         .map((file) => ({ file, error: validateUploadedFile(file) }))
         .filter(({ error }) => error);
