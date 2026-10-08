@@ -29,53 +29,6 @@
   cursor: pointer;
 }
 
-.pushSettings {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin: 0 0 16px;
-  padding: 14px 16px;
-  border: 1px solid #e5e7eb;
-  border-radius: 14px;
-  background: #fff;
-}
-
-.pushCopy {
-  min-width: 0;
-}
-
-.pushCopy h2 {
-  margin: 0;
-  color: #111827;
-  font-size: 14px;
-  font-weight: 800;
-}
-
-.pushCopy p {
-  margin: 5px 0 0;
-  color: #6b7280;
-  font-size: 12px;
-  line-height: 1.45;
-}
-
-.pushCopy .pushMessage {
-  color: #166534;
-  font-weight: 600;
-}
-
-.pushButton {
-  flex-shrink: 0;
-  padding: 8px 14px;
-  border: 0;
-  border-radius: 9px;
-  background: var(--primary-color, #800000);
-  color: #fff;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
 .actionError {
   margin: 0 0 12px;
   padding: 11px 13px;
@@ -304,11 +257,4 @@
 .showMoreBtn:disabled {
   opacity: 0.7;
   cursor: not-allowed;
-}
-
-@media (max-width: 420px) {
-  .pushSettings {
-    align-items: flex-start;
-    padding: 12px;
-  }
 }
