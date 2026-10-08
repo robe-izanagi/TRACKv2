@@ -906,15 +906,42 @@ exports.listArchivedTasks = async (req, res) => {
     const tasks = await Task.findAll({ where: { creator_id: req.userId, is_archived: true, is_deleted: false }, order: [['updated_at', 'DESC']] });
     const result = [];
     for (const task of tasks) {
-      const assignees = await TaskAssignee.findAll({ where: { task_id: task.id }, attributes: ['user_id'] });
-      const collaborators = await TaskCollaborator.findAll({ where: { task_id: task.id }, attributes: ['user_id'] });
+      const assignees = await TaskAssignee.findAll({
+        where: { task_id: task.id, user_id: { [Op.ne]: task.creator_id } },
+        attributes: ['user_id', 'response'],
+      });
+      const assigneeIds = assignees.map((assignee) => assignee.user_id);
+      const [users, profiles] = assigneeIds.length > 0
+        ? await Promise.all([
+          User.findAll({ where: { id: { [Op.in]: assigneeIds } }, attributes: ['id', 'username', 'email'] }),
+          UserProfile.findAll({ where: { user_id: { [Op.in]: assigneeIds } }, attributes: ['user_id', 'full_name'] }),
+        ])
+        : [[], []];
+      const userById = new Map(users.map((user) => [user.id, user]));
+      const profileByUserId = new Map(profiles.map((profile) => [profile.user_id, profile]));
+      const deadlineTime = new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Asia/Manila',
+        hour: '2-digit',
+        minute: '2-digit',
+        hourCycle: 'h23',
+      }).format(task.deadline_datetime);
       const checklist = await TaskChecklistItem.findAll({ where: { task_id: task.id }, order: [['sort_order', 'ASC']] });
       result.push({
         id: task.id, title: task.title, color: task.color, priority: task.priority,
         visibility: task.visibility, department_id: task.department_id, office_id: task.office_id,
         description: task.description, remind_before_minutes: task.remind_before_minutes,
-        assignee_ids: assignees.map(a => a.user_id).filter(id => id !== req.userId),
-        collaborator_ids: collaborators.map(c => c.user_id),
+        deadline_time: deadlineTime,
+        assignee_ids: assigneeIds,
+        assignees: assignees.map((assignee) => {
+          const user = userById.get(assignee.user_id);
+          const profile = profileByUserId.get(assignee.user_id);
+          return {
+            id: assignee.user_id,
+            full_name: profile?.full_name || user?.username || user?.email || 'Unknown assignee',
+            email: user?.email || null,
+            response: assignee.response,
+          };
+        }),
         checklist_items: checklist.map(item => ({ card_id: item.card_id || 'default', card_title: item.card_title || 'Checklist', text: item.text }))
       });
     }
