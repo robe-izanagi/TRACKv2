@@ -22,6 +22,28 @@ async function processQueueOnce() {
 
     for (const item of due) {
       try {
+        // In-app reminders are independent from email delivery. An email provider
+        // outage must not prevent the user from seeing their reminder in TRACK.
+        if (item.email_type === 'reminder' && item.recipient_email && !item.in_app_notified_at) {
+          const user = await User.findOne({ where: { email: item.recipient_email } });
+          let notificationCreated = !user;
+          if (user) {
+            const notification = await createNotification({
+              userId: user.id,
+              type: item.entity_type === 'task' ? 'task_reminder' : 'event_reminder',
+              title: item.subject,
+              message: 'Check the details in TRACK.',
+              entityType: item.entity_type || 'event',
+              entityId: item.event_id || null,
+            });
+            notificationCreated = !!notification;
+          }
+          if (notificationCreated) {
+            item.in_app_notified_at = new Date();
+            await item.save();
+          }
+        }
+
         await sendEmailNow({
           to: item.recipient_email,
           subject: item.subject,
@@ -32,20 +54,6 @@ async function processQueueOnce() {
         item.error_message = null;
         await item.save();
 
-        // Bridge: reminder emails also get an in-app notification
-        if (item.email_type === 'reminder' && item.recipient_email) {
-          const user = await User.findOne({ where: { email: item.recipient_email } });
-          if (user) {
-            await createNotification({
-              userId: user.id,
-              type: item.entity_type === 'task' ? 'task_reminder' : 'event_reminder',
-              title: item.subject,
-              message: 'Check the details in the app.',
-              entityType: item.entity_type || 'event',
-              entityId: item.event_id || null,
-            });
-          }
-        }
       } catch (err) {
         console.error(`Failed to send queued email ${item.id}:`, err.message);
         item.status = 'failed';
