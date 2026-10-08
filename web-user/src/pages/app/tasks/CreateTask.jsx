@@ -13,7 +13,7 @@ import FeedbackModal from "../../../components/common/FeedbackModal";
 import { getReadableTextColor } from "../../../utils/colorUtils";
 import {
   validateAttachmentFiles,
-  ACCEPTED_ATTACHMENT_MIME_TYPES,
+  ACCEPTED_ATTACHMENT_INPUT_TYPES,
 } from "../../../utils/fileValidation";
 import { buildLocalDateTimeISO } from "../../../utils/dateTimeUtils";
 import {
@@ -168,7 +168,7 @@ export default function CreateTask() {
 
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files || []);
-    const validation = validateAttachmentFiles(files);
+    const validation = validateAttachmentFiles(files, attachments.length);
 
     if (!validation.ok) {
       showFeedback(validation.message, "error");
@@ -591,6 +591,7 @@ export default function CreateTask() {
               type="file"
               id="taskFileInput"
               multiple
+              accept={ACCEPTED_ATTACHMENT_INPUT_TYPES}
               style={{ display: "none" }}
               onChange={handleFileChange}
             />
