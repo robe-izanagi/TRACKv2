@@ -108,6 +108,8 @@ export default function Events() {
   const [archivedEvents, setArchivedEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [archiveLoading, setArchiveLoading] = useState(true);
+  const [archiveError, setArchiveError] = useState("");
 
   // ── All tab local filters ──
   const [allStatusFilter, setAllStatusFilter] = useState("all");
@@ -189,7 +191,7 @@ export default function Events() {
       setAllEvents([...createdWithResponse, ...invitedWithResponse]);
     } catch (err) {
       console.error("Failed to fetch events:", err);
-      setError("Unable to load events. Please try again.");
+      setError(err.response?.data?.message || err.message || "We could not load events. Check your connection and try again.");
     } finally {
       setLoading(false);
     }
@@ -209,10 +211,14 @@ export default function Events() {
   const fetchArchivedEvents = useCallback(async () => {
     try {
       const res = await apiClient.get("/events/archived");
+      if (!res.data.ok) throw new Error(res.data.message || "The server did not return archived event records.");
       setArchivedEvents(res.data.events || []);
+      setArchiveError("");
     } catch (err) {
       console.error("Failed to fetch archived events:", err);
-      setArchivedEvents([]);
+      setArchiveError(err.response?.data?.message || err.message || "We could not load archived events. Check your connection and try again.");
+    } finally {
+      setArchiveLoading(false);
     }
   }, []);
 
@@ -224,10 +230,15 @@ export default function Events() {
   };
 
   useEffect(() => {
-    fetchTodayEvents();
-    fetchEvents();
-    fetchCollaborationEvents();
-    fetchArchivedEvents();
+    const loadEventViews = async () => {
+      await Promise.all([
+        fetchTodayEvents(),
+        fetchEvents(),
+        fetchCollaborationEvents(),
+        fetchArchivedEvents(),
+      ]);
+    };
+    loadEventViews();
   }, [fetchTodayEvents, fetchEvents, fetchCollaborationEvents, fetchArchivedEvents]);
 
   const filterEvents = useCallback(
@@ -349,7 +360,7 @@ export default function Events() {
       );
     } catch (err) {
       console.error("Failed to respond:", err);
-      showFeedback("Failed to respond to invitation.", "error");
+      showFeedback(err.response?.data?.message || err.message || "We could not update your invitation response. Please try again.", "error");
     }
   };
 
@@ -908,10 +919,26 @@ export default function Events() {
   };
 
   const renderContent = () => {
-    if (loading) return <p className={styles.loading}>Loading events...</p>;
-    if (error) return <p className={styles.error}>{error}</p>;
-
     if (activeTab === "archived") {
+      if (archiveLoading) return <p className={styles.loading}>Loading archived events...</p>;
+      if (archiveError) {
+        return (
+          <div className={styles.error}>
+            <p>{archiveError}</p>
+            <button
+              type="button"
+              className={styles.createBtn}
+              onClick={() => {
+                setArchiveLoading(true);
+                setArchiveError("");
+                fetchArchivedEvents();
+              }}
+            >
+              Try again
+            </button>
+          </div>
+        );
+      }
       return archivedEvents.length === 0 ? (
         <div className={styles.emptyStateBox}><FiArchive size={28} /><p>No archived events.</p></div>
       ) : (
@@ -943,6 +970,9 @@ export default function Events() {
         </div>
       );
     }
+
+    if (loading) return <p className={styles.loading}>Loading events...</p>;
+    if (error) return <p className={styles.error}>{error}</p>;
 
     switch (activeTab) {
       case "all": {
