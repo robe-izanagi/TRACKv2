@@ -62,8 +62,8 @@ export default function CreateEvent() {
     description: template?.description || "",
     start_date: "",
     end_date: "",
-    start_time: "",
-    end_time: "",
+    start_time: template?.start_time || "",
+    end_time: template?.end_time || "",
     venue_id: template?.venue_id || "",
     location_id: "",
     exact_location: "",
@@ -74,7 +74,7 @@ export default function CreateEvent() {
   });
 
   const [attendeeIds, setAttendeeIds] = useState(template?.attendee_ids || []);
-  const [collaboratorIds, setCollaboratorIds] = useState(template?.collaborator_ids || []);
+  const [collaboratorIds, setCollaboratorIds] = useState([]);
   const [showAttendeeModal, setShowAttendeeModal] = useState(false);
   const [showCollabModal, setShowCollabModal] = useState(false);
   const [attachments, setAttachments] = useState([]);
