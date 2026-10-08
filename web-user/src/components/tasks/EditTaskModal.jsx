@@ -13,6 +13,10 @@ import {
   splitISOToLocalParts,
 } from "../../utils/dateTimeUtils";
 import {
+  validateAttachmentFiles,
+  ACCEPTED_ATTACHMENT_INPUT_TYPES,
+} from "../../utils/fileValidation";
+import {
   FiCalendar,
   FiClock,
   FiInfo,
@@ -55,6 +59,7 @@ export default function EditTaskModal({
   const [collaboratorIds, setCollaboratorIds] = useState([]);
   const [attachments, setAttachments] = useState([]);
   const [existingAttachments, setExistingAttachments] = useState([]);
+  const [originalAttachmentCount, setOriginalAttachmentCount] = useState(0);
 
   const [checklistCards, setChecklistCards] = useState([
     { id: 1, title: "Checklist", items: [], newItemText: "" },
@@ -109,9 +114,8 @@ export default function EditTaskModal({
             ]);
           }
 
-          if (task.attachments) {
-            setExistingAttachments(task.attachments);
-          }
+          setExistingAttachments(task.attachments || []);
+          setOriginalAttachmentCount(task.attachments?.length || 0);
         } else {
           setError(res.data?.message || "The server did not return this task's details. Refresh the page and try again.");
         }
@@ -192,7 +196,18 @@ export default function EditTaskModal({
   };
 
   const handleFileChange = (e) => {
-    const files = Array.from(e.target.files);
+    const files = Array.from(e.target.files || []);
+    const validation = validateAttachmentFiles(
+      files,
+      originalAttachmentCount + attachments.length,
+    );
+    if (!validation.ok) {
+      setStatusMessage(validation.message);
+      e.target.value = "";
+      return;
+    }
+
+    setStatusMessage("");
     const newAttachments = files.map((file) => ({
       file,
       name: file.name,
@@ -559,6 +574,7 @@ export default function EditTaskModal({
               type="file"
               id="editTaskFileInput"
               multiple
+              accept={ACCEPTED_ATTACHMENT_INPUT_TYPES}
               style={{ display: "none" }}
               onChange={handleFileChange}
             />
