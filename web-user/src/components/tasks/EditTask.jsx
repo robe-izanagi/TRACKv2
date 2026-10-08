@@ -139,11 +139,11 @@ export default function EditTask() {
 
           if (task.attachments) setExistingAttachments(task.attachments);
         } else {
-          setError("Failed to load task.");
+          setError(res.data?.message || "The server did not return this task's details. Refresh the page and try again.");
         }
       } catch (err) {
         console.error("Fetch task error:", err);
-        setError("Unable to load task.");
+        setError(err.response?.data?.message || err.message || "We could not load this task. Check your connection and try again.");
       } finally {
         setFetching(false);
       }
@@ -339,7 +339,7 @@ export default function EditTask() {
         setLoading(false);
       }
     } catch (err) {
-      const msg = err.response?.data?.message || "Server error.";
+      const msg = err.response?.data?.message || err.message || "We could not save the task. Review the required fields and try again.";
       setStatusMessage(msg);
       showFeedback(msg, "error");
       setLoading(false);
