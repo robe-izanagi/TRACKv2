@@ -25,8 +25,7 @@
     "nodemailer": "^9.0.3",
     "resend": "^6.18.0",
     "sequelize": "^6.37.8",
-    "uuid": "^14.0.0",
-    "web-push": "^3.6.7"
+    "uuid": "^14.0.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
