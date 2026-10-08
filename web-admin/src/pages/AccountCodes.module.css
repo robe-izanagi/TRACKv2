@@ -13,8 +13,14 @@
   min-height: 100vh;
 }
 
+/* Title + single Refresh button (same layout as Dashboard header) */
 .titleSection {
   grid-column: 1 / -1;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .generateSection {
@@ -456,6 +462,7 @@
   padding: 10px 12px;
   border-bottom: 1px solid var(--admin-hover);
   vertical-align: middle;
+  color: var(--admin-text-secondary);
 }
 
 .table tr:hover td {
@@ -513,28 +520,40 @@
   color: var(--admin-warning);
 }
 
+/* Single Refresh button (top right of the page header) */
 .refreshBtn {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 14px;
-  background: var(--admin-hover);
-  border: none;
+  padding: 8px 16px;
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border-strong);
   border-radius: 8px;
   cursor: pointer;
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
   font-weight: 500;
   color: var(--admin-text-secondary);
   transition: background 0.2s;
+  flex-shrink: 0;
 }
 
-.refreshBtn:hover {
-  background: var(--admin-border);
+.refreshBtn:hover:not(:disabled) {
+  background: var(--admin-hover);
 }
 
 .refreshBtn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.spinning {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ─── Request Filters ────────────────────────────────── */
@@ -1030,6 +1049,103 @@
 .skeletonDetailValue {
   width: 70%;
   height: 12px;
+}
+
+/* Full-page skeleton (first load) */
+.skeletonPageTitle {
+  display: block;
+  width: 320px;
+  max-width: 100%;
+  height: 30px;
+  margin-bottom: 8px;
+}
+
+.skeletonPageSubtitle {
+  display: block;
+  width: 380px;
+  max-width: 100%;
+  height: 16px;
+}
+
+.skeletonRefreshBtn {
+  width: 110px;
+  height: 36px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.skeletonSummaryIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.skeletonSummaryLabel {
+  display: block;
+  width: 90px;
+  height: 11px;
+  margin-top: 6px;
+}
+
+.skeletonCardTitle {
+  display: block;
+  width: 180px;
+  height: 18px;
+  margin-bottom: 12px;
+}
+
+.cardHeader .skeletonCardTitle {
+  margin-bottom: 0;
+}
+
+.skeletonRadio {
+  width: 100px;
+  height: 30px;
+  border-radius: 8px;
+}
+
+.skeletonLabel {
+  display: block;
+  width: 80px;
+  height: 11px;
+}
+
+.skeletonInput {
+  display: block;
+  width: 100%;
+  height: 36px;
+  border-radius: 8px;
+}
+
+.skeletonBtn {
+  width: 140px;
+  height: 36px;
+  border-radius: 8px;
+}
+
+.skeletonSearch {
+  flex: 1;
+  min-width: 150px;
+  height: 36px;
+  border-radius: 8px;
+}
+
+.skeletonSort {
+  width: 160px;
+  height: 36px;
+  border-radius: 8px;
+}
+
+.skeletonFilter {
+  width: 110px;
+  height: 36px;
+  border-radius: 8px;
+}
+
+.skeletonTh {
+  width: 60%;
+  height: 11px;
 }
 
 /* ─── Responsive ──────────────────────────────────────── */
