@@ -16,6 +16,7 @@ import {
 import styles from "./Tasks.module.css";
 import FeedbackModal from "../../../components/common/FeedbackModal";
 import TaskCardView from "../../../components/tasks/TaskCardView";
+import ArchivedTaskView from "../../../components/tasks/ArchivedTaskView";
 import TaskInvitation from "../../../components/tasks/TaskInvitation";
 import {
   getTaskStatus,
@@ -85,6 +86,7 @@ export default function Tasks() {
   const [archiveError, setArchiveError] = useState("");
 
   const [selectedTask, setSelectedTask] = useState(null);
+  const [selectedArchivedTask, setSelectedArchivedTask] = useState(null);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showInvitationModal, setShowInvitationModal] = useState(false);
   const [invitationMode, setInvitationMode] = useState("invite");
@@ -405,18 +407,44 @@ export default function Tasks() {
             <article
               className={styles.archiveCard}
               key={task.id}
-              style={{ borderLeftColor: task.color || "#3B82F6" }}
+              style={{ "--archive-accent": task.color || "#3B82F6" }}
             >
-              <div>
-                <h3>{task.title}</h3>
-                <p>{task.description || "No description"}</p>
-                <span>
-                  {task.priority} priority | {task.checklist_items?.length || 0} checklist items
-                </span>
-              </div>
               <button
                 type="button"
-                className={styles.createBtn}
+                className={styles.archiveCardMain}
+                onClick={() => setSelectedArchivedTask(task)}
+                aria-label={`View archived task: ${task.title}`}
+              >
+                <span className={styles.archiveCardHeading}>
+                  <span className={styles.archiveCardAccent} aria-hidden="true" />
+                  <span className={styles.archiveCardText}>
+                    <span className={styles.archiveCardTitle}>{task.title}</span>
+                    <span className={styles.archiveCardDescription}>
+                      {task.description || "No description"}
+                    </span>
+                  </span>
+                </span>
+                <span className={styles.archiveCardMeta}>
+                  <span className={styles.archiveMetaPill}>
+                    {task.priority} priority
+                  </span>
+                  <span className={styles.archiveMetaPill}>
+                    <FiClock size={14} />
+                    Deadline time: {task.deadline_time || "Not set"}
+                  </span>
+                  <span className={styles.archiveMetaPill}>
+                    <FiUsers size={14} />
+                    {task.assignees?.length || 0} assigned
+                  </span>
+                  <span className={styles.archiveMetaPill}>
+                    {task.checklist_items?.length || 0} checklist items
+                  </span>
+                </span>
+                <span className={styles.archiveCardHint}>View archived details</span>
+              </button>
+              <button
+                type="button"
+                className={styles.archiveTemplateButton}
                 onClick={() => navigate("/create-task", { state: { template: task } })}
               >
                 Use as template
@@ -578,6 +606,16 @@ export default function Tasks() {
         onAddComment={handleAddComment}
         currentUserId={user?.id}
         onActionSuccess={refreshTaskViews}
+      />
+
+      <ArchivedTaskView
+        task={selectedArchivedTask}
+        onClose={() => setSelectedArchivedTask(null)}
+        onUseTemplate={() => {
+          const template = selectedArchivedTask;
+          setSelectedArchivedTask(null);
+          navigate("/create-task", { state: { template } });
+        }}
       />
 
       <TaskInvitation
