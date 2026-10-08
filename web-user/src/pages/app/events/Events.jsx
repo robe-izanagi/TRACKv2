@@ -35,6 +35,7 @@ import {
 } from "../../../utils/eventStatus";
 
 import EventCardView from "../../../components/events/EventCardView";
+import ArchivedEventView from "../../../components/events/ArchivedEventView";
 import EventInvitation from "../../../components/events/EventInvitation";
 import AttendeesModal from "../../../components/events/AttendeesModal";
 import ConflictCardEvent from "../../../components/events/ConflictCardEvent";
@@ -116,6 +117,7 @@ export default function Events() {
   const [allMethodFilter, setAllMethodFilter] = useState("all");
 
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [selectedArchivedEvent, setSelectedArchivedEvent] = useState(null);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showInvitationModal, setShowInvitationModal] = useState(false);
   const [invitationMode, setInvitationMode] = useState("invite"); // invite | revert
@@ -947,20 +949,44 @@ export default function Events() {
             <article
               className={styles.archiveCard}
               key={event.id}
-              style={{ borderLeftColor: event.color || "#800000" }}
+              style={{ "--archive-accent": event.color || "#800000" }}
             >
-              <div>
-                <h3>{event.title}</h3>
-                <p>{event.description || "No description"}</p>
-                <span>
-                  {event.method === "online"
-                    ? "Online"
-                    : event.venue || event.location || "Location undecided"}
-                </span>
-              </div>
               <button
                 type="button"
-                className={styles.createBtn}
+                className={styles.archiveCardMain}
+                onClick={() => setSelectedArchivedEvent(event)}
+                aria-label={`View archived event: ${event.title}`}
+              >
+                <span className={styles.archiveCardHeading}>
+                  <span className={styles.archiveCardAccent} aria-hidden="true" />
+                  <span className={styles.archiveCardText}>
+                    <span className={styles.archiveCardTitle}>{event.title}</span>
+                    <span className={styles.archiveCardDescription}>
+                      {event.description || "No description"}
+                    </span>
+                  </span>
+                </span>
+                <span className={styles.archiveCardMeta}>
+                  <span className={styles.archiveMetaPill}>
+                    <FiClock size={14} />
+                    {event.start_time || "Time not set"} — {event.end_time || "Time not set"}
+                  </span>
+                  <span className={styles.archiveMetaPill}>
+                    <FiMapPin size={14} />
+                    {event.method === "online"
+                      ? "Online"
+                      : event.venue || event.location || "Location undecided"}
+                  </span>
+                  <span className={styles.archiveMetaPill}>
+                    <FiUsers size={14} />
+                    {event.attendees?.length || 0} invited
+                  </span>
+                </span>
+                <span className={styles.archiveCardHint}>View archived details</span>
+              </button>
+              <button
+                type="button"
+                className={styles.archiveTemplateButton}
                 onClick={() => navigate("/create-event", { state: { template: event } })}
               >
                 Use as template
@@ -1203,6 +1229,16 @@ export default function Events() {
         }}
         event={selectedEvent}
         onActionSuccess={refreshEventViews}
+      />
+
+      <ArchivedEventView
+        event={selectedArchivedEvent}
+        onClose={() => setSelectedArchivedEvent(null)}
+        onUseTemplate={() => {
+          const template = selectedArchivedEvent;
+          setSelectedArchivedEvent(null);
+          navigate("/create-event", { state: { template } });
+        }}
       />
 
       <EventInvitation
