@@ -184,9 +184,9 @@
 .table th {
   text-align: left;
   padding: 10px 12px;
-  background: var(--admin-muted);
+  background: var(--admin-surface-raised);
   font-weight: 600;
-  color: var(--admin-surface-muted);
+  color: var(--admin-text-secondary);
   border-bottom: 1px solid var(--admin-border);
 }
 
