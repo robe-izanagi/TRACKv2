@@ -19,6 +19,7 @@ import EventNoteOutlinedIcon from "@mui/icons-material/EventNoteOutlined";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 import GroupsOutlinedIcon from "@mui/icons-material/GroupsOutlined";
 import apiClient from "../../../api/client";
+import { downloadAttachment } from "../../../utils/downloadAttachment";
 import { getInvitations } from "../../../api/notifications";
 import { useCalendar } from "../../../context/CalendarContext";
 import {
@@ -1274,9 +1275,11 @@ export default function CalendarView() {
               {attachments.map((file) => (
                 <a
                   key={file.id}
-                  href={file.file_url}
-                  target="_blank"
-                  rel="noreferrer"
+                  href="#"
+                  onClick={(clickEvent) => {
+                    clickEvent.preventDefault();
+                    downloadAttachment(file);
+                  }}
                   className={styles.sheetAttachItem}
                 >
                   <FiDownload size={13} />
