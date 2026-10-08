@@ -13,6 +13,17 @@
   margin-bottom: 8px;
 }
 
+.error {
+  margin: 0 0 10px;
+  padding: 9px 11px;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #991b1b;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
 .controlsRow {
   display: flex;
   gap: 8px;
