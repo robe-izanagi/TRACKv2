@@ -308,7 +308,7 @@ export default function CreateEvent() {
         }, 800);
       }
     } catch (err) {
-      const errMsg = err.response?.data?.message || "Server error";
+      const errMsg = err.response?.data?.message || err.message || "We could not create the event. Review the required fields and try again.";
       setMessage(errMsg);
       showFeedback(errMsg, "error");
       setLoading(false);
