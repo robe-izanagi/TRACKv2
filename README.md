@@ -33,12 +33,12 @@ Tech Stack (Updated):
 
 ## Persistent attachment storage
 
-The API stores uploaded attachments on disk. On Render, attach a persistent disk
-to the API service with mount path `/var/data`; the server uses
-`/var/data/uploads` automatically. If you use a different mount path, set the
-`UPLOADS_DIR` environment variable to a directory inside that mounted disk.
-Without a persistent disk, uploaded files can disappear when Render restarts or
-redeploys the service even though their database records remain.
+The API stores uploaded attachments on disk. For persistent storage on Render,
+attach a disk to the API service with mount path `/var/data` and set the
+`UPLOADS_DIR` environment variable to `/var/data/uploads`. The directory is
+created on startup. If no disk is configured, the server falls back to
+app-local storage and logs a warning; those uploads can disappear when Render
+restarts or redeploys the service even though their database records remain.
 
 Files already missing from the server cannot be restored by this change. They
 must be recovered from a backup or uploaded again after persistent storage is
