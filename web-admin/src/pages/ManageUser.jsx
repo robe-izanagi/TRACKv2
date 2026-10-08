@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { getAllUsers, toggleBlockUser, deleteUser } from "../api/adminUsers";
 import {
   getChangeRequests,
@@ -106,6 +106,80 @@ function SkeletonRequestCard() {
   );
 }
 
+// Full-page skeleton shown on the very first load (containers + content)
+function ManageUsersSkeleton() {
+  return (
+    <div className={styles.container}>
+      <div className={styles.header}>
+        <div>
+          <div className={`${styles.skeleton} ${styles.skeletonTitle}`} />
+          <div className={`${styles.skeleton} ${styles.skeletonSubtitle}`} />
+        </div>
+        <div className={`${styles.skeleton} ${styles.skeletonRefreshBtn}`} />
+      </div>
+
+      <div className={styles.pageGrid}>
+        {/* User records block */}
+        <div className={styles.sectionBlock}>
+          <div className={styles.sectionHeaderRow}>
+            <div
+              className={`${styles.skeleton} ${styles.skeletonSectionTitle}`}
+            />
+          </div>
+          <div className={styles.searchForm}>
+            <div
+              className={`${styles.skeleton} ${styles.skeletonSearchInput}`}
+            />
+            <div className={`${styles.skeleton} ${styles.skeletonSearchBtn}`} />
+          </div>
+          <div className={styles.tableWrapper}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <th key={i}>
+                      <div
+                        className={`${styles.skeleton} ${styles.skeletonTh}`}
+                      />
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <SkeletonUserRow key={i} />
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Profile change requests block */}
+        <div className={styles.sectionBlock}>
+          <div className={styles.sectionHeaderRow}>
+            <div
+              className={`${styles.skeleton} ${styles.skeletonSectionTitle}`}
+            />
+          </div>
+          <div className={styles.subTabs}>
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div
+                key={i}
+                className={`${styles.skeleton} ${styles.skeletonSubTab}`}
+              />
+            ))}
+          </div>
+          <div className={styles.requestList}>
+            {Array.from({ length: 3 }).map((_, i) => (
+              <SkeletonRequestCard key={i} />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ManageUsers() {
   const [users, setUsers] = useState([]);
   const [usersLoading, setUsersLoading] = useState(true);
@@ -113,13 +187,17 @@ export default function ManageUsers() {
   const [search, setSearch] = useState("");
   const [actioningUserId, setActioningUserId] = useState(null);
 
-  const [reqStatus, setReqStatus] = useState("pending");
-  const [requests, setRequests] = useState([]);
+  // Default filter is "all"
+  const [reqStatus, setReqStatus] = useState("all");
+  const [allRequests, setAllRequests] = useState([]);
   const [requestsLoading, setRequestsLoading] = useState(true);
   const [requestsError, setRequestsError] = useState("");
   const [processingId, setProcessingId] = useState(null);
   const [rejectingId, setRejectingId] = useState(null);
   const [rejectReason, setRejectReason] = useState("");
+
+  // true once both lists have finished their first load (full-page skeleton)
+  const [hasLoaded, setHasLoaded] = useState(false);
 
   const [feedback, setFeedback] = useState({ message: "", type: "success" });
   const showFeedback = (msg, type = "success") =>
@@ -201,12 +279,14 @@ export default function ManageUsers() {
     }
   };
 
-  const fetchRequests = useCallback(async (currentStatus) => {
-    setRequestsLoading(true);
+  // Always loads ALL requests; status filtering + pending count are client-side.
+  // `silent` = refetch without showing the skeleton (used after approve/reject).
+  const fetchRequests = useCallback(async (silent = false) => {
+    if (!silent) setRequestsLoading(true);
     setRequestsError("");
     try {
-      const res = await getChangeRequests(currentStatus);
-      if (res.ok) setRequests(res.requests || []);
+      const res = await getChangeRequests("all");
+      if (res.ok) setAllRequests(res.requests || []);
       else setRequestsError("Failed to load requests.");
     } catch (err) {
       console.error("Failed to fetch profile change requests:", err);
@@ -218,16 +298,43 @@ export default function ManageUsers() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      void fetchRequests(reqStatus);
+      void fetchRequests();
     }, 0);
 
     return () => clearTimeout(timer);
-  }, [reqStatus, fetchRequests]);
+  }, [fetchRequests]);
+
+  // Mark first load as finished once both lists are done
+  useEffect(() => {
+    if (!usersLoading && !requestsLoading) setHasLoaded(true);
+  }, [usersLoading, requestsLoading]);
+
+  // ── Newest first (by date), then filtered by the selected status tab ──
+  const sortedRequests = useMemo(
+    () =>
+      [...allRequests].sort(
+        (a, b) => new Date(b.created_at) - new Date(a.created_at),
+      ),
+    [allRequests],
+  );
+
+  const pendingCount = useMemo(
+    () => allRequests.filter((r) => r.status === "pending").length,
+    [allRequests],
+  );
+
+  const requests = useMemo(
+    () =>
+      reqStatus === "all"
+        ? sortedRequests
+        : sortedRequests.filter((r) => r.status === reqStatus),
+    [sortedRequests, reqStatus],
+  );
 
   // ── Single top-level refresh: reloads both users and requests ──
   const handleRefreshAll = () => {
     fetchUsers(search);
-    fetchRequests(reqStatus);
+    fetchRequests();
   };
 
   const isRefreshing = usersLoading || requestsLoading;
@@ -243,7 +350,7 @@ export default function ManageUsers() {
     try {
       const res = await approveChangeRequest(id);
       if (res.ok) {
-        setRequests((prev) => prev.filter((r) => r.id !== id));
+        await fetchRequests(true);
         showFeedback(res.message || "Request approved.", "success");
       } else {
         showFeedback(res.message || "Failed to approve request.", "error");
@@ -260,7 +367,7 @@ export default function ManageUsers() {
     try {
       const res = await rejectChangeRequest(id, rejectReason);
       if (res.ok) {
-        setRequests((prev) => prev.filter((r) => r.id !== id));
+        await fetchRequests(true);
         setRejectingId(null);
         setRejectReason("");
         showFeedback(res.message || "Request rejected.", "success");
@@ -293,6 +400,11 @@ export default function ManageUsers() {
       </div>
     </div>
   );
+
+  // ── First load: full-page skeleton ──
+  if (!hasLoaded) {
+    return <ManageUsersSkeleton />;
+  }
 
   return (
     <div className={styles.container}>
@@ -408,8 +520,12 @@ export default function ManageUsers() {
                       <td>
                         {u.office || <span className={styles.dim}>—</span>}
                       </td>
-                      {/* <td>{u.role || <span className={styles.dim}>—</span>}</td> */} 
-                      <td>{u.role == "officials"? "heads" : u.role || <span className={styles.dim}>—</span>}</td>
+                      {/* <td>{u.role || <span className={styles.dim}>—</span>}</td> */}
+                      <td>
+                        {u.role == "officials"
+                          ? "heads"
+                          : u.role || <span className={styles.dim}>—</span>}
+                      </td>
                       <td>
                         <span
                           className={`${styles.statusBadge} ${styles[`status_${u.status}`] || ""}`}
@@ -467,6 +583,9 @@ export default function ManageUsers() {
                 onClick={() => setReqStatus(tab.value)}
               >
                 {tab.label}
+                {tab.value === "pending" && (
+                  <span className={styles.tabCount}>{pendingCount}</span>
+                )}
               </button>
             ))}
           </div>
@@ -517,8 +636,12 @@ export default function ManageUsers() {
                     {req.changes.includes("role_update") &&
                       renderChangeRow(
                         "Role",
-                        req.current.role=="officials"? "heads" : req.current.role,
-                        req.requested.role=="officials"? "heads" : req.requested.role,
+                        req.current.role == "officials"
+                          ? "heads"
+                          : req.current.role,
+                        req.requested.role == "officials"
+                          ? "heads"
+                          : req.requested.role,
                       )}
                     {req.changes.includes("position_update") &&
                       renderChangeRow(
