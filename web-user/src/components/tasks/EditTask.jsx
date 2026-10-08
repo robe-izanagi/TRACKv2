@@ -73,7 +73,7 @@ export default function EditTask() {
   const [showCollaboratorModal, setShowCollaboratorModal] = useState(false);
   const [attachments, setAttachments] = useState([]);
   const [existingAttachments, setExistingAttachments] = useState([]);
-  const [originalAttachmentCount, setOriginalAttachmentCount] = useState(0);
+  const [removedAttachmentIds, setRemovedAttachmentIds] = useState([]);
 
   const [checklistCards, setChecklistCards] = useState([
     { id: 1, title: "Checklist", items: [], newItemText: "" },
@@ -139,7 +139,7 @@ export default function EditTask() {
           }
 
           setExistingAttachments(task.attachments || []);
-          setOriginalAttachmentCount(task.attachments?.length || 0);
+          setRemovedAttachmentIds([]);
         } else {
           setError(res.data?.message || "The server did not return this task's details. Refresh the page and try again.");
         }
@@ -226,7 +226,7 @@ export default function EditTask() {
     const files = Array.from(e.target.files || []);
     const validation = validateAttachmentFiles(
       files,
-      originalAttachmentCount + attachments.length,
+      existingAttachments.length + attachments.length,
     );
 
     if (!validation.ok) {
@@ -245,8 +245,10 @@ export default function EditTask() {
   };
   const handleRemoveFile = (fileToRemove) =>
     setAttachments((prev) => prev.filter((f) => f !== fileToRemove));
-  const handleRemoveExistingFile = (fileId) =>
+  const handleRemoveExistingFile = (fileId) => {
     setExistingAttachments((prev) => prev.filter((f) => f.id !== fileId));
+    setRemovedAttachmentIds((prev) => [...new Set([...prev, fileId])]);
+  };
 
   const flushPendingChecklistItems = (cards) => {
     return cards.map((card) => {
@@ -325,16 +327,18 @@ export default function EditTask() {
     try {
       const res = await apiClient.put(`/tasks/${id}`, payload);
       if (res.data.ok) {
+        await Promise.all(
+          removedAttachmentIds.map((attachmentId) =>
+            apiClient.delete(`/attachments/${encodeURIComponent(attachmentId)}`),
+          ),
+        );
+
         if (attachments.length > 0) {
           const formDataObj = new FormData();
           attachments.forEach(({ file }) => formDataObj.append("files", file));
-          try {
-            await apiClient.post(`/attachments/task/${id}`, formDataObj, {
-              headers: { "Content-Type": "multipart/form-data" },
-            });
-          } catch (uploadErr) {
-            console.error("File upload failed:", uploadErr);
-          }
+          await apiClient.post(`/attachments/task/${id}`, formDataObj, {
+            headers: { "Content-Type": "multipart/form-data" },
+          });
         }
         showFeedback("Task updated successfully!", "success");
         setTimeout(() => navigate("/tasks"), 800);
