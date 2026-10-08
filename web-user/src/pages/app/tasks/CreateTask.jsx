@@ -286,7 +286,7 @@ export default function CreateTask() {
         showFeedback(res.data?.message || "Failed to create task.", "error");
       }
     } catch (error) {
-      const msg = error.response?.data?.message || "Server error.";
+      const msg = error.response?.data?.message || error.message || "We could not create the task. Review the required fields and try again.";
       setStatusMessage(msg);
       showFeedback(msg, "error");
     } finally {
