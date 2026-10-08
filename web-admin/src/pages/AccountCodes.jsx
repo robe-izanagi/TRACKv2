@@ -96,6 +96,111 @@ function SkeletonRequestCard() {
   );
 }
 
+function SkeletonSummaryCard() {
+  return (
+    <div className={styles.summaryCard}>
+      <div className={`${styles.skeleton} ${styles.skeletonSummaryIcon}`} />
+      <div className={styles.summaryInfo}>
+        <div className={`${styles.skeleton} ${styles.skeletonSummaryValue}`} />
+        <div className={`${styles.skeleton} ${styles.skeletonSummaryLabel}`} />
+      </div>
+    </div>
+  );
+}
+
+// Full-page skeleton shown on the very first load (containers + content)
+function AccountCodesSkeleton() {
+  return (
+    <div className={styles.parent}>
+      <div className={styles.titleSection}>
+        <div>
+          <div className={`${styles.skeleton} ${styles.skeletonPageTitle}`} />
+          <div
+            className={`${styles.skeleton} ${styles.skeletonPageSubtitle}`}
+          />
+        </div>
+        <div className={`${styles.skeleton} ${styles.skeletonRefreshBtn}`} />
+      </div>
+
+      <div className={styles.generateSection}>
+        <div className={styles.summaryGrid}>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <SkeletonSummaryCard key={i} />
+          ))}
+        </div>
+
+        <div className={styles.card}>
+          <div className={`${styles.skeleton} ${styles.skeletonCardTitle}`} />
+          <div className={styles.radioGroup}>
+            <div className={`${styles.skeleton} ${styles.skeletonRadio}`} />
+            <div className={`${styles.skeleton} ${styles.skeletonRadio}`} />
+          </div>
+          <div className={styles.formGrid}>
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div className={styles.field} key={i}>
+                <div className={`${styles.skeleton} ${styles.skeletonLabel}`} />
+                <div className={`${styles.skeleton} ${styles.skeletonInput}`} />
+              </div>
+            ))}
+          </div>
+          <div className={styles.formFooter}>
+            <div className={`${styles.skeleton} ${styles.skeletonBtn}`} />
+          </div>
+        </div>
+      </div>
+
+      <div className={styles.codesSection}>
+        <div className={styles.card}>
+          <div className={styles.cardHeader}>
+            <div className={`${styles.skeleton} ${styles.skeletonCardTitle}`} />
+          </div>
+          <div className={styles.tableControls}>
+            <div className={`${styles.skeleton} ${styles.skeletonSearch}`} />
+            <div className={`${styles.skeleton} ${styles.skeletonSort}`} />
+          </div>
+          <div className={styles.tableWrapper}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  {Array.from({ length: 12 }).map((_, i) => (
+                    <th key={i}>
+                      <div
+                        className={`${styles.skeleton} ${styles.skeletonTh}`}
+                      />
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <SkeletonCodeRow key={i} />
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div className={styles.requestsSection}>
+        <div className={styles.card}>
+          <div className={styles.cardHeader}>
+            <div className={`${styles.skeleton} ${styles.skeletonCardTitle}`} />
+          </div>
+          <div className={styles.requestFilters}>
+            <div className={`${styles.skeleton} ${styles.skeletonSearch}`} />
+            <div className={`${styles.skeleton} ${styles.skeletonFilter}`} />
+          </div>
+          <div className={styles.requestGrid}>
+            {Array.from({ length: 3 }).map((_, i) => (
+              <SkeletonRequestCard key={i} />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Searchable dropdown (clearable) ─────────────────────
 function SearchableSelect({ options, value, onChange, placeholder }) {
   const [open, setOpen] = useState(false);
@@ -200,7 +305,10 @@ export default function AccountCodes() {
   });
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [codesLoading, setCodesLoading] = useState(false);
+  const [codesLoading, setCodesLoading] = useState(true);
+
+  // true once both lists have finished their first load (full-page skeleton)
+  const [hasLoaded, setHasLoaded] = useState(false);
 
   // ─── Code Table Search & Sort ──────────────────────────
   const [codeSearch, setCodeSearch] = useState("");
@@ -213,7 +321,7 @@ export default function AccountCodes() {
 
   // ─── Account Code Requests State ──────────────────────
   const [requests, setRequests] = useState([]);
-  const [requestsLoading, setRequestsLoading] = useState(false);
+  const [requestsLoading, setRequestsLoading] = useState(true);
   const [requestFilter, setRequestFilter] = useState("pending");
   const [requestSearch, setRequestSearch] = useState("");
   const [selectedRequest, setSelectedRequest] = useState(null);
@@ -221,12 +329,15 @@ export default function AccountCodes() {
   const [emailSending, setEmailSending] = useState(false);
   const [approvingIds, setApprovingIds] = useState(new Set());
 
+  // ─── Pending count (always from ALL requests) ─────────
+  const pendingCount = requests.filter((r) => r.status === "pending").length;
+
   // ─── Summary stats ─────────────────────────────────────
   const summaryStats = {
     totalCodes: codes.length,
     usedCodes: codes.filter((c) => c.status === "used").length,
     unusedCodes: codes.filter((c) => c.status === "unused").length,
-    pendingRequests: requests.filter((r) => r.status === "pending").length,
+    pendingRequests: pendingCount,
     totalRequests: requests.length,
   };
 
@@ -257,16 +368,12 @@ export default function AccountCodes() {
   }, []);
 
   // ─── Load Account Code Requests ──────────────────────
+  // Loads ALL requests; status filter + search are applied client-side so the
+  // Pending count is always accurate.
   const loadRequests = useCallback(async () => {
     setRequestsLoading(true);
     try {
-      const params = new URLSearchParams();
-      if (requestFilter !== "all") params.append("status", requestFilter);
-      if (requestSearch) params.append("search", requestSearch);
-
-      const res = await apiClient.get(
-        `/account-code-requests?${params.toString()}`,
-      );
+      const res = await apiClient.get(`/account-code-requests`);
       if (res.data.ok) {
         setRequests(res.data.requests);
       }
@@ -275,7 +382,7 @@ export default function AccountCodes() {
     } finally {
       setRequestsLoading(false);
     }
-  }, [requestFilter, requestSearch]);
+  }, []);
 
   // ─── Initial Load ──────────────────────────────────────
   useEffect(() => {
@@ -286,6 +393,19 @@ export default function AccountCodes() {
       loadRequests();
     });
   }, [loadCodes, loadRequests]);
+
+  // Mark first load as finished once both lists are done
+  useEffect(() => {
+    if (!codesLoading && !requestsLoading) setHasLoaded(true);
+  }, [codesLoading, requestsLoading]);
+
+  // ─── Single refresh for both tables ──────────────────
+  const handleRefreshAll = () => {
+    loadCodes();
+    loadRequests();
+  };
+
+  const isRefreshing = codesLoading || requestsLoading;
 
   // ─── Handle Generate Code ─────────────────────────────
   const handleSubmit = async (e) => {
@@ -527,6 +647,17 @@ export default function AccountCodes() {
     }
   });
 
+  // ─── Filter Requests (status + search, client-side) ──
+  const visibleRequests = requests.filter((r) => {
+    if (requestFilter !== "all" && r.status !== requestFilter) return false;
+    const s = requestSearch.trim().toLowerCase();
+    if (!s) return true;
+    return (
+      r.full_name?.toLowerCase().includes(s) ||
+      r.email?.toLowerCase().includes(s)
+    );
+  });
+
   // ─── Prepare Options ──────────────────────────────────
   const positionOpts = positions.map((p) => ({
     value: p.id,
@@ -535,14 +666,32 @@ export default function AccountCodes() {
   const deptOpts = depts.map((d) => ({ value: d.id, label: d.name }));
   const officeOpts = offices.map((o) => ({ value: o.id, label: o.name }));
 
+  // ─── First load: full-page skeleton ───────────────────
+  if (!hasLoaded) {
+    return <AccountCodesSkeleton />;
+  }
+
   return (
     <div className={styles.parent}>
       {/* ─── TITLE SECTION ──────────────────────────────── */}
       <div className={styles.titleSection}>
-        <h1 className={styles.pageTitle}>Account Code Management</h1>
-        <p className={styles.pageSubtitle}>
-          Generate account codes and manage code requests
-        </p>
+        <div>
+          <h1 className={styles.pageTitle}>Account Code Management</h1>
+          <p className={styles.pageSubtitle}>
+            Generate account codes and manage code requests
+          </p>
+        </div>
+        <button
+          className={styles.refreshBtn}
+          onClick={handleRefreshAll}
+          disabled={isRefreshing}
+        >
+          <FiRefreshCw
+            size={16}
+            className={isRefreshing ? styles.spinning : ""}
+          />
+          {isRefreshing ? "Refreshing..." : "Refresh"}
+        </button>
       </div>
 
       {/* ─── GENERATE SECTION ───────────────────────────── */}
@@ -743,14 +892,6 @@ export default function AccountCodes() {
         <div className={styles.card}>
           <div className={styles.cardHeader}>
             <h2 className={styles.cardTitle}>Generated Codes</h2>
-            <button
-              className={styles.refreshBtn}
-              onClick={loadCodes}
-              disabled={codesLoading}
-            >
-              <FiRefreshCw size={16} />
-              {codesLoading ? "Refreshing..." : "Refresh"}
-            </button>
           </div>
 
           {/* Search & Sort */}
@@ -897,14 +1038,6 @@ export default function AccountCodes() {
         <div className={styles.card}>
           <div className={styles.cardHeader}>
             <h2 className={styles.cardTitle}>Account Code Requests</h2>
-            <button
-              className={styles.refreshBtn}
-              onClick={loadRequests}
-              disabled={requestsLoading}
-            >
-              <FiRefreshCw size={16} />
-              {requestsLoading ? "Refreshing..." : "Refresh"}
-            </button>
           </div>
 
           {/* ── Request Filters ── */}
@@ -924,7 +1057,7 @@ export default function AccountCodes() {
               onChange={(e) => setRequestFilter(e.target.value)}
             >
               <option value="all">All Status</option>
-              <option value="pending">Pending</option>
+              <option value="pending">Pending ({pendingCount})</option>
               <option value="approved">Approved</option>
               <option value="rejected">Rejected</option>
             </select>
@@ -939,10 +1072,10 @@ export default function AccountCodes() {
             </div>
           ) : (
             <div className={styles.requestGrid}>
-              {requests.length === 0 ? (
+              {visibleRequests.length === 0 ? (
                 <p className={styles.noData}>No requests found.</p>
               ) : (
-                requests.map((req) => (
+                visibleRequests.map((req) => (
                   <div key={req.id} className={styles.requestCard}>
                     <div className={styles.requestHeader}>
                       <div className={styles.requestUser}>
