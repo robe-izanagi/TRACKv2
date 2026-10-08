@@ -135,6 +135,7 @@ export default function Layout() {
   };
 
   const handleLogout = () => {
+    setAccountMenuOpen(false);
     logout();
     navigate("/login", { replace: true });
   };
@@ -193,6 +194,11 @@ export default function Layout() {
                 <button type="button" className={styles.accountAction} onClick={openPasswordModal}>
                   <FiKey />
                   <span>Change password</span>
+                  <FiChevronRight className={styles.accountActionArrow} />
+                </button>
+                <button type="button" className={styles.accountAction} onClick={handleLogout}>
+                  <BiLogOut />
+                  <span>Logout</span>
                   <FiChevronRight className={styles.accountActionArrow} />
                 </button>
               </div>
@@ -291,14 +297,6 @@ export default function Layout() {
             </NavLink>
           </nav>
 
-          <button
-            onClick={handleLogout}
-            className={styles.btnLogout}
-            title="logout"
-          >
-            <BiLogOut className={styles.icon} />
-            <span className={!menuActive ? styles.hide : ""}>Logout</span>
-          </button>
         </aside>
 
         <main className={styles.content}>
