@@ -3,11 +3,18 @@ const fs = require("fs");
 const path = require("path");
 const router = express.Router();
 const upload = require("../config/upload");
-const { Attachment, Event, Task } = require("../models");
+const {
+  Attachment,
+  Event,
+  EventCollaborator,
+  Task,
+  TaskCollaborator,
+} = require("../models");
 const { authenticate } = require("../middleware/auth");
 const { v4: uuidv4 } = require("uuid");
 const { createNotification } = require('../services/notificationService');
 const { getEventParticipantIds, getTaskParticipantIds, uniqueIds } = require('../services/notificationRecipients');
+const uploadsPath = require("../config/uploads");
 
 const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15 MiB per file
 const MAX_ATTACHMENT_COUNT = 5;
@@ -33,7 +40,7 @@ const getAllowedTypesMessage = () =>
 
 const getStoredFilePath = (file) => {
   if (file?.path) return file.path;
-  if (file?.filename) return path.join(__dirname, "../uploads", file.filename);
+  if (file?.filename) return path.join(uploadsPath, file.filename);
   return null;
 };
 
@@ -272,14 +279,14 @@ router.get("/download/:id", authenticate, async (req, res) => {
       });
     }
 
-    const filePath = path.join(__dirname, "../uploads", storedFilename);
+    const filePath = path.join(uploadsPath, storedFilename);
 
     fs.access(filePath, fs.constants.R_OK, (accessErr) => {
       if (accessErr) {
         console.error("Attachment file missing:", accessErr);
         return res.status(404).json({
           ok: false,
-          message: "Attachment file is no longer available on the server.",
+          message: "This attachment record exists, but its file is missing from server storage. It may have been lost after a restart or redeployment; ask the event or task creator to upload it again.",
         });
       }
 
@@ -302,6 +309,66 @@ router.get("/download/:id", authenticate, async (req, res) => {
     res.status(500).json({
       ok: false,
       message: "We could not find this attachment. Please refresh and try again.",
+    });
+  }
+});
+
+router.delete("/:id", authenticate, async (req, res) => {
+  try {
+    const attachment = await Attachment.findByPk(req.params.id);
+    if (!attachment) {
+      return res.json({ ok: true, message: "Attachment was already removed." });
+    }
+
+    const isEvent = attachment.entity_type === "event";
+    const Entity = isEvent ? Event : Task;
+    const entity = await Entity.findByPk(attachment.entity_id);
+    if (!entity || entity.is_archived || entity.is_deleted) {
+      return res.status(404).json({
+        ok: false,
+        message: "This event or task is no longer available.",
+      });
+    }
+
+    const isCreator = entity.creator_id === req.userId;
+    const collaborator = isEvent
+      ? await EventCollaborator.findOne({
+          where: { event_id: entity.id, user_id: req.userId },
+        })
+      : await TaskCollaborator.findOne({
+          where: { task_id: entity.id, user_id: req.userId },
+        });
+    if (!isCreator && !collaborator) {
+      return res.status(403).json({
+        ok: false,
+        message: "Only the event or task creator or a collaborator can remove attachments.",
+      });
+    }
+
+    let storedFilename = "";
+    try {
+      storedFilename = path.basename(
+        new URL(attachment.file_url, "http://attachment.local").pathname,
+      );
+    } catch {
+      storedFilename = path.basename(attachment.file_url || "");
+    }
+
+    if (storedFilename) {
+      try {
+        await fs.promises.unlink(path.join(uploadsPath, storedFilename));
+      } catch (error) {
+        if (error.code !== "ENOENT") throw error;
+      }
+    }
+
+    await attachment.destroy();
+    return res.json({ ok: true, message: "Attachment removed successfully." });
+  } catch (error) {
+    console.error("Attachment removal error:", error);
+    return res.status(500).json({
+      ok: false,
+      message: "We could not remove this attachment. Please try again.",
     });
   }
 });
