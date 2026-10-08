@@ -81,6 +81,8 @@ export default function Tasks() {
   const [archivedTasks, setArchivedTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [archiveLoading, setArchiveLoading] = useState(true);
+  const [archiveError, setArchiveError] = useState("");
 
   const [selectedTask, setSelectedTask] = useState(null);
   const [showViewModal, setShowViewModal] = useState(false);
@@ -101,30 +103,42 @@ export default function Tasks() {
         params.visibility = visibilityFilter;
       const res = await apiClient.get("/tasks", { params });
       if (res.data.ok) setTasks(res.data.tasks || []);
-      else setError("Failed to load tasks.");
+      else setError(res.data.message || "We could not load tasks. Please try again.");
     } catch (err) {
       console.error("Failed to fetch tasks:", err);
-      setError("Unable to load tasks. Please try again.");
+      setError(err.response?.data?.message || err.message || "We could not load tasks. Check your connection and try again.");
     } finally {
       setLoading(false);
     }
   }, [searchTerm, visibilityFilter]);
 
   useEffect(() => {
-    fetchTasks();
+    const loadTasks = async () => {
+      await fetchTasks();
+    };
+    loadTasks();
   }, [fetchTasks]);
 
   const fetchArchivedTasks = useCallback(async () => {
     try {
       const res = await apiClient.get("/tasks/archived");
+      if (!res.data.ok) throw new Error(res.data.message || "The server did not return archived task records.");
       setArchivedTasks(res.data.tasks || []);
+      setArchiveError("");
     } catch (err) {
       console.error("Failed to fetch archived tasks:", err);
-      setArchivedTasks([]);
+      setArchiveError(err.response?.data?.message || err.message || "We could not load archived tasks. Check your connection and try again.");
+    } finally {
+      setArchiveLoading(false);
     }
   }, []);
 
-  useEffect(() => { fetchArchivedTasks(); }, [fetchArchivedTasks]);
+  useEffect(() => {
+    const loadArchivedTasks = async () => {
+      await fetchArchivedTasks();
+    };
+    loadArchivedTasks();
+  }, [fetchArchivedTasks]);
 
   const refreshTaskViews = () => { fetchTasks(); fetchArchivedTasks(); };
 
@@ -212,7 +226,7 @@ export default function Tasks() {
       );
     } catch (err) {
       console.error("Failed to respond:", err);
-      showFeedback("Failed to respond to task.", "error");
+      showFeedback(err.response?.data?.message || err.message || "We could not update your task response. Please try again.", "error");
     }
   };
 
@@ -228,7 +242,7 @@ export default function Tasks() {
       fetchTasks();
     } catch (err) {
       console.error("Failed to toggle checklist:", err);
-      showFeedback("Failed to update checklist.", "error");
+      showFeedback(err.response?.data?.message || err.message || "We could not update this checklist item. Please try again.", "error");
     }
   };
 
@@ -243,7 +257,7 @@ export default function Tasks() {
       }
     } catch (err) {
       console.error("Failed to add comment:", err);
-      showFeedback("Failed to add comment.", "error");
+      showFeedback(err.response?.data?.message || err.message || "We could not add your comment. Please try again.", "error");
     }
   };
 
@@ -363,10 +377,26 @@ export default function Tasks() {
   };
 
   const renderContent = () => {
-    if (loading) return <p className={styles.loading}>Loading tasks...</p>;
-    if (error) return <p className={styles.error}>{error}</p>;
-
     if (activeTab === "archived") {
+      if (archiveLoading) return <p className={styles.loading}>Loading archived tasks...</p>;
+      if (archiveError) {
+        return (
+          <div className={styles.error}>
+            <p>{archiveError}</p>
+            <button
+              type="button"
+              className={styles.createBtn}
+              onClick={() => {
+                setArchiveLoading(true);
+                setArchiveError("");
+                fetchArchivedTasks();
+              }}
+            >
+              Try again
+            </button>
+          </div>
+        );
+      }
       return archivedTasks.length === 0 ? (
         <div className={eventsPageStyles.emptyStateBox}><FiArchive size={28} /><p>No archived tasks.</p></div>
       ) : (
@@ -396,6 +426,9 @@ export default function Tasks() {
         </div>
       );
     }
+
+    if (loading) return <p className={styles.loading}>Loading tasks...</p>;
+    if (error) return <p className={styles.error}>{error}</p>;
 
     if (activeTab === "invited") {
       const invitedAll = tasks.filter((t) => !t.isCreator);
