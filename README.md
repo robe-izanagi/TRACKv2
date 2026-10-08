@@ -30,3 +30,16 @@ Tech Stack (Updated):
 • Backend: Express.js + Node.js
 • Database: MySQL (Cloud-hosted)
 • Methodology: Agile
+
+## Persistent attachment storage
+
+The API stores uploaded attachments on disk. On Render, attach a persistent disk
+to the API service with mount path `/var/data`; the server uses
+`/var/data/uploads` automatically. If you use a different mount path, set the
+`UPLOADS_DIR` environment variable to a directory inside that mounted disk.
+Without a persistent disk, uploaded files can disappear when Render restarts or
+redeploys the service even though their database records remain.
+
+Files already missing from the server cannot be restored by this change. They
+must be recovered from a backup or uploaded again after persistent storage is
+configured.
