@@ -28,6 +28,14 @@ import {
 } from "react-icons/fi";
 import styles from "./AccountCodes.module.css";
 
+// Same filter concept as Profile Change Requests (Manage Users)
+const REQUEST_TABS = [
+  { value: "pending", label: "Pending" },
+  { value: "approved", label: "Approved" },
+  { value: "rejected", label: "Rejected" },
+  { value: "all", label: "All" },
+];
+
 // ── Skeleton helpers ────────────────────────────────────
 function SkeletonSummaryValue() {
   return (
@@ -40,7 +48,7 @@ const SKELETON_CELL_WIDTHS = [50, 90, 80, 70, 90, 60, 100, 100];
 function SkeletonCodeRow() {
   return (
     <tr>
-      <td className={styles.codeCell}>
+      <td>
         <div className={`${styles.skeleton} ${styles.skeletonCodeCell}`} />
       </td>
       {SKELETON_CELL_WIDTHS.map((w, i) => (
@@ -85,12 +93,22 @@ function SkeletonRequestCard() {
       <div className={styles.requestDetails}>
         {Array.from({ length: 4 }).map((_, i) => (
           <div className={styles.detailRow} key={i}>
-            <span className={styles.detailLabel}>&nbsp;</span>
+            <div
+              className={`${styles.skeleton} ${styles.skeletonDetailLabel}`}
+            />
             <div
               className={`${styles.skeleton} ${styles.skeletonDetailValue}`}
             />
           </div>
         ))}
+        <div className={styles.detailRow} style={{ gridColumn: "1 / -1" }}>
+          <div className={`${styles.skeleton} ${styles.skeletonDetailLabel}`} />
+          <div className={`${styles.skeleton} ${styles.skeletonDetailValue}`} />
+        </div>
+      </div>
+      <div className={styles.requestActions}>
+        <div className={`${styles.skeleton} ${styles.skeletonRequestAction}`} />
+        <div className={`${styles.skeleton} ${styles.skeletonRequestAction}`} />
       </div>
     </div>
   );
@@ -188,7 +206,14 @@ function AccountCodesSkeleton() {
           </div>
           <div className={styles.requestFilters}>
             <div className={`${styles.skeleton} ${styles.skeletonSearch}`} />
-            <div className={`${styles.skeleton} ${styles.skeletonFilter}`} />
+          </div>
+          <div className={styles.subTabs}>
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div
+                key={i}
+                className={`${styles.skeleton} ${styles.skeletonSubTab}`}
+              />
+            ))}
           </div>
           <div className={styles.requestGrid}>
             {Array.from({ length: 3 }).map((_, i) => (
@@ -288,6 +313,16 @@ function SearchableSelect({ options, value, onChange, placeholder }) {
   );
 }
 
+// Long text -> "sample@..." with the full value on hover
+function Truncate({ value }) {
+  if (!value) return "—";
+  return (
+    <span className={styles.cellTruncate} title={value}>
+      {value}
+    </span>
+  );
+}
+
 // ── Main component ──────────────────────────────────────
 export default function AccountCodes() {
   // ─── Account Codes State ──────────────────────────────
@@ -322,7 +357,8 @@ export default function AccountCodes() {
   // ─── Account Code Requests State ──────────────────────
   const [requests, setRequests] = useState([]);
   const [requestsLoading, setRequestsLoading] = useState(true);
-  const [requestFilter, setRequestFilter] = useState("pending");
+  // Default filter is "all"
+  const [requestFilter, setRequestFilter] = useState("all");
   const [requestSearch, setRequestSearch] = useState("");
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [showEmailModal, setShowEmailModal] = useState(false);
@@ -647,16 +683,18 @@ export default function AccountCodes() {
     }
   });
 
-  // ─── Filter Requests (status + search, client-side) ──
-  const visibleRequests = requests.filter((r) => {
-    if (requestFilter !== "all" && r.status !== requestFilter) return false;
-    const s = requestSearch.trim().toLowerCase();
-    if (!s) return true;
-    return (
-      r.full_name?.toLowerCase().includes(s) ||
-      r.email?.toLowerCase().includes(s)
-    );
-  });
+  // ─── Requests: newest first (by date), then status + search filter ──
+  const visibleRequests = [...requests]
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    .filter((r) => {
+      if (requestFilter !== "all" && r.status !== requestFilter) return false;
+      const s = requestSearch.trim().toLowerCase();
+      if (!s) return true;
+      return (
+        r.full_name?.toLowerCase().includes(s) ||
+        r.email?.toLowerCase().includes(s)
+      );
+    });
 
   // ─── Prepare Options ──────────────────────────────────
   const positionOpts = positions.map((p) => ({
@@ -957,30 +995,42 @@ export default function AccountCodes() {
                 ) : (
                   sortedCodes.map((code) => (
                     <tr key={code.id}>
-                      <td className={styles.codeCell}>
-                        <span className={styles.hiddenCode}>••••••••</span>
-                        <button
-                          className={styles.copyBtn}
-                          onClick={() => copyToClipboard(code.code)}
-                          title="Copy code"
-                        >
-                          <FiCopy size={16} />
-                        </button>
+                      <td>
+                        <div className={styles.codeCell}>
+                          <span className={styles.hiddenCode}>••••••••</span>
+                          <button
+                            className={styles.copyBtn}
+                            onClick={() => copyToClipboard(code.code)}
+                            title="Copy code"
+                          >
+                            <FiCopy size={16} />
+                          </button>
+                        </div>
                       </td>
                       <td>{code.is_admin ? "Admin" : "User"}</td>
-                      <td>{code.department || "—"}</td>
-                      <td>{code.office || "—"}</td>
+                      <td>
+                        <Truncate value={code.department} />
+                      </td>
+                      <td>
+                        <Truncate value={code.office} />
+                      </td>
                       <td>
                         {code.role === "officials" ? "heads" : code.role || "—"}
                       </td>
-                      <td>{code.position || "—"}</td>
+                      <td>
+                        <Truncate value={code.position} />
+                      </td>
                       <td>
                         {code.source_type === "admin_generated"
                           ? "Admin"
                           : "Request"}
                       </td>
-                      <td>{code.requested_by || "—"}</td>
-                      <td>{code.generated_by || "—"}</td>
+                      <td>
+                        <Truncate value={code.requested_by} />
+                      </td>
+                      <td>
+                        <Truncate value={code.generated_by} />
+                      </td>
                       <td>
                         <span
                           className={`${styles.statusBadge} ${getCodeStatusClass(code.status)}`}
@@ -1040,7 +1090,7 @@ export default function AccountCodes() {
             <h2 className={styles.cardTitle}>Account Code Requests</h2>
           </div>
 
-          {/* ── Request Filters ── */}
+          {/* ── Search ── */}
           <div className={styles.requestFilters}>
             <div className={styles.searchBar}>
               <FiSearch className={styles.searchIcon} />
@@ -1051,16 +1101,23 @@ export default function AccountCodes() {
                 onChange={(e) => setRequestSearch(e.target.value)}
               />
             </div>
-            <select
-              className={styles.statusFilter}
-              value={requestFilter}
-              onChange={(e) => setRequestFilter(e.target.value)}
-            >
-              <option value="all">All Status</option>
-              <option value="pending">Pending ({pendingCount})</option>
-              <option value="approved">Approved</option>
-              <option value="rejected">Rejected</option>
-            </select>
+          </div>
+
+          {/* ── Status filter (same style as Profile Change Requests) ── */}
+          <div className={styles.subTabs}>
+            {REQUEST_TABS.map((tab) => (
+              <button
+                key={tab.value}
+                type="button"
+                className={`${styles.subTab} ${requestFilter === tab.value ? styles.activeSubTab : ""}`}
+                onClick={() => setRequestFilter(tab.value)}
+              >
+                {tab.label}
+                {tab.value === "pending" && (
+                  <span className={styles.tabCount}>{pendingCount}</span>
+                )}
+              </button>
+            ))}
           </div>
 
           {/* ── Request Cards ── */}
@@ -1125,7 +1182,10 @@ export default function AccountCodes() {
                           </span>
                         </div>
                       )}
-                      <div className={styles.detailRow}>
+                      <div
+                        className={styles.detailRow}
+                        style={{ gridColumn: "1 / -1" }}
+                      >
                         <span className={styles.detailLabel}>Requested:</span>
                         <span className={styles.detailValue}>
                           {new Date(req.created_at).toLocaleDateString()}
