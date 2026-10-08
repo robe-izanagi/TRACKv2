@@ -71,6 +71,85 @@ function SkeletonPositionCard() {
   );
 }
 
+function SkeletonStatCard() {
+  return (
+    <div className={styles.summaryCard}>
+      <div className={`${styles.skeleton} ${styles.skeletonStatIcon}`} />
+      <div className={styles.summaryInfo}>
+        <div className={`${styles.skeleton} ${styles.skeletonSummaryValue}`} />
+        <div className={`${styles.skeleton} ${styles.skeletonStatLabel}`} />
+      </div>
+    </div>
+  );
+}
+
+function SkeletonAddCard() {
+  return <div className={`${styles.skeleton} ${styles.skeletonAddCard}`} />;
+}
+
+// Full-page skeleton shown on the very first load (containers + content)
+function DeclarationSkeleton() {
+  return (
+    <div className={styles.container}>
+      <div className={styles.header}>
+        <div>
+          <div className={`${styles.skeleton} ${styles.skeletonTitle}`} />
+          <div className={`${styles.skeleton} ${styles.skeletonSubtitle}`} />
+        </div>
+        <div className={`${styles.skeleton} ${styles.skeletonRefreshBtn}`} />
+      </div>
+
+      <div className={styles.tabs}>
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className={`${styles.skeleton} ${styles.skeletonTab}`} />
+        ))}
+      </div>
+
+      <div className={styles.tabContent}>
+        <div className={styles.departmentStatsSection}>
+          <div
+            className={`${styles.skeleton} ${styles.skeletonSectionTitle}`}
+          />
+          <div className={styles.departmentStatsGrid}>
+            <SkeletonStatCard />
+            <SkeletonStatCard />
+            <SkeletonStatCard />
+            <SkeletonAddCard />
+          </div>
+        </div>
+
+        <div className={styles.tableSection}>
+          <div className={styles.card}>
+            <div className={styles.controls}>
+              <div className={`${styles.skeleton} ${styles.skeletonSearch}`} />
+            </div>
+            <div className={styles.tableWrapper}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <th key={i}>
+                        <div
+                          className={`${styles.skeleton} ${styles.skeletonTh}`}
+                        />
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <SkeletonTableRow key={i} columns={5} />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Declaration() {
   const [tab, setTab] = useState("departments");
 
@@ -88,6 +167,9 @@ export default function Declaration() {
     name: "",
     allow_multiple: false,
   });
+
+  // ─── Add modal state ──────────────────────────────────
+  const [showAddModal, setShowAddModal] = useState(false);
 
   // ─── Search states ────────────────────────────────────
   const [searchDepartments, setSearchDepartments] = useState("");
@@ -113,6 +195,8 @@ export default function Declaration() {
 
   // ─── Loading ──────────────────────────────────────────
   const [loading, setLoading] = useState(true);
+  // true once the very first load has finished (used for the full-page skeleton)
+  const [hasLoaded, setHasLoaded] = useState(false);
 
   // ─── Show feedback ────────────────────────────────────
   const showFeedback = useCallback((message, type = "success") => {
@@ -145,6 +229,7 @@ export default function Declaration() {
       showFeedback("Failed to load data.", "error");
     } finally {
       setLoading(false);
+      setHasLoaded(true);
     }
   }, [showFeedback]);
 
@@ -202,6 +287,23 @@ export default function Declaration() {
 
   const isPositionTaken = (posId) => takenPositionIds.has(posId);
 
+  // ─── Tab + modal helpers ───────────────────────────────
+  const changeTab = (t) => {
+    setTab(t);
+    setShowAddModal(false);
+  };
+
+  const openAddModal = () => {
+    setNewName("");
+    setNewDomain("");
+    setNewPosition({ name: "", allow_multiple: false });
+    setShowAddModal(true);
+  };
+
+  const closeAddModal = () => {
+    setShowAddModal(false);
+  };
+
   // ─── Add handlers ──────────────────────────────────────
   const handleAddDepartment = async (e) => {
     e.preventDefault();
@@ -209,6 +311,7 @@ export default function Declaration() {
     try {
       await createDepartment(newName.trim());
       setNewName("");
+      setShowAddModal(false);
       load();
       showFeedback("Department added successfully.");
     } catch (err) {
@@ -222,6 +325,7 @@ export default function Declaration() {
     try {
       await createOffice(newName.trim());
       setNewName("");
+      setShowAddModal(false);
       load();
       showFeedback("Office added successfully.");
     } catch (err) {
@@ -235,6 +339,7 @@ export default function Declaration() {
     try {
       await addDomain(newDomain.trim());
       setNewDomain("");
+      setShowAddModal(false);
       load();
       showFeedback("Domain added successfully.");
     } catch (err) {
@@ -254,6 +359,7 @@ export default function Declaration() {
         allow_multiple: newPosition.allow_multiple,
       });
       setNewPosition({ name: "", allow_multiple: false });
+      setShowAddModal(false);
       load();
       showFeedback("Position added successfully.");
     } catch (err) {
@@ -476,6 +582,106 @@ export default function Declaration() {
     );
   };
 
+  // Stats row (3 summary cards + "Add" button card) for departments/offices/domains
+  const renderStatsSection = (title, plural, singular, list) => {
+    const cards = [
+      {
+        label: `Total ${plural}`,
+        value: list.length,
+        icon: <FiUser size={20} />,
+        iconClass: styles.summaryIconTotal,
+      },
+      {
+        label: `Active ${plural}`,
+        value: list.filter((i) => i.is_active).length,
+        icon: <FiCheck size={20} />,
+        iconClass: styles.summaryIconActive,
+      },
+      {
+        label: `Inactive ${plural}`,
+        value: list.filter((i) => !i.is_active).length,
+        icon: <FiX size={20} />,
+        iconClass: styles.summaryIconInactive,
+      },
+    ];
+
+    return (
+      <div className={styles.departmentStatsSection}>
+        <h3>{title}</h3>
+        <div className={styles.departmentStatsGrid}>
+          {cards.map((c) => (
+            <div key={c.label} className={styles.summaryCard}>
+              <div className={`${styles.summaryIcon} ${c.iconClass}`}>
+                {c.icon}
+              </div>
+              <div className={styles.summaryInfo}>
+                {loading ? (
+                  <SkeletonStatValue />
+                ) : (
+                  <span className={styles.summaryValue}>{c.value}</span>
+                )}
+                <span className={styles.summaryLabel}>{c.label}</span>
+              </div>
+            </div>
+          ))}
+          <button
+            type="button"
+            className={styles.addCard}
+            onClick={openAddModal}
+          >
+            <span className={styles.addCardIcon}>
+              <FiPlus size={20} />
+            </span>
+            <span className={styles.addCardText}>Add {singular}</span>
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  // ─── Add modal config (depends on active tab) ─────────
+  const addConfig = {
+    departments: {
+      title: "Add Department",
+      placeholder: "Department name",
+      onSubmit: handleAddDepartment,
+    },
+    offices: {
+      title: "Add Office",
+      placeholder: "Office name",
+      onSubmit: handleAddOffice,
+    },
+    domains: {
+      title: "Add Allowed Domain",
+      placeholder: "e.g., pup.edu.ph",
+      onSubmit: handleAddDomain,
+    },
+    positions: {
+      title: "Add Position",
+      placeholder: "Position name",
+      onSubmit: handleAddPosition,
+    },
+  }[tab];
+
+  const modalValue =
+    tab === "domains"
+      ? newDomain
+      : tab === "positions"
+        ? newPosition.name
+        : newName;
+
+  const handleModalInput = (value) => {
+    if (tab === "domains") setNewDomain(value);
+    else if (tab === "positions")
+      setNewPosition((prev) => ({ ...prev, name: value }));
+    else setNewName(value);
+  };
+
+  // ─── First load: full-page skeleton ───────────────────
+  if (!hasLoaded) {
+    return <DeclarationSkeleton />;
+  }
+
   // ─── Main render ──────────────────────────────────────
   return (
     <div className={styles.container}>
@@ -501,25 +707,25 @@ export default function Declaration() {
       <div className={styles.tabs}>
         <button
           className={tab === "departments" ? styles.activeTab : ""}
-          onClick={() => setTab("departments")}
+          onClick={() => changeTab("departments")}
         >
           Departments
         </button>
         <button
           className={tab === "offices" ? styles.activeTab : ""}
-          onClick={() => setTab("offices")}
+          onClick={() => changeTab("offices")}
         >
           Offices
         </button>
         <button
           className={tab === "domains" ? styles.activeTab : ""}
-          onClick={() => setTab("domains")}
+          onClick={() => changeTab("domains")}
         >
           Domains
         </button>
         <button
           className={tab === "positions" ? styles.activeTab : ""}
-          onClick={() => setTab("positions")}
+          onClick={() => changeTab("positions")}
         >
           Positions
         </button>
@@ -528,89 +734,12 @@ export default function Declaration() {
       {/* ─── DEPARTMENTS ────────────────────────────────── */}
       {tab === "departments" && (
         <div className={styles.tabContent}>
-          <div className={styles.topRow}>
-            <div className={styles.topLeft}>
-              <div className={styles.card}>
-                <h3>Add Department</h3>
-                <form onSubmit={handleAddDepartment} className={styles.addForm}>
-                  <input
-                    type="text"
-                    placeholder="Department name"
-                    value={newName}
-                    onChange={(e) => setNewName(e.target.value)}
-                    className={styles.input}
-                  />
-                  <button type="submit" className={styles.btn}>
-                    <FiPlus /> Add
-                  </button>
-                </form>
-              </div>
-            </div>
-            <div className={styles.topRight}>
-              <div className={styles.departmentStatsSection}>
-                <h3>Department Stats</h3>
-                <div className={styles.departmentStatsGrid}>
-                  <div className={styles.summaryCard}>
-                    <div
-                      className={`${styles.summaryIcon} ${styles.summaryIconTotal}`}
-                    >
-                      <FiUser size={20} />
-                    </div>
-                    <div className={styles.summaryInfo}>
-                      {loading ? (
-                        <SkeletonStatValue />
-                      ) : (
-                        <span className={styles.summaryValue}>
-                          {departments.length}
-                        </span>
-                      )}
-                      <span className={styles.summaryLabel}>
-                        Total Departments
-                      </span>
-                    </div>
-                  </div>
-                  <div className={styles.summaryCard}>
-                    <div
-                      className={`${styles.summaryIcon} ${styles.summaryIconActive}`}
-                    >
-                      <FiCheck size={20} />
-                    </div>
-                    <div className={styles.summaryInfo}>
-                      {loading ? (
-                        <SkeletonStatValue />
-                      ) : (
-                        <span className={styles.summaryValue}>
-                          {departments.filter((d) => d.is_active).length}
-                        </span>
-                      )}
-                      <span className={styles.summaryLabel}>
-                        Active Departments
-                      </span>
-                    </div>
-                  </div>
-                  <div className={styles.summaryCard}>
-                    <div
-                      className={`${styles.summaryIcon} ${styles.summaryIconInactive}`}
-                    >
-                      <FiX size={20} />
-                    </div>
-                    <div className={styles.summaryInfo}>
-                      {loading ? (
-                        <SkeletonStatValue />
-                      ) : (
-                        <span className={styles.summaryValue}>
-                          {departments.filter((d) => !d.is_active).length}
-                        </span>
-                      )}
-                      <span className={styles.summaryLabel}>
-                        Inactive Departments
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          {renderStatsSection(
+            "Department Stats",
+            "Departments",
+            "Department",
+            departments,
+          )}
 
           <div className={styles.tableSection}>
             <div className={styles.card}>
@@ -723,87 +852,7 @@ export default function Declaration() {
       {/* ─── OFFICES ────────────────────────────────────── */}
       {tab === "offices" && (
         <div className={styles.tabContent}>
-          <div className={styles.topRow}>
-            <div className={styles.topLeft}>
-              <div className={styles.card}>
-                <h3>Add Office</h3>
-                <form onSubmit={handleAddOffice} className={styles.addForm}>
-                  <input
-                    type="text"
-                    placeholder="Office name"
-                    value={newName}
-                    onChange={(e) => setNewName(e.target.value)}
-                    className={styles.input}
-                  />
-                  <button type="submit" className={styles.btn}>
-                    <FiPlus /> Add
-                  </button>
-                </form>
-              </div>
-            </div>
-            <div className={styles.topRight}>
-              <div className={styles.departmentStatsSection}>
-                <h3>Office Stats</h3>
-                <div className={styles.departmentStatsGrid}>
-                  <div className={styles.summaryCard}>
-                    <div
-                      className={`${styles.summaryIcon} ${styles.summaryIconTotal}`}
-                    >
-                      <FiUser size={20} />
-                    </div>
-                    <div className={styles.summaryInfo}>
-                      {loading ? (
-                        <SkeletonStatValue />
-                      ) : (
-                        <span className={styles.summaryValue}>
-                          {offices.length}
-                        </span>
-                      )}
-                      <span className={styles.summaryLabel}>Total Offices</span>
-                    </div>
-                  </div>
-                  <div className={styles.summaryCard}>
-                    <div
-                      className={`${styles.summaryIcon} ${styles.summaryIconActive}`}
-                    >
-                      <FiCheck size={20} />
-                    </div>
-                    <div className={styles.summaryInfo}>
-                      {loading ? (
-                        <SkeletonStatValue />
-                      ) : (
-                        <span className={styles.summaryValue}>
-                          {offices.filter((o) => o.is_active).length}
-                        </span>
-                      )}
-                      <span className={styles.summaryLabel}>
-                        Active Offices
-                      </span>
-                    </div>
-                  </div>
-                  <div className={styles.summaryCard}>
-                    <div
-                      className={`${styles.summaryIcon} ${styles.summaryIconInactive}`}
-                    >
-                      <FiX size={20} />
-                    </div>
-                    <div className={styles.summaryInfo}>
-                      {loading ? (
-                        <SkeletonStatValue />
-                      ) : (
-                        <span className={styles.summaryValue}>
-                          {offices.filter((o) => !o.is_active).length}
-                        </span>
-                      )}
-                      <span className={styles.summaryLabel}>
-                        Inactive Offices
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          {renderStatsSection("Office Stats", "Offices", "Office", offices)}
 
           <div className={styles.tableSection}>
             <div className={styles.card}>
@@ -912,87 +961,7 @@ export default function Declaration() {
       {/* ─── DOMAINS ────────────────────────────────────── */}
       {tab === "domains" && (
         <div className={styles.tabContent}>
-          <div className={styles.topRow}>
-            <div className={styles.topLeft}>
-              <div className={styles.card}>
-                <h3>Add Allowed Domain</h3>
-                <form onSubmit={handleAddDomain} className={styles.addForm}>
-                  <input
-                    type="text"
-                    placeholder="e.g., pup.edu.ph"
-                    value={newDomain}
-                    onChange={(e) => setNewDomain(e.target.value)}
-                    className={styles.input}
-                  />
-                  <button type="submit" className={styles.btn}>
-                    <FiPlus /> Add
-                  </button>
-                </form>
-              </div>
-            </div>
-            <div className={styles.topRight}>
-              <div className={styles.departmentStatsSection}>
-                <h3>Domain Stats</h3>
-                <div className={styles.departmentStatsGrid}>
-                  <div className={styles.summaryCard}>
-                    <div
-                      className={`${styles.summaryIcon} ${styles.summaryIconTotal}`}
-                    >
-                      <FiUser size={20} />
-                    </div>
-                    <div className={styles.summaryInfo}>
-                      {loading ? (
-                        <SkeletonStatValue />
-                      ) : (
-                        <span className={styles.summaryValue}>
-                          {domains.length}
-                        </span>
-                      )}
-                      <span className={styles.summaryLabel}>Total Domains</span>
-                    </div>
-                  </div>
-                  <div className={styles.summaryCard}>
-                    <div
-                      className={`${styles.summaryIcon} ${styles.summaryIconActive}`}
-                    >
-                      <FiCheck size={20} />
-                    </div>
-                    <div className={styles.summaryInfo}>
-                      {loading ? (
-                        <SkeletonStatValue />
-                      ) : (
-                        <span className={styles.summaryValue}>
-                          {domains.filter((d) => d.is_active).length}
-                        </span>
-                      )}
-                      <span className={styles.summaryLabel}>
-                        Active Domains
-                      </span>
-                    </div>
-                  </div>
-                  <div className={styles.summaryCard}>
-                    <div
-                      className={`${styles.summaryIcon} ${styles.summaryIconInactive}`}
-                    >
-                      <FiX size={20} />
-                    </div>
-                    <div className={styles.summaryInfo}>
-                      {loading ? (
-                        <SkeletonStatValue />
-                      ) : (
-                        <span className={styles.summaryValue}>
-                          {domains.filter((d) => !d.is_active).length}
-                        </span>
-                      )}
-                      <span className={styles.summaryLabel}>
-                        Inactive Domains
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          {renderStatsSection("Domain Stats", "Domains", "Domain", domains)}
 
           <div className={styles.tableSection}>
             <div className={styles.card}>
@@ -1172,44 +1141,25 @@ export default function Declaration() {
                     {positionStats.taken}
                   </span>
                 )}
-                <span className={styles.summaryLabel}>Taken Single Positions</span>
+                <span className={styles.summaryLabel}>
+                  Taken Single Positions
+                </span>
               </div>
             </div>
+            <button
+              type="button"
+              className={styles.addCard}
+              onClick={openAddModal}
+            >
+              <span className={styles.addCardIcon}>
+                <FiPlus size={20} />
+              </span>
+              <span className={styles.addCardText}>Add Position</span>
+            </button>
           </div>
 
-          {/* Left Panel: Add Form + All Positions (Cards) */}
+          {/* Left Panel: All Positions (Cards) */}
           <div className={styles.leftPanelPositions}>
-            <div className={styles.card}>
-              <h3>Add Position</h3>
-              <form onSubmit={handleAddPosition} className={styles.addForm}>
-                <input
-                  type="text"
-                  placeholder="Position name"
-                  value={newPosition.name}
-                  onChange={(e) =>
-                    setNewPosition({ ...newPosition, name: e.target.value })
-                  }
-                  className={styles.input}
-                />
-                <label className={styles.checkboxRow}>
-                  <input
-                    type="checkbox"
-                    checked={newPosition.allow_multiple}
-                    onChange={(e) =>
-                      setNewPosition({
-                        ...newPosition,
-                        allow_multiple: e.target.checked,
-                      })
-                    }
-                  />
-                  Multiple holders
-                </label>
-                <button type="submit" className={styles.btn}>
-                  <FiPlus /> Add
-                </button>
-              </form>
-            </div>
-
             <div className={styles.card}>
               <div className={styles.cardHeader}>
                 <h3>All Positions</h3>
@@ -1413,6 +1363,65 @@ export default function Declaration() {
                 </table>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── ADD MODAL (all tabs) ───────────────────────── */}
+      {showAddModal && addConfig && (
+        <div className={styles.modalOverlay} onClick={closeAddModal}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h3>{addConfig.title}</h3>
+              <button
+                type="button"
+                className={styles.modalClose}
+                onClick={closeAddModal}
+              >
+                <FiX size={22} />
+              </button>
+            </div>
+            <form onSubmit={addConfig.onSubmit}>
+              <div className={styles.modalBody}>
+                <input
+                  type="text"
+                  placeholder={addConfig.placeholder}
+                  value={modalValue}
+                  onChange={(e) => handleModalInput(e.target.value)}
+                  className={styles.modalInput}
+                  autoFocus
+                />
+                {tab === "positions" && (
+                  <label
+                    className={`${styles.checkboxRow} ${styles.modalCheckbox}`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={newPosition.allow_multiple}
+                      onChange={(e) =>
+                        setNewPosition({
+                          ...newPosition,
+                          allow_multiple: e.target.checked,
+                        })
+                      }
+                    />
+                    Multiple holders
+                  </label>
+                )}
+              </div>
+              <div className={styles.modalActions}>
+                <button
+                  type="button"
+                  className={styles.cancelBtn}
+                  onClick={closeAddModal}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className={styles.modalSubmitBtn}>
+                  <FiPlus /> Add
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
