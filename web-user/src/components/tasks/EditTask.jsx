@@ -13,7 +13,7 @@ import apiClient from "../../api/client";
 import { getReadableTextColor } from "../../utils/colorUtils";
 import {
   validateAttachmentFiles,
-  ACCEPTED_ATTACHMENT_MIME_TYPES,
+  ACCEPTED_ATTACHMENT_INPUT_TYPES,
 } from "../../utils/fileValidation";
 import {
   buildLocalDateTimeISO,
@@ -73,6 +73,7 @@ export default function EditTask() {
   const [showCollaboratorModal, setShowCollaboratorModal] = useState(false);
   const [attachments, setAttachments] = useState([]);
   const [existingAttachments, setExistingAttachments] = useState([]);
+  const [originalAttachmentCount, setOriginalAttachmentCount] = useState(0);
 
   const [checklistCards, setChecklistCards] = useState([
     { id: 1, title: "Checklist", items: [], newItemText: "" },
@@ -137,7 +138,8 @@ export default function EditTask() {
             );
           }
 
-          if (task.attachments) setExistingAttachments(task.attachments);
+          setExistingAttachments(task.attachments || []);
+          setOriginalAttachmentCount(task.attachments?.length || 0);
         } else {
           setError(res.data?.message || "The server did not return this task's details. Refresh the page and try again.");
         }
@@ -222,7 +224,10 @@ export default function EditTask() {
   const handleFileAdd = () => fileInputRef.current?.click();
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files || []);
-    const validation = validateAttachmentFiles(files);
+    const validation = validateAttachmentFiles(
+      files,
+      originalAttachmentCount + attachments.length,
+    );
 
     if (!validation.ok) {
       showFeedback(validation.message, "error");
@@ -681,7 +686,7 @@ export default function EditTask() {
             <input
               type="file"
               multiple
-              accept={`${ACCEPTED_ATTACHMENT_MIME_TYPES.join(",")},.pdf,.docx`}
+              accept={ACCEPTED_ATTACHMENT_INPUT_TYPES}
               ref={fileInputRef}
               style={{ display: "none" }}
               onChange={handleFileChange}
