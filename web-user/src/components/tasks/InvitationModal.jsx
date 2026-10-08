@@ -63,7 +63,7 @@ export default function InvitationModal({
         setSortBy("name");
       } catch (err) {
         console.error("Failed to load data", err);
-        setError("Unable to load users.");
+        setError(err.response?.data?.message || err.message || "We could not load the people you can invite. Check your connection and try again.");
       } finally {
         setLoading(false);
       }
