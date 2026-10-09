@@ -6,7 +6,7 @@ exports.adminRegisterLimiter = rateLimit({
   max: 5,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { ok: false, message: 'Too many registration attempts. Please try again later.' },
+  message: { ok: false, message: 'Too many account-creation attempts were made in a short time. Wait 15 minutes, then try again.' },
 });
 
 // ─── For Admin Login ───
@@ -15,5 +15,5 @@ exports.adminLoginLimiter = rateLimit({
   max: 8,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { ok: false, message: 'Too many login attempts. Please try again later.' },
+  message: { ok: false, message: 'Too many sign-in attempts were made in a short time. Wait 15 minutes, then try again.' },
 });
