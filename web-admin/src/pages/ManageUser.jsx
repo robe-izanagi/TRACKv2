@@ -539,28 +539,34 @@ export default function ManageUsers() {
                           : "—"}
                       </td>
                       <td>
-                        <div className={styles.actionsCell}>
-                          <button
-                            type="button"
-                            className={
-                              u.status === "blocked"
-                                ? styles.unblockBtn
-                                : styles.blockBtn
-                            }
-                            onClick={() => handleToggleBlock(u)}
-                            disabled={actioningUserId === u.id}
-                          >
-                            {u.status === "blocked" ? "Unblock" : "Block"}
-                          </button>
-                          <button
-                            type="button"
-                            className={styles.deleteBtn}
-                            onClick={() => handleDeleteUser(u)}
-                            disabled={actioningUserId === u.id}
-                          >
-                            Delete
-                          </button>
-                        </div>
+                        {u.is_current_admin_user ? (
+                          <span title="Administrators cannot block or delete their own account.">
+                            Your account
+                          </span>
+                        ) : (
+                          <div className={styles.actionsCell}>
+                            <button
+                              type="button"
+                              className={
+                                u.status === "blocked"
+                                  ? styles.unblockBtn
+                                  : styles.blockBtn
+                              }
+                              onClick={() => handleToggleBlock(u)}
+                              disabled={actioningUserId === u.id}
+                            >
+                              {u.status === "blocked" ? "Unblock" : "Block"}
+                            </button>
+                            <button
+                              type="button"
+                              className={styles.deleteBtn}
+                              onClick={() => handleDeleteUser(u)}
+                              disabled={actioningUserId === u.id}
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        )}
                       </td>
                     </tr>
                   ))}
