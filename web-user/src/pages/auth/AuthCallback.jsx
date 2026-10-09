@@ -18,7 +18,7 @@ export default function AuthCallback() {
     }
 
     if (!token) {
-      navigate('/login', { replace: true });
+      navigate('/login?error=missing_token', { replace: true });
       return;
     }
 
@@ -34,11 +34,11 @@ export default function AuthCallback() {
           const rolePath = `/${role}/home`;
           navigate(rolePath, { replace: true });
         } else {
-          navigate('/login', { replace: true });
+          navigate('/login?error=profile_unavailable', { replace: true });
         }
       })
       .catch(() => {
-        navigate('/login', { replace: true });
+        navigate('/login?error=profile_unavailable', { replace: true });
       });
   }, [searchParams, navigate, login]);
 
