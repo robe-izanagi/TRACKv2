@@ -445,7 +445,7 @@ exports.updateTask = async (req, res) => {
         const assignments = await PositionAssignment.findAll({ where: { user_id: req.userId, status: 'active' } });
         if (assignments.length === 0) {
           await t.rollback();
-          return res.status(403).json({ ok: false, message: "Only officials can set campus visibility." });
+          return res.status(403).json({ ok: false, message: "Only users with the Heads role can set campus visibility." });
         }
       }
     }
