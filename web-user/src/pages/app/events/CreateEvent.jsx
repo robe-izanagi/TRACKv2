@@ -316,7 +316,7 @@ export default function CreateEvent() {
   };
 
   const visibilityOptions = [];
-  if (role === "officials") {
+  if (role === "heads") {
     visibilityOptions.push({ value: "private", label: "Private" });
     if (hasDepartment) {
       visibilityOptions.push({ value: "department", label: "Department" });
