@@ -44,6 +44,11 @@ const Notification = sequelize.define('notifications', {
     type: DataTypes.BOOLEAN,
     defaultValue: false
   },
+  is_deleted: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false
+  },
   created_at: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW
