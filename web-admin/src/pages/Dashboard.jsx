@@ -18,6 +18,8 @@ import {
 } from "react-icons/fi";
 import styles from "./Dashboard.module.css";
 
+const RANGES = [7, 30, 90, 365];
+
 /* ── Skeleton building blocks ── */
 function SkeletonStatCard() {
   return (
@@ -153,6 +155,8 @@ function DashboardSkeleton() {
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const [range, setRange] = useState(30);
+  const [refreshKey, setRefreshKey] = useState(0);
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalCodes: 0,
@@ -183,6 +187,15 @@ export default function Dashboard() {
       setError("");
 
       try {
+        const rangeEnd = new Date();
+        const rangeStart = new Date(rangeEnd);
+        rangeStart.setDate(rangeStart.getDate() - range);
+        rangeStart.setHours(0, 0, 0, 0);
+        const isWithinRange = (item) => {
+          const createdAt = new Date(item.created_at).getTime();
+          return createdAt >= rangeStart.getTime() && createdAt <= rangeEnd.getTime();
+        };
+
         const [
           usersRes,
           codesRes,
@@ -201,9 +214,9 @@ export default function Dashboard() {
           apiClient.get("/admin/offices"),
         ]);
 
-        const users = usersRes.data.users || [];
-        const codes = codesRes.data.codes || [];
-        const requests = requestsRes.data.requests || [];
+        const users = (usersRes.data.users || []).filter(isWithinRange);
+        const codes = (codesRes.data.codes || []).filter(isWithinRange);
+        const requests = (requestsRes.data.requests || []).filter(isWithinRange);
         const positions = positionsRes.data.positions || [];
         const assignments = assignmentsRes.data.assignments || [];
 
@@ -270,7 +283,7 @@ export default function Dashboard() {
     };
 
     fetchDashboardData();
-  }, []);
+  }, [range, refreshKey]);
 
   const getStatusBadge = (status) => {
     const map = {
@@ -304,14 +317,35 @@ export default function Dashboard() {
           <h1 className={styles.title}>Dashboard</h1>
           <p className={styles.subtitle}>
             Welcome back, {user?.full_name || user?.username || "Admin"}!
+            {" "}Activity metrics cover the selected period.
           </p>
         </div>
         <div className={styles.headerActions}>
-          <button
-            className={styles.refreshBtn}
-            onClick={() => window.location.reload()}
+          <div
+            className={styles.rangeControl}
+            aria-label="Dashboard date range"
           >
-            <FiRefreshCcw size={16} /> Refresh
+            {RANGES.map((days) => (
+              <button
+                key={days}
+                type="button"
+                className={`${styles.rangeBtn} ${
+                  range === days ? styles.rangeBtnActive : ""
+                }`}
+                aria-pressed={range === days}
+                onClick={() => setRange(days)}
+              >
+                {days === 365 ? "1 year" : `${days} days`}
+              </button>
+            ))}
+          </div>
+          <button
+            type="button"
+            className={styles.refreshBtn}
+            onClick={() => setRefreshKey((key) => key + 1)}
+            disabled={loading}
+          >
+            <FiRefreshCcw size={16} /> {loading ? "Refreshing..." : "Refresh"}
           </button>
         </div>
       </div>
@@ -321,7 +355,7 @@ export default function Dashboard() {
       <div className={styles.statsSubsectionRow}>
         <div className={styles.statsSubsection}>
           <div className={styles.statsSubsectionHeader}>
-            <h4>Users</h4>
+            <h4>Users · last {range === 365 ? "1 year" : `${range} days`}</h4>
           </div>
           <div className={styles.statsGrid}>
             <div className={styles.statCard}>
@@ -330,7 +364,7 @@ export default function Dashboard() {
               </div>
               <div className={styles.statInfo}>
                 <span className={styles.statValue}>{stats.totalUsers}</span>
-                <span className={styles.statLabel}>Total Users</span>
+                <span className={styles.statLabel}>New Users</span>
               </div>
             </div>
             <div className={styles.statCard}>
@@ -499,7 +533,9 @@ export default function Dashboard() {
 
       <div className={styles.statsSubsection}>
         <div className={styles.statsSubsectionHeader}>
-          <h4>Account Codes</h4>
+          <h4>
+            Account Codes · last {range === 365 ? "1 year" : `${range} days`}
+          </h4>
         </div>
         <div className={`${styles.statsGrid} ${styles.statsGridAccountCodes}`}>
           <div className={styles.statCard}>
