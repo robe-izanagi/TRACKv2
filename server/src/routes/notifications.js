@@ -269,6 +269,19 @@ router.put('/:id/read', authenticate, async (req, res) => {
   }
 });
 
+router.delete('/:id', authenticate, async (req, res) => {
+  try {
+    const deletedCount = await Notification.destroy({
+      where: { id: req.params.id, user_id: req.userId },
+    });
+    if (!deletedCount) return res.status(404).json({ ok: false, message: 'Not found.' });
+    res.json({ ok: true });
+  } catch (error) {
+    console.error('Delete notification error:', error);
+    res.status(500).json({ ok: false, message: 'Server error.' });
+  }
+});
+
 router.put('/read-all', authenticate, async (req, res) => {
   try {
     await Notification.update(
