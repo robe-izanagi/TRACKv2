@@ -700,7 +700,7 @@ export default function Profile() {
 
   const displayUser = profile || user || {};
   const roleLine = [
-    displayUser.role=="officials"?"heads":displayUser.role,
+    displayUser.role,
     displayUser.department,
     displayUser.office,
     displayUser.position,
@@ -1606,7 +1606,7 @@ export default function Profile() {
                       <div className={styles.nestedFormGroup}>
                         <p className={styles.currentValueNote}>
                           Current role:{" "}
-                          <strong>{profile?.role=="officials"?"heads":profile?.role || "None"}</strong>
+                          <strong>{profile?.role || "None"}</strong>
                         </p>
                         <select
                           value={selectedRole}
@@ -1616,7 +1616,7 @@ export default function Profile() {
                           <option value="">Choose a role</option>
                           {roles.map((role) => (
                             <option key={role.id} value={role.id}>
-                              {role.name=="officials"?"heads":role.name}
+                              {role.name}
                             </option>
                           ))}
                         </select>
