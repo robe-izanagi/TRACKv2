@@ -358,7 +358,7 @@ export default function CreateTask() {
               <FiUsers size={16} className={styles.cardHeaderIcon} />
               <span>Visibility</span>
             </div>
-            {role === "officials" ? (
+            {role === "heads" ? (
               <RadioGroup
                 name="visibility"
                 label="VISIBILITY"
