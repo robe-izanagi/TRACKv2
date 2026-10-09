@@ -223,7 +223,7 @@ router.put('/:eventId/respond', authenticate, async (req, res) => {
 router.get('/feed', authenticate, async (req, res) => {
   try {
     const { filter = 'all', limit = 20, offset = 0 } = req.query;
-    const where = { user_id: req.userId };
+    const where = { user_id: req.userId, is_deleted: false };
     if (filter === 'unread') where.is_read = false;
 
     const notifications = await Notification.findAll({
@@ -232,7 +232,9 @@ router.get('/feed', authenticate, async (req, res) => {
       limit: parseInt(limit),
       offset: parseInt(offset),
     });
-    const unreadCount = await Notification.count({ where: { user_id: req.userId, is_read: false } });
+    const unreadCount = await Notification.count({
+      where: { user_id: req.userId, is_read: false, is_deleted: false },
+    });
 
     res.json({
       ok: true,
@@ -248,7 +250,9 @@ router.get('/feed', authenticate, async (req, res) => {
 
 router.get('/unread-count', authenticate, async (req, res) => {
   try {
-    const count = await Notification.count({ where: { user_id: req.userId, is_read: false } });
+    const count = await Notification.count({
+      where: { user_id: req.userId, is_read: false, is_deleted: false },
+    });
     res.json({ ok: true, count });
   } catch (error) {
     console.error('Get unread count error:', error);
@@ -258,7 +262,9 @@ router.get('/unread-count', authenticate, async (req, res) => {
 
 router.put('/:id/read', authenticate, async (req, res) => {
   try {
-    const notif = await Notification.findOne({ where: { id: req.params.id, user_id: req.userId } });
+    const notif = await Notification.findOne({
+      where: { id: req.params.id, user_id: req.userId, is_deleted: false },
+    });
     if (!notif) return res.status(404).json({ ok: false, message: 'Not found.' });
     notif.is_read = true;
     await notif.save();
@@ -271,9 +277,10 @@ router.put('/:id/read', authenticate, async (req, res) => {
 
 router.delete('/:id', authenticate, async (req, res) => {
   try {
-    const deletedCount = await Notification.destroy({
-      where: { id: req.params.id, user_id: req.userId },
-    });
+    const [deletedCount] = await Notification.update(
+      { is_deleted: true },
+      { where: { id: req.params.id, user_id: req.userId, is_deleted: false } },
+    );
     if (!deletedCount) return res.status(404).json({ ok: false, message: 'Not found.' });
     res.json({ ok: true });
   } catch (error) {
@@ -282,11 +289,25 @@ router.delete('/:id', authenticate, async (req, res) => {
   }
 });
 
+router.post('/:id/restore', authenticate, async (req, res) => {
+  try {
+    const [restoredCount] = await Notification.update(
+      { is_deleted: false },
+      { where: { id: req.params.id, user_id: req.userId, is_deleted: true } },
+    );
+    if (!restoredCount) return res.status(404).json({ ok: false, message: 'Not found.' });
+    res.json({ ok: true });
+  } catch (error) {
+    console.error('Restore notification error:', error);
+    res.status(500).json({ ok: false, message: 'Server error.' });
+  }
+});
+
 router.put('/read-all', authenticate, async (req, res) => {
   try {
     await Notification.update(
       { is_read: true },
-      { where: { user_id: req.userId, is_read: false } }
+      { where: { user_id: req.userId, is_read: false, is_deleted: false } }
     );
     res.json({ ok: true });
   } catch (error) {
