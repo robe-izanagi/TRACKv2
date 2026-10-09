@@ -633,9 +633,9 @@
   min-height: 27px;
   padding: 0.3rem 0.62rem;
   border-radius: 999px;
-  background: rgba(128, 0, 0, 0.08);
-  color: var(--accent);
-  border: 1px solid rgba(128, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.2);
+  color: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.35);
   font-size: 0.66rem;
   font-weight: 800;
   line-height: 1;
