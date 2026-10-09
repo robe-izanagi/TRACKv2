@@ -15,12 +15,14 @@ import {
   FiMapPin,
   FiMessageCircle,
   FiUserMinus,
+  FiCheck,
 } from "react-icons/fi";
 import {
   getNotificationFeed,
   markNotificationRead,
   markAllNotificationsRead,
   deleteNotification,
+  restoreNotification,
 } from "../../../api/notifications";
 import styles from "./Notifications.module.css";
 
@@ -70,6 +72,8 @@ const formatRelativeTime = (dateStr) => {
   return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 };
 
+const SWIPE_DELETE_THRESHOLD = 100;
+
 export default function Notifications() {
   const navigate = useNavigate();
 
@@ -82,7 +86,11 @@ export default function Notifications() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
   const [actionError, setActionError] = useState("");
-  const [deletingNotificationId, setDeletingNotificationId] = useState(null);
+  const [swipe, setSwipe] = useState(null);
+  const [deletedNotification, setDeletedNotification] = useState(null);
+  const swipeRef = useRef(null);
+  const suppressClickRef = useRef(false);
+  const undoTimerRef = useRef(null);
 
   const fetchFeed = useCallback(
     async (reset = true) => {
@@ -143,10 +151,8 @@ export default function Notifications() {
     }
   };
 
-  const handleDeleteNotification = async (event, notif) => {
-    event.stopPropagation();
+  const handleDeleteNotification = async (notif) => {
     setActionError("");
-    setDeletingNotificationId(notif.id);
     try {
       await deleteNotification(notif.id);
       setNotifications((prev) => prev.filter((item) => item.id !== notif.id));
@@ -154,18 +160,101 @@ export default function Notifications() {
       if (!notif.is_read) {
         setUnreadCount((prev) => Math.max(0, prev - 1));
       }
+      if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+      setDeletedNotification({
+        notification: notif,
+        index: notifications.findIndex((item) => item.id === notif.id),
+      });
+      undoTimerRef.current = setTimeout(() => {
+        setDeletedNotification(null);
+        undoTimerRef.current = null;
+      }, 7000);
       if (notifications.length === 1 && hasMore) {
         await fetchFeed(true);
       }
     } catch (err) {
       console.error("Failed to delete notification:", err);
       setActionError(err.response?.data?.message || err.message || "We could not delete this notification. Please try again.");
-    } finally {
-      setDeletingNotificationId(null);
     }
   };
 
+  const handleUndoDelete = async () => {
+    if (!deletedNotification) return;
+    const { notification, index } = deletedNotification;
+    setActionError("");
+    try {
+      await restoreNotification(notification.id);
+      if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+      undoTimerRef.current = null;
+      setDeletedNotification(null);
+      if (filter === "all" || !notification.is_read) {
+        setNotifications((prev) => {
+          const restored = [...prev];
+          restored.splice(Math.min(index, restored.length), 0, notification);
+          return restored;
+        });
+        offsetRef.current += 1;
+        if (!notification.is_read) {
+          setUnreadCount((prev) => prev + 1);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to restore notification:", err);
+      setActionError(err.response?.data?.message || err.message || "We could not undo this deletion. Please try again.");
+    }
+  };
+
+  const handleSwipeStart = (event, notif) => {
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    swipeRef.current = {
+      id: notif.id,
+      startX: event.clientX,
+      startY: event.clientY,
+      x: 0,
+      horizontal: false,
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const handleSwipeMove = (event) => {
+    const currentSwipe = swipeRef.current;
+    if (!currentSwipe) return;
+    const deltaX = event.clientX - currentSwipe.startX;
+    const deltaY = event.clientY - currentSwipe.startY;
+    if (!currentSwipe.horizontal && Math.abs(deltaX) > 8 && Math.abs(deltaX) > Math.abs(deltaY)) {
+      currentSwipe.horizontal = true;
+    }
+    if (currentSwipe.horizontal) {
+      event.preventDefault();
+      currentSwipe.x = Math.max(-180, Math.min(180, deltaX));
+      setSwipe({ id: currentSwipe.id, x: currentSwipe.x, dragging: true });
+    }
+  };
+
+  const handleSwipeEnd = () => {
+    const currentSwipe = swipeRef.current;
+    swipeRef.current = null;
+    setSwipe(null);
+    if (!currentSwipe?.horizontal) return;
+    suppressClickRef.current = true;
+    setTimeout(() => {
+      suppressClickRef.current = false;
+    }, 300);
+    if (Math.abs(currentSwipe.x) >= SWIPE_DELETE_THRESHOLD) {
+      const notification = notifications.find((item) => item.id === currentSwipe.id);
+      if (notification) handleDeleteNotification(notification);
+    }
+  };
+
+  useEffect(() => () => {
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+  }, []);
+
   const handleNotificationClick = async (notif) => {
+    if (suppressClickRef.current) {
+      suppressClickRef.current = false;
+      return;
+    }
     if (!notif.is_read) {
       try {
         await markNotificationRead(notif.id);
@@ -252,38 +341,46 @@ export default function Notifications() {
               return (
                 <div
                   key={notif.id}
-                  className={`${styles.notifCard} ${!notif.is_read ? styles.notifUnread : ""}`}
-                  onClick={() => handleNotificationClick(notif)}
+                  className={styles.swipeContainer}
+                  onPointerDown={(event) => handleSwipeStart(event, notif)}
+                  onPointerMove={handleSwipeMove}
+                  onPointerUp={handleSwipeEnd}
+                  onPointerCancel={handleSwipeEnd}
                 >
-                  <span
-                    className={`${styles.notifIcon} ${styles[cfg.className]}`}
+                  <div
+                    className={`${styles.swipeDeleteReveal} ${swipe?.id === notif.id && swipe.x < 0 ? styles.swipeDeleteRight : ""}`}
                   >
-                    <Icon size={16} />
-                  </span>
-                  <div className={styles.notifBody}>
-                    <div className={styles.notifTopRow}>
-                      <span className={styles.notifTitle}>{notif.title}</span>
-                      <div className={styles.notifActions}>
-                        <span className={styles.notifTime}>
-                          {formatRelativeTime(notif.created_at)}
-                        </span>
-                        <button
-                          type="button"
-                          className={styles.deleteNotificationBtn}
-                          aria-label={`Delete notification: ${notif.title}`}
-                          title="Delete notification"
-                          disabled={deletingNotificationId === notif.id}
-                          onClick={(event) => handleDeleteNotification(event, notif)}
-                        >
-                          <FiTrash2 size={15} />
-                        </button>
-                      </div>
-                    </div>
-                    {notif.message && (
-                      <p className={styles.notifMessage}>{notif.message}</p>
-                    )}
+                    <span><FiTrash2 size={16} /> Delete</span>
                   </div>
-                  {!notif.is_read && <span className={styles.unreadDot} />}
+                  <div
+                    className={`${styles.notifCard} ${!notif.is_read ? styles.notifUnread : ""}`}
+                    style={{
+                      transform: `translateX(${swipe?.id === notif.id ? swipe.x : 0}px)`,
+                      transition: swipe?.id === notif.id && swipe.dragging ? "none" : "transform 180ms ease",
+                    }}
+                    onClick={() => handleNotificationClick(notif)}
+                  >
+                    <span
+                      className={`${styles.notifIcon} ${styles[cfg.className]}`}
+                    >
+                      <Icon size={16} />
+                    </span>
+                    <div className={styles.notifBody}>
+                      <div className={styles.notifTopRow}>
+                        <span className={styles.notifTitle}>{notif.title}</span>
+                        <div className={styles.notifActions}>
+                          <span className={styles.notifTime}>
+                            {formatRelativeTime(notif.created_at)}
+                          </span>
+                          <span className={styles.swipeHint}>Swipe to delete</span>
+                        </div>
+                      </div>
+                      {notif.message && (
+                        <p className={styles.notifMessage}>{notif.message}</p>
+                      )}
+                    </div>
+                    {!notif.is_read && <span className={styles.unreadDot} />}
+                  </div>
                 </div>
               );
             })}
@@ -302,6 +399,15 @@ export default function Notifications() {
           </>
         )}
       </div>
+      {deletedNotification && (
+        <div className={styles.undoNotice} role="status" aria-live="polite">
+          <span className={styles.undoNoticeIcon}><FiCheck size={17} /></span>
+          <span className={styles.undoNoticeText}>Notification has been deleted</span>
+          <button type="button" className={styles.undoButton} onClick={handleUndoDelete}>
+            Undo
+          </button>
+        </div>
+      )}
     </div>
   );
 }
