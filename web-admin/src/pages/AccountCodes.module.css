@@ -1247,6 +1247,18 @@
   height: 11px;
 }
 
+/* Skeleton only: stretch the codes card so its bottom lines up with the
+   Requests panel (the grid is stretched by .parent's min-height: 100vh) */
+.skeletonStretch {
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.skeletonStretch .tableWrapper {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
 /* ─── Responsive ──────────────────────────────────────── */
 @media (min-width: 1025px) and (max-width: 1300px) {
   .parent {

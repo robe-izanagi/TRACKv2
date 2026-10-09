@@ -168,7 +168,7 @@ function AccountCodesSkeleton() {
       </div>
 
       <div className={styles.codesSection}>
-        <div className={styles.card}>
+        <div className={`${styles.card} ${styles.skeletonStretch}`}>
           <div className={styles.cardHeader}>
             <div className={`${styles.skeleton} ${styles.skeletonCardTitle}`} />
           </div>
