@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import apiClient from "../api/client"; // ⚠️ i-adjust kung iba ang path ng axios instance mo
 import Footer from "../components/login/Footer";
 import BrandHeader from "../components/login/BrandHeader";
+import FeedbackModal from "../components/common/FeedbackModal";
 import styles from "./Login.module.css";
 
 export default function Register() {
@@ -15,8 +16,7 @@ export default function Register() {
     accountCode: "",
   });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [feedback, setFeedback] = useState({ message: "", type: "error" });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -25,18 +25,50 @@ export default function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
-    setSuccess("");
+    setFeedback({ message: "", type: "error" });
 
+    if (!form.accountCode.trim()) {
+      setFeedback({
+        message: "Enter the admin account code provided by your system administrator. It is required to create an admin account.",
+        type: "error",
+      });
+      return;
+    }
+    if (!form.username.trim()) {
+      setFeedback({
+        message: "Choose a username for your administrator account.",
+        type: "error",
+      });
+      return;
+    }
+    if (form.username.trim().length < 3) {
+      setFeedback({
+        message: "Your username must be at least 3 characters long. Choose a longer username and try again.",
+        type: "error",
+      });
+      return;
+    }
+    if (!form.confirmPassword) {
+      setFeedback({
+        message: "Re-enter your password in the confirmation field so we can check that both entries match.",
+        type: "error",
+      });
+      return;
+    }
     if (form.password !== form.confirmPassword) {
-      setError("Passwords do not match.");
+      setFeedback({
+        message: "The passwords do not match. Re-enter the same password in both password fields.",
+        type: "error",
+      });
       return;
     }
     if (form.password.length < 8) {
-      setError("Password must be at least 8 characters long.");
+      setFeedback({
+        message: "Your password must contain at least 8 characters. Enter a longer password and try again.",
+        type: "error",
+      });
       return;
     }
-
     setLoading(true);
     try {
       const { data } = await apiClient.post("/admin/register", {
@@ -46,23 +78,29 @@ export default function Register() {
       });
 
       if (data.ok) {
-        setSuccess("Account created successfully! Redirecting to login...");
+        setFeedback({
+          message: "Your administrator account has been created. You will be taken to the sign-in page shortly.",
+          type: "success",
+        });
         setTimeout(() => navigate("/login"), 1500);
       } else {
-        setError(data.message || "Failed to create account.");
+        setFeedback({
+          message: data.message || "We could not create your account. Check the information and try again.",
+          type: "error",
+        });
       }
     } catch (err) {
-      const status = err.response?.status;
-      if (status === 429) {
-        setError(
-          "Too many attempts. Please wait a few minutes before trying again.",
-        );
-      } else {
-        setError(
-          err.response?.data?.message ||
-            "Something went wrong. Please try again.",
-        );
-      }
+      const message = err.response?.data?.message;
+      const isGenericMessage = typeof message === "string"
+        && /^(server error|internal server error|something went wrong|request failed)\.?$/i.test(message.trim());
+      setFeedback({
+        message: message && !isGenericMessage
+          ? message
+          : !err.response
+            ? "TRACK could not reach the registration service. Check your internet connection and try again."
+            : "The registration service could not complete your request. Your account has not been confirmed as created. Wait a moment and try again.",
+        type: "error",
+      });
     } finally {
       setLoading(false);
     }
@@ -75,7 +113,7 @@ export default function Register() {
         <div className={styles.loginCard}>
           <h1 className={styles.title}>Admin Register</h1>
           <p className={styles.subTitle}>Create a new admin account</p>
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} noValidate>
             <div className={styles.inputContainer}>
               <label htmlFor="accountCode">Admin Account Code: </label>
               <input
@@ -138,10 +176,6 @@ export default function Register() {
               {loading ? "Creating Account..." : "Register"}
             </button>
           </form>
-          {error && <p className={styles.error}>{error}</p>}
-          {success && (
-            <p style={{ color: "#16a34a", marginTop: "8px" }}>{success}</p>
-          )}
           <p
             style={{
               textAlign: "center",
@@ -154,6 +188,11 @@ export default function Register() {
         </div>
       </div>
       <Footer />
+      <FeedbackModal
+        message={feedback.message}
+        type={feedback.type}
+        onClose={() => setFeedback({ message: "", type: "error" })}
+      />
     </div>
   );
 }
