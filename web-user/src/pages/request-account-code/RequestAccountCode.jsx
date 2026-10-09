@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { FiCheckCircle, FiAlertCircle, FiArrowRight } from "react-icons/fi";
+import { Link } from "react-router-dom";
+import { FiArrowRight } from "react-icons/fi";
 import apiClient from "../../api/client";
 import {
   getDepartments,
@@ -15,8 +15,6 @@ import FeedbackModal from "../../components/common/FeedbackModal";
 import styles from "./RequestAccountCode.module.css";
 
 export default function RequestAccountCode() {
-  const navigate = useNavigate();
-
   // ─── Form State ──────────────────────────────────────
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
@@ -33,12 +31,6 @@ export default function RequestAccountCode() {
   const [allowedDomains, setAllowedDomains] = useState([]);
 
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState("");
-  const [error, setError] = useState("");
-
-  // ─── Email validation state ──────────────────────────
-  const [emailError, setEmailError] = useState("");
-
   // ─── Feedback state ──────────────────────────────────
   const [feedback, setFeedback] = useState({ message: "", type: "" });
 
@@ -65,30 +57,8 @@ export default function RequestAccountCode() {
   }, []);
 
   // ─── Validate email domain ───────────────────────────
-  const validateEmailDomain = (emailValue) => {
-    if (!emailValue) {
-      setEmailError("");
-      return true;
-    }
-    const domain = emailValue.split("@")[1];
-    if (!domain) {
-      setEmailError("Please enter a valid email address.");
-      return false;
-    }
-    if (allowedDomains.length > 0 && !allowedDomains.includes(domain)) {
-      setEmailError(
-        `Email domain "${domain}" is not allowed. Allowed domains: ${allowedDomains.join(", ")}`,
-      );
-      return false;
-    }
-    setEmailError("");
-    return true;
-  };
-
   const handleEmailChange = (e) => {
-    const value = e.target.value;
-    setEmail(value);
-    validateEmailDomain(value);
+    setEmail(e.target.value);
   };
 
   // ─── Show feedback ────────────────────────────────────
@@ -98,16 +68,12 @@ export default function RequestAccountCode() {
 
   const clearFeedback = () => {
     setFeedback({ message: "", type: "" });
-    setSuccess("");
-    setError("");
   };
 
   // ─── Submit Request ─────────────────────────────────
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
-    setSuccess("");
     clearFeedback();
 
     // ── Basic validation ──
@@ -121,27 +87,44 @@ export default function RequestAccountCode() {
       setLoading(false);
       return;
     }
-    // Validate email domain again
-    if (!validateEmailDomain(email)) {
-      showFeedback(emailError, "error");
+    const normalizedEmail = email.trim().toLowerCase();
+    if (
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)
+    ) {
+      showFeedback(
+        "Enter a valid email address, including the part after @ (for example, name@school.edu).",
+        "error",
+      );
       setLoading(false);
       return;
     }
-    // At least one of department or office must be selected
+    const emailDomain = normalizedEmail.split("@")[1];
+    if (allowedDomains.length > 0
+      && !allowedDomains.some((domain) => domain.toLowerCase() === emailDomain)) {
+      showFeedback(
+        `The email domain "${emailDomain}" is not approved for account requests. Use your official institutional email address or contact an administrator to ask whether this domain can be approved.`,
+        "error",
+      );
+      setLoading(false);
+      return;
+    }
     if (!department && !office) {
-      showFeedback("Please select at least one: Department or Office.", "error");
+      showFeedback(
+        "Select at least one department or office so the administrator can assign your request correctly.",
+        "error",
+      );
       setLoading(false);
       return;
     }
     if (!role) {
-      showFeedback("Please select a role.", "error");
+      showFeedback("Select your role before submitting the account-code request.", "error");
       setLoading(false);
       return;
     }
 
     try {
       const payload = {
-        email: email.trim(),
+        email: normalizedEmail,
         full_name: fullName.trim(),
         department_id: department || null,
         office_id: office || null,
@@ -152,7 +135,10 @@ export default function RequestAccountCode() {
 
       const res = await apiClient.post("/account-code-requests", payload);
       if (res.data && res.data.ok) {
-        showFeedback("Request submitted successfully! Please wait for admin approval.", "success");
+        showFeedback(
+          "Your account-code request has been submitted successfully. An administrator must approve it before you can register; please wait for the decision.",
+          "success",
+        );
         setEmail("");
         setFullName("");
         setDepartment("");
@@ -160,29 +146,18 @@ export default function RequestAccountCode() {
         setRole("");
         setPosition("");
         setDescription("");
-        setEmailError("");
       } else {
-        showFeedback(res.data?.message || "Submission failed.", "error");
+        showFeedback(
+          res.data?.message || "We could not submit your request. Check your information and try again.",
+          "error",
+        );
       }
     } catch (err) {
-      const status = err?.response?.status;
-      const msg = err?.response?.data?.message || err.message || "Server error";
-
-      let userMsg = msg;
-      if (status === 409 || msg.includes("already registered") || msg.includes("pending request") || msg.includes("approved")) {
-        if (msg.includes("already registered")) {
-          userMsg = "This email is already registered. Please login or use a different email address.";
-        } else if (msg.includes("pending request")) {
-          userMsg = "You already have a pending request. Please wait for admin approval.";
-        } else if (msg.includes("approved")) {
-          userMsg = "This email already has an approved account code request. Please check your email for the code.";
-        } else {
-          userMsg = "This email is already in the system. Please use a different email address.";
-        }
-      } else if (msg.includes("pending request")) {
-        userMsg = "You already have a pending request. Please wait for admin review.";
-      }
-      showFeedback(userMsg, "error");
+      showFeedback(
+        err?.response?.data?.message
+          || "TRACK could not submit your request. Check your internet connection and try again.",
+        "error",
+      );
     } finally {
       setLoading(false);
     }
@@ -195,7 +170,7 @@ export default function RequestAccountCode() {
         <div className={styles.requestCard}>
           <h2 className={styles.title}>Request Account Code</h2>
 
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} noValidate>
             <label className={styles.field}>
               <span className={styles.label}>FULL NAME *</span>
               <input
@@ -217,11 +192,7 @@ export default function RequestAccountCode() {
                 value={email}
                 onChange={handleEmailChange}
                 required
-                style={{ borderColor: emailError ? "var(--input-focus-color)" : "" }}
               />
-              {emailError && (
-                <span className={styles.fieldError}>{emailError}</span>
-              )}
             </label>
 
             <div className={styles.fieldGroup}>
