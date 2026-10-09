@@ -91,7 +91,8 @@ exports.getAllUsers = async (req, res) => {
         office_id: officeId,
         role,
         role_id: roleId,
-        created_at: user.created_at
+        created_at: user.created_at,
+        is_current_admin_user: user.id === req.userId
       });
     }
 
@@ -109,6 +110,12 @@ exports.getAllUsers = async (req, res) => {
 exports.toggleBlockUser = async (req, res) => {
   try {
     const { id } = req.params;
+    if (id === req.userId) {
+      return res.status(403).json({
+        ok: false,
+        message: 'You cannot block or unblock your own administrator account. Ask another administrator to manage your account if needed.',
+      });
+    }
     const user = await User.findByPk(id);
     if (!user) return res.status(404).json({ ok: false, message: 'User not found.' });
 
@@ -155,9 +162,16 @@ exports.toggleBlockUser = async (req, res) => {
 // Position assignment is deleted outright, so a single-occupancy position
 // becomes available again for other users immediately.
 exports.deleteUser = async (req, res) => {
+  const { id } = req.params;
+  if (id === req.userId) {
+    return res.status(403).json({
+      ok: false,
+      message: 'You cannot delete your own administrator account. Ask another administrator to manage your account if needed.',
+    });
+  }
+
   const t = await sequelize.transaction();
   try {
-    const { id } = req.params;
     const user = await User.findByPk(id);
     if (!user) {
       await t.rollback();
