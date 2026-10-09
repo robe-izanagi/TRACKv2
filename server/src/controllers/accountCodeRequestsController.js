@@ -1,4 +1,4 @@
-const { AccountCodeRequest, AccountCode, Department, Office, Role, Position, Admin, User, PositionAssignment } = require('../models');
+const { AccountCodeRequest, AccountCode, Department, Office, Role, Position, Admin, User, PositionAssignment, AllowedDomain } = require('../models');
 const { Op } = require('sequelize');
 const { v4: uuidv4 } = require('uuid');
 const { generateUniqueCode } = require('../utils/codeGenerator');
@@ -12,18 +12,64 @@ exports.createRequest = async (req, res) => {
   try {
     const { email, full_name, department_id, office_id, role_id, position_id, description } = req.body;
 
-    if (!email) {
-      return res.status(400).json({ ok: false, message: 'Email is required.' });
+    if (typeof email !== 'string' || !email.trim()) {
+      return res.status(400).json({ ok: false, message: 'Enter your institutional email address to request an account code.' });
+    }
+    if (typeof full_name !== 'string' || !full_name.trim()) {
+      return res.status(400).json({ ok: false, message: 'Enter your full name so the administrator can identify your request.' });
+    }
+    if (!department_id && !office_id) {
+      return res.status(400).json({ ok: false, message: 'Select at least one department or office so your request can be assigned correctly.' });
+    }
+    if (!role_id) {
+      return res.status(400).json({ ok: false, message: 'Select your role before submitting the account-code request.' });
     }
 
     const normalizedEmail = email.trim().toLowerCase();
+    const emailParts = normalizedEmail.split('@');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      return res.status(400).json({ ok: false, message: 'Enter a valid email address, including the part after @ (for example, name@school.edu).' });
+    }
+
+    const activeDomains = await AllowedDomain.findAll({
+      where: { is_active: true },
+      attributes: ['domain'],
+    });
+    const allowedDomain = activeDomains.some(
+      (item) => item.domain.toLowerCase() === emailParts[1],
+    );
+    if (!allowedDomain) {
+      return res.status(403).json({
+        ok: false,
+        message: `The email domain "${emailParts[1]}" is not approved for account requests. Use your official institutional email address or contact an administrator to ask whether this domain can be approved.`
+      });
+    }
+
+    const [department, office, role, position] = await Promise.all([
+      department_id ? Department.findByPk(department_id) : null,
+      office_id ? Office.findByPk(office_id) : null,
+      Role.findByPk(role_id),
+      position_id ? Position.findByPk(position_id) : null,
+    ]);
+    if (department_id && (!department || !department.is_active)) {
+      return res.status(400).json({ ok: false, message: 'The selected department is no longer available. Refresh the page and choose an active department.' });
+    }
+    if (office_id && (!office || !office.is_active)) {
+      return res.status(400).json({ ok: false, message: 'The selected office is no longer available. Refresh the page and choose an active office.' });
+    }
+    if (!role || !role.is_active) {
+      return res.status(400).json({ ok: false, message: 'The selected role is no longer available. Refresh the page and choose an active role.' });
+    }
+    if (position_id && (!position || !position.is_active)) {
+      return res.status(400).json({ ok: false, message: 'The selected position is no longer available. Refresh the page and choose an active position, or leave it blank.' });
+    }
 
     // Check if email already has a pending request
     const existingPending = await AccountCodeRequest.findOne({
       where: { email: normalizedEmail, status: 'pending' }
     });
     if (existingPending) {
-      return res.status(409).json({ ok: false, message: 'You already have a pending request.' });
+      return res.status(409).json({ ok: false, message: 'There is already an account-code request waiting for review for this email address. Please wait for the administrator\'s decision instead of submitting another request.' });
     }
 
     // Check if email already has an approved request
@@ -31,7 +77,7 @@ exports.createRequest = async (req, res) => {
       where: { email: normalizedEmail, status: 'approved' }
     });
     if (existingApproved) {
-      return res.status(409).json({ ok: false, message: 'This email already has an approved account code request.' });
+      return res.status(409).json({ ok: false, message: 'An account-code request for this email has already been approved. Check your inbox, including the spam folder, for the account code. Contact an administrator if you cannot find it.' });
     }
 
     //Check if email is already registered as a user
@@ -39,18 +85,18 @@ exports.createRequest = async (req, res) => {
       where: { email: normalizedEmail }
     });
     if (existingUser) {
-      return res.status(409).json({ ok: false, message: 'Email already registered.' });
+      return res.status(409).json({ ok: false, message: 'This email address is already linked to a registered account. Return to the sign-in page and continue with this email address.' });
     }
 
     const request = await AccountCodeRequest.create({
       id: uuidv4(),
       email: normalizedEmail,
-      full_name: full_name?.trim() || null,
+      full_name: full_name.trim(),
       department_id: department_id || null,
       office_id: office_id || null,
       role_id: role_id || null,
       position_id: position_id || null,
-      description: description || null,
+      description: typeof description === 'string' ? description.trim() || null : null,
       status: 'pending'
     });
 
