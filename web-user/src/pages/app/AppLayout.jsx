@@ -114,7 +114,7 @@ export default function AppLayout() {
       bottomItems.push(
         {
           label: "Home",
-          path: `/${role == "officials" ? "heads" : role}/home`,
+          path: `/${role}/home`,
           icon: <FiHome size={20} />,
         },
         { label: "Venues", path: "/venues", icon: <FiMapPin size={20} /> },
@@ -130,7 +130,7 @@ export default function AppLayout() {
       bottomItems.push(
         {
           label: "Home",
-          path: `/${role == "officials" ? "heads" : role}/home`,
+          path: `/${role}/home`,
           icon: <FiHome size={20} />,
         },
         { label: "Events", path: "/events", icon: <FiList size={20} /> },
