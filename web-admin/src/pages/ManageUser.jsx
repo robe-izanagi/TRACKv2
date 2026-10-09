@@ -522,9 +522,7 @@ export default function ManageUsers() {
                       </td>
                       {/* <td>{u.role || <span className={styles.dim}>—</span>}</td> */}
                       <td>
-                        {u.role == "officials"
-                          ? "heads"
-                          : u.role || <span className={styles.dim}>—</span>}
+                        {u.role || <span className={styles.dim}>—</span>}
                       </td>
                       <td>
                         <span
@@ -642,12 +640,8 @@ export default function ManageUsers() {
                     {req.changes.includes("role_update") &&
                       renderChangeRow(
                         "Role",
-                        req.current.role == "officials"
-                          ? "heads"
-                          : req.current.role,
-                        req.requested.role == "officials"
-                          ? "heads"
-                          : req.requested.role,
+                        req.current.role,
+                        req.requested.role,
                       )}
                     {req.changes.includes("position_update") &&
                       renderChangeRow(
