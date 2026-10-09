@@ -59,7 +59,7 @@ export const AuthProvider = ({ children }) => {
     if (publicPaths.some((p) => currentPath.startsWith(p))) return;
 
     const role = user.role || "faculty";
-    const expectedHome = `/${role == "officials" ? "heads" : role}/home`;
+    const expectedHome = `/${role}/home`;
 
     // If user is at root "/", send them to their role-home
     if (currentPath === "/") {
@@ -67,15 +67,13 @@ export const AuthProvider = ({ children }) => {
       return;
     }
 
-    // If user is on a path that starts with a different role (e.g., /staff/home when role is officials),
+    // If user is on a path that starts with a different role,
     // redirect to their own role-home
-    const otherRoles = ["officials", "staff", "faculty"].filter(
+    const otherRoles = ["heads", "staff", "faculty"].filter(
       (r) => r !== role,
     );
     if (
-      otherRoles.some((r) =>
-        currentPath.startsWith(`/${r == "officials" ? "heads" : r}/`),
-      )
+      otherRoles.some((r) => currentPath.startsWith(`/${r}/`))
     ) {
       navigate(expectedHome, { replace: true });
       return;
