@@ -50,7 +50,7 @@ exports.googleCallback = async (req, res) => {
     emailForAudit = email;
     const name = payload.name || '';
 
-    const domain = typeof email === 'string' ? email.split('@')[1] : null;
+    const domain = typeof email === 'string' ? email.split('@')[1]?.toLowerCase() : null;
     if (!domain) {
       if (mode === 'login') {
         await recordLoginAttempt({ req, email, method: 'google', success: false, reason: 'auth_failed' });
@@ -58,9 +58,13 @@ exports.googleCallback = async (req, res) => {
       return res.redirect(`${process.env.FRONTEND_URL}/login?error=invalid_email`);
     }
 
-    const allowed = await AllowedDomain.findOne({
-      where: { domain, is_active: true }
+    const activeDomains = await AllowedDomain.findAll({
+      where: { is_active: true },
+      attributes: ['domain'],
     });
+    const allowed = activeDomains.some(
+      (item) => item.domain.toLowerCase() === domain,
+    );
     if (!allowed) {
       if (mode === 'login') {
         await recordLoginAttempt({ req, email, method: 'google', success: false, reason: 'domain_not_allowed' });
@@ -140,24 +144,37 @@ exports.completeGoogleRegistration = async (req, res) => {
   try {
     const { registration_token, account_code } = req.body;
     if (!registration_token || !account_code) {
-      return res.status(400).json({ ok: false, message: 'Registration token and account code are required.' });
+      return res.status(400).json({ ok: false, message: 'Your registration session or account code is missing. Start registration again and enter the code provided by your administrator.' });
     }
 
     let decoded;
     try {
       decoded = jwt.verify(registration_token, process.env.JWT_SECRET);
     } catch (err) {
-      return res.status(401).json({ ok: false, message: 'Registration token expired or invalid.' });
+      return res.status(401).json({ ok: false, message: 'Your registration session has expired or is no longer valid. Start registration again with your Google account.' });
     }
     if (decoded.purpose !== 'google-registration') {
-      return res.status(400).json({ ok: false, message: 'Invalid registration token.' });
+      return res.status(400).json({ ok: false, message: 'This registration link is not valid for creating a user account. Start again from the user registration page.' });
     }
 
     const { email, name } = decoded;
+    const domain = typeof email === 'string' ? email.split('@')[1]?.toLowerCase() : null;
+    const activeDomains = domain
+      ? await AllowedDomain.findAll({ where: { is_active: true }, attributes: ['domain'] })
+      : [];
+    const allowedDomain = activeDomains.some(
+      (item) => item.domain.toLowerCase() === domain,
+    );
+    if (!allowedDomain) {
+      return res.status(403).json({
+        ok: false,
+        message: 'The Google email domain for this registration is no longer approved. Start again with an authorized institutional email address or contact an administrator.'
+      });
+    }
 
     const code = await AccountCode.findOne({ where: { code: account_code } });
     if (!code) {
-      return res.status(400).json({ ok: false, message: 'Invalid account code.' });
+      return res.status(400).json({ ok: false, message: 'We could not find that account code. Check that you entered it exactly as provided by your administrator, then try again.' });
     }
 
     // Rejects used, inactive/deactivated, expired, and older-than-7-days codes
@@ -167,7 +184,7 @@ exports.completeGoogleRegistration = async (req, res) => {
     }
 
     if (code.is_admin) {
-      return res.status(400).json({ ok: false, message: 'This code is for admin accounts only.' });
+      return res.status(400).json({ ok: false, message: 'This code is for an administrator account, not a user account. Use a user account code or contact your administrator.' });
     }
 
     const t = await sequelize.transaction();
@@ -237,7 +254,7 @@ exports.completeGoogleRegistration = async (req, res) => {
     } catch (error) {
       await t.rollback();
       if (error.name === 'SequelizeUniqueConstraintError') {
-        return res.status(409).json({ ok: false, message: 'Email already registered.' });
+        return res.status(409).json({ ok: false, message: 'An account has already been registered with this Google email address. Return to sign-in and choose the account you registered with.' });
       }
       throw error;
     }
