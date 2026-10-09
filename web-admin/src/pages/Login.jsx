@@ -3,18 +3,31 @@ import { useAuth } from "../context/AuthContext";
 import { Link, Navigate } from "react-router-dom";
 import Footer from "../components/login/Footer";
 import BrandHeader from "../components/login/BrandHeader";
+import FeedbackModal from "../components/common/FeedbackModal";
 import styles from "./Login.module.css";
 
 export default function Login() {
   const { login, loading, error, token } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [formError, setFormError] = useState("");
+  const [dismissedError, setDismissedError] = useState(false);
 
   if (token) return <Navigate to="/dashboard" replace />;
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    login(username, password);
+    setFormError("");
+    setDismissedError(false);
+    if (!username.trim()) {
+      setFormError("Enter your administrator username. It is the username you chose when your admin account was created.");
+      return;
+    }
+    if (!password) {
+      setFormError("Enter your password to sign in. If you forgot it, contact your system administrator.");
+      return;
+    }
+    login(username.trim(), password);
   };
 
   return (
@@ -24,10 +37,11 @@ export default function Login() {
         <div className={styles.loginCard}>
           <h1 className={styles.title}>Admin Login</h1>
           <p className={styles.subTitle}>Welcome back!</p>
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} noValidate>
             <div className={styles.inputContainer}>
-              <label for="username">Username: </label>
+              <label htmlFor="username">Username: </label>
               <input
+                id="username"
                 type="text"
                 placeholder="Enter Admin Username"
                 value={username}
@@ -37,8 +51,9 @@ export default function Login() {
               />
             </div>
             <div className={styles.inputContainer}>
-              <label for="password">Password: </label>
+              <label htmlFor="password">Password: </label>
               <input
+                id="password"
                 type="password"
                 placeholder="Enter Admin Password"
                 value={password}
@@ -60,10 +75,17 @@ export default function Login() {
               Don't have an account? <Link to="/register">Register here</Link>
             </p>
           </form>
-          {error && <p style={{ color: "red" }}>{error}</p>}
         </div>
       </div>
       <Footer />
+      <FeedbackModal
+        message={formError || (dismissedError ? "" : error)}
+        type="error"
+        onClose={() => {
+          setFormError("");
+          setDismissedError(true);
+        }}
+      />
     </div>
   );
 }
