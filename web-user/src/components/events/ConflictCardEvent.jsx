@@ -65,8 +65,8 @@ export default function ConflictCardEvent({ isOpen, onClose, event }) {
               )}
               <span>
                 {conflict.isPriority
-                  ? "This event takes priority"
-                  : "This event is lower priority"}
+                  ? "Priority event: this event takes precedence over the overlapping event"
+                  : "Not the priority: the overlapping event takes precedence"}
               </span>
             </div>
 
