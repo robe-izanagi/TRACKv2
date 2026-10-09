@@ -20,9 +20,59 @@
   gap: clamp(8px, 1.5vw, 12px);
 }
 
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.rangeControl {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+}
+
+.rangeBtn {
+  min-height: 34px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--admin-transparent);
+  color: var(--admin-muted);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.rangeBtn:hover {
+  background: var(--admin-hover);
+  color: var(--admin-text);
+}
+
+.rangeBtnActive,
+.rangeBtnActive:hover {
+  background: var(--admin-primary-hover);
+  color: var(--admin-surface);
+}
+
 @media (max-width: 640px) {
   .header {
     flex-direction: column;
+  }
+
+  .headerActions {
+    width: 100%;
+  }
+
+  .rangeControl {
+    flex: 1;
+    justify-content: space-between;
   }
 }
 
@@ -59,6 +109,11 @@
 
 .refreshBtn:hover {
   background: var(--admin-hover);
+}
+
+.refreshBtn:disabled {
+  cursor: wait;
+  opacity: 0.7;
 }
 
 .refreshBtn:active {
