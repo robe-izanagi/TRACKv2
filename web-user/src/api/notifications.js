@@ -30,6 +30,11 @@ export const deleteNotification = async (id) => {
   return data;
 };
 
+export const restoreNotification = async (id) => {
+  const { data } = await apiClient.post(`/notifications/${id}/restore`);
+  return data;
+};
+
 export const markAllNotificationsRead = async () => {
   const { data } = await apiClient.put('/notifications/read-all');
   return data;
