@@ -1,4 +1,4 @@
-const { AccountCodeRequest, AccountCode, Department, Office, Role, Position, Admin, User, PositionAssignment, AllowedDomain } = require('../models');
+const { AccountCodeRequest, AccountCode, Department, Office, Role, Position, Admin, User, PositionAssignment, AllowedDomain, EmailQueue, sequelize } = require('../models');
 const { Op } = require('sequelize');
 const { v4: uuidv4 } = require('uuid');
 const { generateUniqueCode } = require('../utils/codeGenerator');
@@ -6,6 +6,30 @@ const { getUsabilityError } = require('../utils/accCodeLifeCycle');
 const { sendAccountCodeEmail } = require('../services/emailService');
 const A = require('../utils/auditActions');
 const { logAudit, detectRequestSpam, maskEmail } = require('../utils/auditLogger');
+
+const escapeHtml = (value) => String(value || '').replace(/[&<>"']/g, (character) => ({
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#39;',
+}[character]));
+
+const queueRejectionEmail = (request, transaction) => EmailQueue.create({
+  id: uuidv4(),
+  recipient_email: request.email,
+  subject: 'Update on your TRACK account code request',
+  body: `
+    <h2>Hello ${escapeHtml(request.full_name || 'there')},</h2>
+    <p>Your request for a TRACK account code has been reviewed and was not approved.</p>
+    ${request.admin_notes ? `<p><strong>Administrator's note:</strong> ${escapeHtml(request.admin_notes)}</p>` : ''}
+    <p>If you believe this decision was made in error or have questions, please contact your administrator.</p>
+  `,
+  scheduled_for: null,
+  entity_type: 'account_code_request',
+  email_type: 'account_code_rejected',
+  status: 'pending',
+}, { transaction });
 
 // ─── Public – Create request ──────────────────────────
 exports.createRequest = async (req, res) => {
@@ -221,11 +245,19 @@ exports.approveRequest = async (req, res) => {
         });
         if (existingAssignment) {
           // Auto-reject the request
-          request.status = 'rejected';
-          request.admin_notes = 'Position is already assigned to another user.';
-          request.reviewed_by_admin_id = req.adminId;
-          request.reviewed_at = new Date();
-          await request.save();
+          const transaction = await sequelize.transaction();
+          try {
+            request.status = 'rejected';
+            request.admin_notes = 'Position is already assigned to another user.';
+            request.reviewed_by_admin_id = req.adminId;
+            request.reviewed_at = new Date();
+            await request.save({ transaction });
+            await queueRejectionEmail(request, transaction);
+            await transaction.commit();
+          } catch (error) {
+            await transaction.rollback();
+            throw error;
+          }
           await logAudit({
             req, targetUserId: null, actionType: A.ACCOUNT_CODE_REJECTED,
             entityTable: 'account_code_requests', entityId: request.id,
@@ -292,11 +324,19 @@ exports.rejectRequest = async (req, res) => {
       return res.status(400).json({ ok: false, message: 'Request already reviewed.' });
     }
 
-    request.status = 'rejected';
-    request.admin_notes = admin_notes || null;
-    request.reviewed_by_admin_id = req.adminId;
-    request.reviewed_at = new Date();
-    await request.save();
+    const transaction = await sequelize.transaction();
+    try {
+      request.status = 'rejected';
+      request.admin_notes = admin_notes || null;
+      request.reviewed_by_admin_id = req.adminId;
+      request.reviewed_at = new Date();
+      await request.save({ transaction });
+      await queueRejectionEmail(request, transaction);
+      await transaction.commit();
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
     await logAudit({
       req, actionType: A.ACCOUNT_CODE_REJECTED,
       entityTable: 'account_code_requests', entityId: request.id,
