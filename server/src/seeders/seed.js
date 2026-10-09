@@ -17,7 +17,7 @@ async function seed() {
     defaults: { id: uuidv4(), is_active: true }
   });
   const [role] = await Role.findOrCreate({
-    where: { name: 'officials' },
+    where: { name: 'heads' },
     defaults: { id: uuidv4(), is_active: true }
   });
 
