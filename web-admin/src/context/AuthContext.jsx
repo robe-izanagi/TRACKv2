@@ -15,14 +15,22 @@ export const AuthProvider = ({ children }) => {
     try {
       const result = await loginAdmin(username, password);
       if (!result.ok) {
-        setError(result.message);
+        setError(result.message
+          || 'We could not sign you in. Check your administrator username and password, then try again.');
       } else {
         localStorage.setItem('admin_token', result.token);
         setToken(result.token);
         setUser(result.user);
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed');
+      const message = err.response?.data?.message;
+      const isGenericMessage = typeof message === 'string'
+        && /^(server error|internal server error|something went wrong|request failed)\.?$/i.test(message.trim());
+      setError(message && !isGenericMessage
+        ? message
+        : !err.response
+          ? 'TRACK could not reach the sign-in service. Check your internet connection and try again.'
+          : 'The sign-in service could not complete your request. Wait a moment and try again. If the problem continues, contact your system administrator.');
     } finally {
       setLoading(false);
     }
@@ -41,4 +49,6 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
+// The auth hook is intentionally exported beside its provider for this context module.
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => useContext(AuthContext);
