@@ -71,6 +71,24 @@ const getInitials = (name) => {
   return parts[0]?.slice(0, 2).toUpperCase() || "?";
 };
 
+const getContrastTextColor = (hexColor) => {
+  if (!hexColor || !/^#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(hexColor)) {
+    return "#ffffff";
+  }
+  let hex = hexColor.replace("#", "");
+  if (hex.length === 3) {
+    hex = hex
+      .split("")
+      .map((character) => character + character)
+      .join("");
+  }
+  const red = parseInt(hex.substring(0, 2), 16);
+  const green = parseInt(hex.substring(2, 4), 16);
+  const blue = parseInt(hex.substring(4, 6), 16);
+  const luminance = (0.299 * red + 0.587 * green + 0.114 * blue) / 255;
+  return luminance > 0.55 ? "#1f2937" : "#ffffff";
+};
+
 const AVATAR_COLORS = [
   "#f9a825",
   "#43a047",
@@ -859,12 +877,17 @@ function Home() {
     const status = getEventStatus(todayEvent);
     const statusCfg = EVENT_STATUS_CONFIG[status];
     const conflict = todayEvent.conflict || {};
+    const headerColor = todayEvent.color || "#800000";
+    const headerTextColor = getContrastTextColor(headerColor);
 
     return (
       <div className={styles.featuredEventSection}>
         <div className={styles.featuredContainer}>
           <div className={styles.featuredCard}>
-            <div className={styles.badgesStatus}>
+            <div
+              className={styles.badgesStatus}
+              style={{ background: headerColor, color: headerTextColor }}
+            >
               <div className={styles.badgeRow}>
                 <div className={styles.badgePill}>
                   {todayEvent.hierarchy || "Unknown Hierarchy"}
@@ -885,7 +908,12 @@ function Home() {
                 </div>
               </div>
               <div className={styles.heading2}>
-                <div className={styles.featuredTitle}>{todayEvent.title}</div>
+                <div
+                  className={styles.featuredTitle}
+                  style={{ color: headerTextColor }}
+                >
+                  {todayEvent.title}
+                </div>
               </div>
             </div>
 
@@ -1058,8 +1086,10 @@ function Home() {
                   onClick={() => handleShowConflict(todayEvent)}
                 >
                   <FiAlertTriangle size={13} />
-                  {conflict.isPriority ? "Priority Event" : "Conflicted"} — View
-                  details
+                  {conflict.isPriority
+                    ? "Priority event — this event takes precedence"
+                    : "Schedule conflict — another event takes precedence"}{" "}
+                  — View details
                 </button>
               )}
             </div>
