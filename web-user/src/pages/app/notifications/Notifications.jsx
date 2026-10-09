@@ -20,6 +20,7 @@ import {
   getNotificationFeed,
   markNotificationRead,
   markAllNotificationsRead,
+  deleteNotification,
 } from "../../../api/notifications";
 import styles from "./Notifications.module.css";
 
@@ -81,6 +82,7 @@ export default function Notifications() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
   const [actionError, setActionError] = useState("");
+  const [deletingNotificationId, setDeletingNotificationId] = useState(null);
 
   const fetchFeed = useCallback(
     async (reset = true) => {
@@ -138,6 +140,28 @@ export default function Notifications() {
     } catch (err) {
       console.error("Failed to mark all read:", err);
       setActionError(err.response?.data?.message || err.message || "We could not mark notifications as read. Please try again.");
+    }
+  };
+
+  const handleDeleteNotification = async (event, notif) => {
+    event.stopPropagation();
+    setActionError("");
+    setDeletingNotificationId(notif.id);
+    try {
+      await deleteNotification(notif.id);
+      setNotifications((prev) => prev.filter((item) => item.id !== notif.id));
+      offsetRef.current = Math.max(0, offsetRef.current - 1);
+      if (!notif.is_read) {
+        setUnreadCount((prev) => Math.max(0, prev - 1));
+      }
+      if (notifications.length === 1 && hasMore) {
+        await fetchFeed(true);
+      }
+    } catch (err) {
+      console.error("Failed to delete notification:", err);
+      setActionError(err.response?.data?.message || err.message || "We could not delete this notification. Please try again.");
+    } finally {
+      setDeletingNotificationId(null);
     }
   };
 
@@ -239,9 +263,21 @@ export default function Notifications() {
                   <div className={styles.notifBody}>
                     <div className={styles.notifTopRow}>
                       <span className={styles.notifTitle}>{notif.title}</span>
-                      <span className={styles.notifTime}>
-                        {formatRelativeTime(notif.created_at)}
-                      </span>
+                      <div className={styles.notifActions}>
+                        <span className={styles.notifTime}>
+                          {formatRelativeTime(notif.created_at)}
+                        </span>
+                        <button
+                          type="button"
+                          className={styles.deleteNotificationBtn}
+                          aria-label={`Delete notification: ${notif.title}`}
+                          title="Delete notification"
+                          disabled={deletingNotificationId === notif.id}
+                          onClick={(event) => handleDeleteNotification(event, notif)}
+                        >
+                          <FiTrash2 size={15} />
+                        </button>
+                      </div>
                     </div>
                     {notif.message && (
                       <p className={styles.notifMessage}>{notif.message}</p>
