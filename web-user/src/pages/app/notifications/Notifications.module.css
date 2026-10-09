@@ -186,6 +186,43 @@
   gap: 8px;
 }
 
+.notifActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.deleteNotificationBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+  color: #6b7280;
+  cursor: pointer;
+}
+
+.deleteNotificationBtn:hover:not(:disabled) {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.deleteNotificationBtn:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.deleteNotificationBtn:focus-visible {
+  outline: 3px solid rgba(128, 0, 0, 0.25);
+  outline-offset: 2px;
+}
+
 .notifTitle {
   font-weight: 800;
   font-size: 14px;
