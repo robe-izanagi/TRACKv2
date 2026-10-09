@@ -238,7 +238,9 @@ export default function EventCardView({ isOpen, onClose, event, onActionSuccess 
                   onClick={() => setShowConflictModal(true)}
                 >
                   <FiAlertTriangle size={13} />
-                  {conflict.isPriority ? "Priority Event" : "Conflicted"}
+                  {conflict.isPriority
+                    ? "Priority: this event takes precedence"
+                    : "Conflict: another event takes precedence"}
                 </button>
               )}
             </div>
