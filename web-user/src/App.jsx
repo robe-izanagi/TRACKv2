@@ -12,7 +12,7 @@ import RequestAccountCode from "./pages/request-account-code/RequestAccountCode"
 import AppLayout from "./pages/app/AppLayout";
 
 // Role dashboards
-import OfficialsHome from "./pages/app/officials/Home";
+import HeadsHome from "./pages/app/officials/Home";
 import StaffHome from "./pages/app/staff/Home";
 import FacultyHome from "./pages/app/faculty/Home";
 
@@ -32,7 +32,7 @@ const RoleRedirect = () => {
   const { user } = useAuth();
   const role = user?.role || "faculty";
   return (
-    <Navigate to={`/${role == "officials" ? "heads" : role}/home`} replace />
+    <Navigate to={`/${role}/home`} replace />
   );
 };
 
@@ -61,8 +61,7 @@ export default function App() {
                 }
               >
                 <Route index element={<RoleRedirect />} />
-                {/* <Route path="/officials/home" element={<OfficialsHome />} /> */}
-                <Route path="/heads/home" element={<OfficialsHome />} />
+                <Route path="/heads/home" element={<HeadsHome />} />
                 <Route path="/staff/home" element={<StaffHome />} />
                 <Route path="/faculty/home" element={<FacultyHome />} />
                 <Route path="/calendar" element={<CalendarView />} />
