@@ -22,10 +22,16 @@ export default function FeedbackModal({ message, type, onClose }) {
       <div
         className={`${styles.modal} ${isError ? styles.error : styles.success}`}
         onClick={(e) => e.stopPropagation()}
+        role={isError ? "alert" : "status"}
       >
         <Icon size={20} color={iconColor} className={styles.icon} />
         <span className={styles.text}>{message}</span>
-        <button className={styles.closeBtn} onClick={onClose}>
+        <button
+          type="button"
+          className={styles.closeBtn}
+          onClick={onClose}
+          aria-label="Dismiss message"
+        >
           <FiX size={18} />
         </button>
       </div>
