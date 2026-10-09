@@ -1161,6 +1161,7 @@ exports.getTodayEvent = async (req, res) => {
         hierarchy: event.hierarchy,
         event_type: event.event_type,
         visibility: event.visibility,
+        color: event.color,
         venue: venueName,
         location: locationName,
         creator: creatorData,
@@ -1189,7 +1190,7 @@ exports.getUpcomingEvents = async (req, res) => {
     const now = new Date(todayEnd.getTime() + 1);
 
     const attendeeEvents = await EventAttendee.findAll({
-      where: { user_id: userId },
+      where: { user_id: userId, response: 'accepted' },
       attributes: ['event_id']
     });
     const eventIds = attendeeEvents.map(a => a.event_id);
@@ -1223,6 +1224,7 @@ exports.getUpcomingEvents = async (req, res) => {
       venue: ev.Venue ? ev.Venue.name : null,
       location: ev.Location ? ev.Location.map_location : null,
       event_type: ev.event_type,
+      color: ev.color,
       hierarchy: ev.hierarchy,
       method: ev.method,
       link: ev.link,
