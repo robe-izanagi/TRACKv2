@@ -333,7 +333,7 @@ export default function EditEvent() {
     }
   };
 
-  const canEditVisibility = role === "officials" && isEventCreator;
+  const canEditVisibility = role === "heads" && isEventCreator;
 
   const visibilityOptions = [];
   if (canEditVisibility) {
