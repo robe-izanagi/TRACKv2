@@ -2,7 +2,7 @@
   padding: 16px;
   max-width: 480px;
   margin: 0 auto;
-  padding-bottom: 60px;
+  padding-bottom: 100px;
 }
 
 .headerRow {
@@ -116,8 +116,16 @@
   margin: 0;
 }
 
+.swipeContainer {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  touch-action: pan-y;
+}
+
 .notifCard {
   position: relative;
+  z-index: 1;
   display: flex;
   align-items: flex-start;
   gap: 12px;
@@ -126,12 +134,11 @@
   border-radius: 16px;
   padding: 14px 14px 12px;
   cursor: pointer;
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  transition: box-shadow 0.2s ease;
 }
 
 .notifCard:hover {
   box-shadow: 0 6px 18px rgba(17, 24, 39, 0.06);
-  transform: translateY(-1px);
 }
 
 .notifUnread {
@@ -193,34 +200,33 @@
   flex-shrink: 0;
 }
 
-.deleteNotificationBtn {
+.swipeDeleteReveal {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0 20px;
+  background: #b91c1c;
+  color: #fff;
+}
+
+.swipeDeleteReveal span {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  padding: 0;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  background: #fff;
-  color: #6b7280;
-  cursor: pointer;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 800;
 }
 
-.deleteNotificationBtn:hover:not(:disabled) {
-  border-color: #fecaca;
-  background: #fef2f2;
-  color: #b91c1c;
+.swipeDeleteRight {
+  justify-content: flex-end;
 }
 
-.deleteNotificationBtn:disabled {
-  opacity: 0.55;
-  cursor: wait;
-}
-
-.deleteNotificationBtn:focus-visible {
-  outline: 3px solid rgba(128, 0, 0, 0.25);
-  outline-offset: 2px;
+.swipeHint {
+  color: #9ca3af;
+  font-size: 10px;
+  white-space: nowrap;
 }
 
 .notifTitle {
@@ -294,4 +300,80 @@
 .showMoreBtn:disabled {
   opacity: 0.7;
   cursor: not-allowed;
+}
+
+.undoNotice {
+  position: fixed;
+  z-index: 1200;
+  left: 50%;
+  bottom: calc(76px + env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: min(440px, calc(100vw - 28px));
+  padding: 12px 14px;
+  border: 1px solid #374151;
+  border-radius: 14px;
+  background: #1f2937;
+  color: #fff;
+  box-shadow: 0 12px 32px rgba(17, 24, 39, 0.28);
+  transform: translateX(-50%);
+  animation: undoNoticeIn 180ms ease-out;
+}
+
+.undoNoticeIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.14);
+  color: #bbf7d0;
+}
+
+.undoNoticeText {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.undoButton {
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #fde68a;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.undoButton:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.undoButton:focus-visible {
+  outline: 2px solid #fde68a;
+  outline-offset: 2px;
+}
+
+@keyframes undoNoticeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+@media (max-width: 360px) {
+  .swipeHint {
+    display: none;
+  }
 }
