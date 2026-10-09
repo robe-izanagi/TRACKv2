@@ -907,7 +907,7 @@ export default function AccountCodes() {
                     <option value="">Select role</option>
                     {roles.map((r) => (
                       <option key={r.id} value={r.id}>
-                        {r.name === "officials" ? "heads" : r.name}
+                        {r.name}
                       </option>
                     ))}
                   </select>
@@ -1015,7 +1015,7 @@ export default function AccountCodes() {
                         <Truncate value={code.office} />
                       </td>
                       <td>
-                        {code.role === "officials" ? "heads" : code.role || "—"}
+                        {code.role || "—"}
                       </td>
                       <td>
                         <Truncate value={code.position} />
@@ -1160,9 +1160,7 @@ export default function AccountCodes() {
                       <div className={styles.detailRow}>
                         <span className={styles.detailLabel}>Role:</span>
                         <span className={styles.detailValue}>
-                          {req.role_name === "officials"
-                            ? "heads"
-                            : req.role_name || "—"}
+                          {req.role_name || "—"}
                         </span>
                       </div>
                       <div className={styles.detailRow}>
@@ -1344,9 +1342,7 @@ export default function AccountCodes() {
                 <dd>{confirmAction.code.office || "—"}</dd>
                 <dt>Role</dt>
                 <dd>
-                  {confirmAction.code.role === "officials"
-                    ? "heads"
-                    : confirmAction.code.role || "—"}
+                  {confirmAction.code.role || "—"}
                 </dd>
                 <dt>Position</dt>
                 <dd>{confirmAction.code.position || "—"}</dd>
