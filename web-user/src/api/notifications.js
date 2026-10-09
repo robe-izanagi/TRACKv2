@@ -25,6 +25,11 @@ export const markNotificationRead = async (id) => {
   return data;
 };
 
+export const deleteNotification = async (id) => {
+  const { data } = await apiClient.delete(`/notifications/${id}`);
+  return data;
+};
+
 export const markAllNotificationsRead = async () => {
   const { data } = await apiClient.put('/notifications/read-all');
   return data;
