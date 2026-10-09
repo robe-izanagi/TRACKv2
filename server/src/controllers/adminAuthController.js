@@ -11,9 +11,11 @@ exports.registerAdmin = async (req, res) => {
   try {
     const { username, password, account_code } = req.body;
 
-    if (!username || !password || !account_code) {
+    if (typeof username !== 'string' || !username.trim()
+      || typeof password !== 'string' || !password
+      || typeof account_code !== 'string' || !account_code.trim()) {
       await t.rollback();
-      return res.status(400).json({ ok: false, message: 'Username, password, and account code are required.' });
+      return res.status(400).json({ ok: false, message: 'Enter a username, password, and admin account code to create your account.' });
     }
 
     const trimmedUsername = username.trim();
@@ -29,7 +31,7 @@ exports.registerAdmin = async (req, res) => {
     const codeRecord = await AccountCode.findOne({ where: { code: account_code.trim() }, transaction: t });
     if (!codeRecord) {
       await t.rollback();
-      return res.status(400).json({ ok: false, message: 'Invalid account code.' });
+      return res.status(400).json({ ok: false, message: 'We could not find that account code. Check that you entered it exactly as provided by your administrator, then try again.' });
     }
 
     // Rejects used, inactive/deactivated, expired, and older-than-7-days codes
@@ -41,13 +43,13 @@ exports.registerAdmin = async (req, res) => {
 
     if (!codeRecord.is_admin) {
       await t.rollback();
-      return res.status(403).json({ ok: false, message: 'This account code is not valid for admin registration.' });
+      return res.status(403).json({ ok: false, message: 'This code is for a regular user account, not an administrator account. Use an admin account code or contact your system administrator.' });
     }
 
     const existingUser = await User.findOne({ where: { username: trimmedUsername }, transaction: t });
     if (existingUser) {
       await t.rollback();
-      return res.status(409).json({ ok: false, message: 'Username is already taken.' });
+      return res.status(409).json({ ok: false, message: 'That username is already in use. Choose a different username for your administrator account.' });
     }
 
     const password_hash = await bcrypt.hash(password, 10);
@@ -101,7 +103,8 @@ exports.loginAdmin = async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    if (!username || !password) {
+    if (typeof username !== 'string' || !username.trim()
+      || typeof password !== 'string' || !password) {
       await recordLoginAttempt({
         req, username, method: 'local', success: false,
         reason: 'auth_failed', isAdminLogin: true,
@@ -115,7 +118,7 @@ exports.loginAdmin = async (req, res) => {
         req, username: username.trim(), method: 'local', success: false,
         reason: 'user_not_found', isAdminLogin: true,
       });
-      return res.status(404).json({ ok: false, message: "Can't find your account or your account has been deleted." });
+      return res.status(404).json({ ok: false, message: 'We could not find an active administrator account with that username. Check the spelling, or contact your system administrator if you believe you should have access.' });
     }
 
     const admin = await Admin.findOne({ where: { user_id: user.id, is_active: true } });
@@ -124,7 +127,7 @@ exports.loginAdmin = async (req, res) => {
         req, user, username: user.username, email: user.email, method: 'local',
         success: false, reason: 'not_admin', isAdminLogin: true,
       });
-      return res.status(404).json({ ok: false, message: "Can't find your account or your account has been deleted." });
+      return res.status(404).json({ ok: false, message: 'We could not find an active administrator account with that username. Check the spelling, or contact your system administrator if you believe you should have access.' });
     }
 
     if (user.status === 'blocked' || user.status === 'suspended') {
@@ -132,7 +135,7 @@ exports.loginAdmin = async (req, res) => {
         req, user, username: user.username, email: user.email, method: 'local',
         success: false, reason: 'blocked', isAdminLogin: true,
       });
-      return res.status(403).json({ ok: false, message: 'Your account has been blocked. Please contact the admin office for restoring your account.' });
+      return res.status(403).json({ ok: false, message: 'Your administrator account is blocked or suspended, so sign-in is unavailable. Contact your system administrator to restore access.' });
     }
 
     const validPassword = await bcrypt.compare(password, user.password_hash);
@@ -141,7 +144,7 @@ exports.loginAdmin = async (req, res) => {
         req, user, username: user.username, email: user.email, method: 'local',
         success: false, reason: 'invalid_password', isAdminLogin: true,
       });
-      return res.status(401).json({ ok: false, message: 'Invalid username or password.' });
+      return res.status(401).json({ ok: false, message: 'The username or password does not match our records. Check the spelling of your username and make sure Caps Lock is off, then try again.' });
     }
 
     const token = jwt.sign({ userId: user.id, isAdmin: true }, process.env.JWT_SECRET, { expiresIn: '7d' });
