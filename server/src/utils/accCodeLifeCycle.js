@@ -52,15 +52,17 @@ function getActionBlock(code, now = new Date()) {
  * between sweeps.
  */
 function getUsabilityError(code, now = new Date()) {
-  if (code.status === 'used') return 'Account code already used.';
+  if (code.status === 'used') {
+    return 'This account code has already been used to register an account. Ask your administrator for a new code.';
+  }
   if (code.status !== 'unused') {
-    return 'This account code has been deactivated and can no longer be used.';
+    return 'This account code is inactive and can no longer be used. Ask your administrator for a new code.';
   }
   if (code.expires_at && new Date(code.expires_at) < now) {
-    return 'Account code has expired.';
+    return 'This account code has expired and can no longer be used. Ask your administrator for a new code.';
   }
   if (isPastAutoDeactivate(code, now)) {
-    return 'This account code is older than 7 days and has been deactivated.';
+    return `This account code is more than ${AUTO_DEACTIVATE_DAYS} days old and has been deactivated. Ask your administrator for a new code.`;
   }
   return null;
 }
