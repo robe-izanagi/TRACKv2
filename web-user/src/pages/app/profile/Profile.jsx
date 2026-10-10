@@ -406,15 +406,6 @@ export default function Profile() {
         : selectedOffice
       : profile?.office_id || null;
 
-    if (!finalDepartmentId && !finalOfficeId) {
-      const msg =
-        "You must keep at least one of Department or Office set — you cannot remove both.";
-      setRequestMessage(msg);
-      showFeedback(msg, "error");
-      setRequestSubmitting(false);
-      return;
-    }
-
     let hasActualChanges = false;
     if (
       requestChanges.department_change &&
