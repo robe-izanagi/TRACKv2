@@ -1,7 +1,5 @@
 const multer = require('multer');
 const path = require('path');
-const { v4: uuidv4 } = require('uuid');
-const uploadsPath = require('./uploads');
 
 const allowedTypes = new Map([
   ['.jpg', 'image/jpeg'],
@@ -11,13 +9,7 @@ const allowedTypes = new Map([
 ]);
 
 module.exports = multer({
-  storage: multer.diskStorage({
-    destination: (req, file, cb) => cb(null, uploadsPath),
-    filename: (req, file, cb) => {
-      const extension = path.extname(file.originalname).toLowerCase();
-      cb(null, `${uuidv4()}${extension}`);
-    },
-  }),
+  storage: multer.memoryStorage(),
   fileFilter: (req, file, cb) => {
     const extension = path.extname(file.originalname).toLowerCase();
     if (allowedTypes.get(extension) !== file.mimetype.toLowerCase()) {
