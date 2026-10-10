@@ -13,6 +13,11 @@ const apiClient = axios.create({
   headers: { 'Content-Type': 'application/json' }
 });
 
+export const getMediaUrl = (url) => {
+  if (!url || /^(data:|blob:|https?:\/\/)/i.test(url)) return url;
+  return new URL(url, `${new URL(apiBaseURL).origin}/`).toString();
+};
+
 apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
