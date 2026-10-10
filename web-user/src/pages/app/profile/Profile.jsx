@@ -152,6 +152,7 @@ export default function Profile() {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [changeProfileRequestOpen, setChangeProfileRequestOpen] =
     useState(false);
+  const [profilePictureModalOpen, setProfilePictureModalOpen] = useState(false);
 
   const [requestChanges, setRequestChanges] = useState({
     department_change: false,
@@ -179,6 +180,15 @@ export default function Profile() {
 
   const fileInputRef = useRef(null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+
+  useEffect(() => {
+    if (!profilePictureModalOpen) return undefined;
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") setProfilePictureModalOpen(false);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [profilePictureModalOpen]);
 
   const [feedback, setFeedback] = useState({ message: "", type: "success" });
   const showFeedback = (msg, type = "success") =>
@@ -307,6 +317,11 @@ export default function Profile() {
         headers: { "Content-Type": "multipart/form-data" },
       });
       setProfile((prev) => ({ ...prev, display_picture: data.picture_url }));
+      window.dispatchEvent(
+        new CustomEvent("track-profile-picture-updated", {
+          detail: data.picture_url,
+        }),
+      );
       showFeedback("Profile picture updated!", "success");
     } catch (err) {
       console.error("Upload error:", err);
@@ -704,16 +719,24 @@ export default function Profile() {
       <div className={styles.header}>
         <div className={styles.avatarWrapper}>
           <div className={styles.avatar}>
-            {displayUser.display_picture ? (
-              <img
-                src={getMediaUrl(displayUser.display_picture)}
-                alt="Profile"
-                className={styles.avatarImg}
-              />
-            ) : (
-              <FiUser size={40} />
-            )}
             <button
+              type="button"
+              className={styles.avatarPreviewBtn}
+              onClick={() => setProfilePictureModalOpen(true)}
+              aria-label="View profile picture"
+            >
+              {displayUser.display_picture ? (
+                <img
+                  src={getMediaUrl(displayUser.display_picture)}
+                  alt=""
+                  className={styles.avatarImg}
+                />
+              ) : (
+                <FiUser size={40} />
+              )}
+            </button>
+            <button
+              type="button"
               className={styles.avatarUploadBtn}
               onClick={() => fileInputRef.current?.click()}
               disabled={uploadingPhoto}
@@ -738,6 +761,52 @@ export default function Profile() {
         </h1>
         <p className={styles.userRole}>{roleLine || "Member"}</p>
       </div>
+
+      {profilePictureModalOpen && (
+        <div
+          className={styles.photoPreviewOverlay}
+          onClick={() => setProfilePictureModalOpen(false)}
+        >
+          <div
+            className={styles.photoPreviewModal}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Profile picture preview"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              className={styles.photoPreviewClose}
+              onClick={() => setProfilePictureModalOpen(false)}
+              aria-label="Close profile picture preview"
+            >
+              <FiX size={20} />
+            </button>
+            <div className={styles.photoPreviewImage}>
+              {displayUser.display_picture ? (
+                <img
+                  src={getMediaUrl(displayUser.display_picture)}
+                  alt={displayUser.full_name || "Profile picture"}
+                />
+              ) : (
+                <FiUser size={72} />
+              )}
+            </div>
+            <button
+              type="button"
+              className={styles.photoPreviewEdit}
+              onClick={() => {
+                setProfilePictureModalOpen(false);
+                fileInputRef.current?.click();
+              }}
+              disabled={uploadingPhoto}
+            >
+              <FiCamera size={17} />
+              <span>Change profile picture</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ─── Info Cards ─── */}
       <div className={styles.infoGrid}>
