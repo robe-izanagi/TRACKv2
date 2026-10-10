@@ -1376,7 +1376,12 @@ function Home() {
         </h1>
         {displayUser && (
           <p>
-            {[displayUser.position, displayUser.office, displayUser.department]
+            {[
+              displayUser.role,
+              displayUser.position,
+              displayUser.department,
+              displayUser.office,
+            ]
               .filter(Boolean)
               .join(" | ") || ""}
           </p>
