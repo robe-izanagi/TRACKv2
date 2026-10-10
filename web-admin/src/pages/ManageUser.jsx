@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { getAllUsers, toggleBlockUser, deleteUser } from "../api/adminUsers";
+import { getMediaUrl } from "../api/client";
 import {
   getChangeRequests,
   approveChangeRequest,
@@ -494,7 +495,7 @@ export default function ManageUsers() {
                           <div className={styles.avatar}>
                             {u.display_picture ? (
                               <img
-                                src={u.display_picture}
+                                src={getMediaUrl(u.display_picture)}
                                 alt={u.full_name || u.username}
                               />
                             ) : (
