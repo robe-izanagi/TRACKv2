@@ -77,11 +77,11 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
-/* Dark maroon button — force the icon white regardless of any inherited
-   color so it never renders dark-on-dark. */
+/* Keep the camera's outline light against the dark maroon button. */
 .avatarUploadBtn svg {
-  color: #fff;
-  fill: currentColor;
+  color: #fecaca;
+  fill: none;
+  stroke: currentColor;
 }
 
 .avatarUploadBtn:hover:not(:disabled) {
@@ -302,8 +302,7 @@
   width: min(100%, 480px);
   padding: 48px 24px 22px;
   border-radius: 20px;
-  background: #fff;
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.35);
+  background: transparent;
 }
 
 .photoPreviewClose {
@@ -316,9 +315,19 @@
   height: 36px;
   border: 0;
   border-radius: 50%;
-  background: #f3f4f6;
-  color: #374151;
+  background: transparent;
+  color: #f3f4f6;
   cursor: pointer;
+}
+
+.photoPreviewClose:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.photoPreviewClose svg {
+  color: #f3f4f6;
+  fill: none;
+  stroke: currentColor;
 }
 
 .photoPreviewImage {
@@ -357,7 +366,9 @@
 }
 
 .photoPreviewEdit svg {
-  color: #fff;
+  color: #fecaca;
+  fill: none;
+  stroke: currentColor;
 }
 
 .photoPreviewEdit:hover:not(:disabled) {
