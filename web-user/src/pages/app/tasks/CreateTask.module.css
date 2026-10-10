@@ -85,6 +85,15 @@
   flex: 1 1 150px;
 }
 
+.assigneeCollaboratorRow {
+  flex-direction: column;
+}
+
+.assigneeCollaboratorRow > * {
+  width: 100%;
+  flex: 0 0 auto;
+}
+
 /* Radio Group */
 .labelGroup {
   display: flex;
@@ -365,6 +374,26 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+@media (max-width: 640px) {
+  .sectionContent {
+    padding: 1rem 0.75rem;
+  }
+
+  .card {
+    padding: 1rem;
+  }
+
+  .row {
+    flex-direction: column;
+  }
+
+  .row > * {
+    width: 100%;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
 }
 
 .titleWordDisplay {
