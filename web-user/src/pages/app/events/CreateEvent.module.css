@@ -109,6 +109,26 @@
   width: 100%;
 }
 
+@media (max-width: 640px) {
+  .sectionContent {
+    padding: 1rem 0.75rem;
+  }
+
+  .card {
+    padding: 1rem;
+  }
+
+  .row {
+    flex-direction: column;
+  }
+
+  .row > * {
+    width: 100%;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+}
+
 .sectionLabel {
   font-size: 0.75rem;
   font-weight: 600;
