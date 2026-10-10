@@ -94,7 +94,10 @@
 .heading2 {
   display: flex;
   align-items: center;
-  padding: 1rem 0 1rem 0;
+  width: 100%;
+  min-width: 0;
+  padding: 1rem;
+  border-radius: 12px;
 }
 
 .featuredCard {
@@ -152,6 +155,7 @@
   font-size: 1.7rem;
   font-weight: 700;
   line-height: 1.1;
+  overflow-wrap: anywhere;
 }
 
 .descriptionText {
@@ -710,6 +714,10 @@
     font-size: 1.4rem;
   }
 
+  .badgesStatus {
+    align-items: stretch;
+  }
+
   .carouselArrow {
     width: 28px;
     height: 28px;
@@ -951,8 +959,9 @@
 .archiveCard {
   display: flex;
   align-items: center;
-  gap: 18px;
-  padding: 16px;
+  min-width: 0;
+  gap: 20px;
+  padding: 18px;
   background: linear-gradient(135deg, #fff 0%, #fcfaf9 100%);
   border: 1px solid #e8e1df;
   border-left: 4px solid var(--archive-accent, #800000);
@@ -968,6 +977,7 @@
 
 .archiveCardMain {
   display: flex;
+  width: 100%;
   min-width: 0;
   flex: 1;
   flex-direction: column;
@@ -987,6 +997,7 @@
 
 .archiveCardHeading {
   display: flex;
+  min-width: 0;
   gap: 12px;
   align-items: stretch;
 }
@@ -1058,6 +1069,7 @@
 
 .archiveTemplateButton {
   flex: 0 0 auto;
+  white-space: nowrap;
   min-height: 40px;
   padding: 9px 14px;
   border: 1px solid #800000;
