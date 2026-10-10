@@ -1,6 +1,6 @@
 Project Overview:
 TRACK Version 2 is a customizable calendar scheduler developed specifically for the Polytechnic University of the Philippines (PUP) – Sto. Tomas. 
-It is designed as a hybrid mobile-web application to eliminate scheduling conflicts, improve time management, and optimize the allocation of university resources (venues, equipment) for officials, faculty, and staff.
+It is designed as a hybrid mobile-web application to eliminate scheduling conflicts, improve time management, and optimize the allocation of university resources (venues, equipment) for heads, faculty, and staff.
 
 Core Features:
 
