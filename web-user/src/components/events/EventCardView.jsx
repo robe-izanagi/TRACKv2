@@ -434,20 +434,19 @@ export default function EventCardView({ isOpen, onClose, event, onActionSuccess 
                   </div>
                 )}
             </div>
+            {event.isCreator && (
+              <div className={styles.managementActions}>
+                <button type="button" className={styles.archiveAction} onClick={() => handleManageEvent("archive")}>
+                  <FiArchive size={15} /> Archive event
+                </button>
+                <button type="button" className={styles.deleteAction} onClick={() => handleManageEvent("delete")}>
+                  <FiTrash2 size={15} /> Delete event
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
-
-      {event.isCreator && (
-        <div className={styles.managementActions}>
-          <button type="button" className={styles.archiveAction} onClick={() => handleManageEvent("archive")}>
-            <FiArchive size={15} /> Archive event
-          </button>
-          <button type="button" className={styles.deleteAction} onClick={() => handleManageEvent("delete")}>
-            <FiTrash2 size={15} /> Delete event
-          </button>
-        </div>
-      )}
 
       <ConflictCardEvent
         isOpen={showConflictModal}
