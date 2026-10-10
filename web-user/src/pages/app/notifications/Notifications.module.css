@@ -219,6 +219,10 @@
   font-weight: 800;
 }
 
+.swipeDeleteReveal svg {
+  color: #fff;
+}
+
 .swipeDeleteRight {
   justify-content: flex-end;
 }
@@ -330,7 +334,11 @@
   flex: 0 0 auto;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.14);
-  color: #bbf7d0;
+  color: #fff;
+}
+
+.undoNoticeIcon svg {
+  color: #fff;
 }
 
 .undoNoticeText {
