@@ -1,5 +1,4 @@
 const express = require("express");
-const fs = require("fs");
 const path = require("path");
 const router = express.Router();
 const upload = require("../config/upload");
@@ -11,10 +10,11 @@ const {
   TaskCollaborator,
 } = require("../models");
 const { authenticate } = require("../middleware/auth");
+const requirePersistentUploads = require("../middleware/requirePersistentUploads");
+const fileStorage = require("../services/fileStorage");
 const { v4: uuidv4 } = require("uuid");
 const { createNotification } = require('../services/notificationService');
 const { getEventParticipantIds, getTaskParticipantIds, uniqueIds } = require('../services/notificationRecipients');
-const uploadsPath = require("../config/uploads");
 
 const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15 MiB per file
 const MAX_ATTACHMENT_COUNT = 5;
@@ -37,29 +37,6 @@ const getExtension = (fileName = "") =>
   path.extname(fileName).toLowerCase();
 const getAllowedTypesMessage = () =>
   "Only DOC, DOCX, TXT, PDF, PNG, JPG, MP4, and MP3 files are accepted.";
-
-const getStoredFilePath = (file) => {
-  if (file?.path) return file.path;
-  if (file?.filename) return path.join(uploadsPath, file.filename);
-  return null;
-};
-
-const removeUploadedFiles = async (files = []) => {
-  await Promise.all(
-    files.map(async (file) => {
-      const filePath = getStoredFilePath(file);
-      if (!filePath) return;
-
-      try {
-        await fs.promises.unlink(filePath);
-      } catch (err) {
-        if (err.code !== "ENOENT") {
-          console.error("Failed to remove rejected upload:", err);
-        }
-      }
-    }),
-  );
-};
 
 const validateUploadedFile = (file) => {
   const extension = getExtension(file.originalname);
@@ -84,6 +61,7 @@ const validateUploadedFile = (file) => {
 router.post(
   "/:entity_type/:entity_id",
   authenticate,
+  requirePersistentUploads,
   (req, res, next) => {
     const { entity_type, entity_id } = req.params;
 
@@ -117,7 +95,6 @@ router.post(
 
         upload.array("files", MAX_ATTACHMENT_COUNT)(req, res, async (err) => {
           if (err) {
-            await removeUploadedFiles(req.files || []);
             console.error("Multer error:", err);
             return res.status(400).json({
               ok: false,
@@ -141,6 +118,8 @@ router.post(
       });
   },
   async (req, res) => {
+    const records = [];
+    const storedFiles = [];
     try {
       const files = req.files || [];
 
@@ -158,7 +137,6 @@ router.post(
         },
       });
       if (currentAttachmentCount + files.length > MAX_ATTACHMENT_COUNT) {
-        await removeUploadedFiles(files);
         return res.status(400).json({
           ok: false,
           message: `An event or task can have no more than 5 attachments. It currently has ${currentAttachmentCount}; remove an attachment before adding more.`,
@@ -170,10 +148,6 @@ router.post(
         .filter(({ error }) => error);
 
       if (invalidFiles.length > 0) {
-        // Remove all files from this batch so a partially accepted upload
-        // cannot leave orphan files on disk.
-        await removeUploadedFiles(files);
-
         return res.status(400).json({
           ok: false,
           message: invalidFiles.map(({ error }) => error).join(" "),
@@ -184,18 +158,20 @@ router.post(
         });
       }
 
-      const records = [];
-
       for (const file of files) {
+        const storedFile = await fileStorage.uploadBuffer(file.buffer, {
+          extension: getExtension(file.originalname),
+          folder: 'trackv2/attachments',
+          resourceType: 'auto',
+        });
+        storedFiles.push(storedFile);
         const record = await Attachment.create({
           id: uuidv4(),
           entity_type: req.params.entity_type,
           entity_id: req.params.entity_id,
-          // Keep the stored file path in the database. The actual browser
-          // download uses /attachments/download/:id below, not this path.
-          file_url: `/uploads/${file.filename}`,
+          file_url: storedFile.fileUrl,
           file_name: file.originalname,
-          file_size: file.size,
+          file_size: storedFile.size || file.size,
         });
 
         records.push(record);
@@ -231,6 +207,12 @@ router.post(
         attachments: records,
       });
     } catch (error) {
+      await Promise.all(records.map((record) => record.destroy().catch((cleanupError) => {
+        console.error('Failed to remove incomplete attachment record:', cleanupError);
+      })));
+      await Promise.all(storedFiles.map((file) => fileStorage.deleteStoredFile(file.fileUrl).catch((cleanupError) => {
+        console.error('Failed to remove incomplete attachment upload:', cleanupError);
+      })));
       console.error("Attachment save error:", error);
       res.status(500).json({
         ok: false,
@@ -261,48 +243,63 @@ router.get("/download/:id", authenticate, async (req, res) => {
       return res.status(404).json({ ok: false, message: "Attachment not found." });
     }
 
-    let storedFilename = "";
-    try {
-      const parsedUrl = new URL(
-        attachment.file_url,
-        "http://attachment.local",
-      );
-      storedFilename = path.basename(parsedUrl.pathname);
-    } catch {
-      storedFilename = path.basename(attachment.file_url || "");
-    }
-
-    if (!storedFilename) {
-      return res.status(404).json({
+    const participantIds = attachment.entity_type === 'event'
+      ? await getEventParticipantIds(entity.id)
+      : await getTaskParticipantIds(entity.id);
+    if (entity.creator_id !== req.userId && !participantIds.includes(req.userId)) {
+      return res.status(403).json({
         ok: false,
-        message: "Attachment file path is invalid.",
+        message: "You do not have access to this event or task attachment.",
       });
     }
 
-    const filePath = path.join(uploadsPath, storedFilename);
-
-    fs.access(filePath, fs.constants.R_OK, (accessErr) => {
-      if (accessErr) {
-        console.error("Attachment file missing:", accessErr);
-        return res.status(404).json({
-          ok: false,
-          message: "This attachment record exists, but its file is missing from server storage. It may have been lost after a restart or redeployment; ask the event or task creator to upload it again.",
-        });
+    const cloudinaryAsset = fileStorage.parseCloudinaryReference(attachment.file_url);
+    if (cloudinaryAsset) {
+      const downloadUrl = fileStorage.getPrivateDownloadUrl(cloudinaryAsset);
+      const response = await fetch(downloadUrl);
+      if (!response.ok || !response.body) {
+        throw new Error(`Cloudinary download failed with status ${response.status}.`);
       }
 
-      return res.download(
-        filePath,
-        attachment.file_name || storedFilename,
-        (downloadErr) => {
-          if (downloadErr && !res.headersSent) {
-            console.error("Attachment download error:", downloadErr);
-            res.status(500).json({
-              ok: false,
-              message: "Failed to download attachment.",
-            });
-          }
-        },
-      );
+      const { Readable } = require('stream');
+      res.setHeader('Content-Type', response.headers.get('content-type') || 'application/octet-stream');
+      res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(attachment.file_name || 'attachment')}`);
+      if (attachment.file_size) res.setHeader('Content-Length', attachment.file_size);
+      const downloadStream = Readable.fromWeb(response.body);
+      downloadStream.on('error', (streamError) => {
+        console.error("Cloudinary attachment stream error:", streamError);
+        if (!res.headersSent) {
+          res.status(502).json({
+            ok: false,
+            message: "Cloudinary could not deliver this file. Please try again.",
+          });
+        } else {
+          res.destroy(streamError);
+        }
+      });
+      return downloadStream.pipe(res);
+    }
+
+    let storedFilename = '';
+    try {
+      storedFilename = path.basename(new URL(attachment.file_url, 'http://attachment.local').pathname);
+    } catch {
+      storedFilename = path.basename(attachment.file_url || '');
+    }
+    if (!storedFilename) {
+      return res.status(404).json({ ok: false, message: "Attachment file path is invalid." });
+    }
+    const filePath = path.join(require("../config/uploads"), storedFilename);
+    return res.download(filePath, attachment.file_name || storedFilename, (downloadErr) => {
+      if (downloadErr && !res.headersSent) {
+        console.error("Attachment download error:", downloadErr);
+        res.status(downloadErr.code === 'ENOENT' ? 404 : 500).json({
+          ok: false,
+          message: downloadErr.code === 'ENOENT'
+            ? "This attachment record exists, but its file is missing from server storage. Ask the event or task creator to upload it again."
+            : "Failed to download attachment.",
+        });
+      }
     });
   } catch (error) {
     console.error("Attachment download lookup error:", error);
@@ -345,23 +342,7 @@ router.delete("/:id", authenticate, async (req, res) => {
       });
     }
 
-    let storedFilename = "";
-    try {
-      storedFilename = path.basename(
-        new URL(attachment.file_url, "http://attachment.local").pathname,
-      );
-    } catch {
-      storedFilename = path.basename(attachment.file_url || "");
-    }
-
-    if (storedFilename) {
-      try {
-        await fs.promises.unlink(path.join(uploadsPath, storedFilename));
-      } catch (error) {
-        if (error.code !== "ENOENT") throw error;
-      }
-    }
-
+    await fileStorage.deleteStoredFile(attachment.file_url);
     await attachment.destroy();
     return res.json({ ok: true, message: "Attachment removed successfully." });
   } catch (error) {
