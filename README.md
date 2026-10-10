@@ -31,15 +31,25 @@ Tech Stack (Updated):
 • Database: MySQL (Cloud-hosted)
 • Methodology: Agile
 
-## Persistent attachment storage
+## Persistent uploads storage
 
-The API stores uploaded attachments on disk. For persistent storage on Render,
-attach a disk to the API service with mount path `/var/data` and set the
-`UPLOADS_DIR` environment variable to `/var/data/uploads`. The directory is
-created on startup. If no disk is configured, the server falls back to
-app-local storage and logs a warning; those uploads can disappear when Render
-restarts or redeploys the service even though their database records remain.
+The API can store profile pictures and event/task attachments in Cloudinary.
+Configure these variables on the API service (never in frontend variables):
 
-Files already missing from the server cannot be restored by this change. They
-must be recovered from a backup or uploaded again after persistent storage is
-configured.
+```text
+CLOUDINARY_CLOUD_NAME
+CLOUDINARY_API_KEY
+CLOUDINARY_API_SECRET
+```
+
+Profile pictures are delivered from Cloudinary. Event/task attachments use
+authenticated Cloudinary assets and are downloaded through the API after its
+access checks. `UPLOADS_DIR` can instead point to a persistent disk, such as a
+Render disk mounted at `/var/data` with `UPLOADS_DIR=/var/data/uploads`.
+On Render, uploads are rejected if neither Cloudinary nor a persistent uploads
+directory is configured.
+
+Existing files stored on an ephemeral server disk are not automatically copied
+to Cloudinary. Back them up or migrate/re-upload them before redeploying if they
+are still needed; files already lost from server storage must be recovered from
+a backup or uploaded again.
