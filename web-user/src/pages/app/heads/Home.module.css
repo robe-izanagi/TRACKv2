@@ -301,6 +301,7 @@
 }
 
 .statsGridWrapper {
+  container-type: inline-size;
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
   gap: 0.85rem;
@@ -691,6 +692,7 @@
 }
 
 .featuredCardContent {
+  container-type: inline-size;
   padding: clamp(1rem, 2vw, 1.35rem);
 }
 
@@ -1803,6 +1805,32 @@
 
   .todayCarouselArrowRight {
     right: 8px;
+  }
+}
+
+@container (max-width: 440px) {
+  .sectionContainer {
+    grid-column: 1 / -1;
+  }
+}
+
+@container (max-width: 360px) {
+  .twoColGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@container (max-width: 640px) {
+  .container8 {
+    grid-template-columns: 1fr;
+  }
+
+  .whenWhereGroup {
+    grid-column: auto;
+  }
+
+  .infoGrid {
+    grid-template-columns: 1fr;
   }
 }
 
