@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { Op } = require('sequelize');
 const { Department, Office, Role, Position, PositionAssignment, AllowedDomain } = require('../models');
 
 // ─── Public lookups ──────────────────────────────────────
@@ -25,7 +26,11 @@ router.get('/offices', async (req, res) => {
 
 router.get('/roles', async (req, res) => {
   try {
-    const rows = await Role.findAll({ where: { is_active: true }, attributes: ['id', 'name'], order: [['name', 'ASC']] });
+    const rows = await Role.findAll({
+      where: { is_active: true, name: { [Op.in]: ['heads', 'staff', 'faculty'] } },
+      attributes: ['id', 'name'],
+      order: [['name', 'ASC']]
+    });
     res.json({ ok: true, items: rows });
   } catch (err) {
     console.error('Lookup roles error:', err);
