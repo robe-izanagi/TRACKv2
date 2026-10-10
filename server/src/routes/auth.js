@@ -1,9 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
+const path = require('path');
 const { login, register } = require('../controllers/authController');
 const { loginAdmin, registerAdmin } = require('../controllers/adminAuthController');
 const { adminRegisterLimiter, adminLoginLimiter } = require('../middleware/rateLimiter');
+const requirePersistentUploads = require('../middleware/requirePersistentUploads');
+const fileStorage = require('../services/fileStorage');
 const {
   googleLoginUrl,
   googleCallback,
@@ -13,21 +16,7 @@ const {
 const { authenticate } = require('../middleware/auth');
 const { User, UserProfile, Department, Office, Role, Admin, Position } = require('../models');
 const { Op } = require('sequelize');
-const fs = require('fs');
-const path = require('path');
 const profilePictureUpload = require('../config/profilePictureUpload');
-const uploadsPath = require('../config/uploads');
-
-const removeProfilePicture = async (filePath) => {
-  if (!filePath) return;
-  try {
-    await fs.promises.unlink(filePath);
-  } catch (error) {
-    if (error.code !== 'ENOENT') {
-      console.error('Failed to remove profile picture:', error);
-    }
-  }
-};
 
 // ─── Local auth ───
 router.post('/login', adminLoginLimiter, loginAdmin);
@@ -240,7 +229,7 @@ router.put('/password', authenticate, async (req, res) => {
 });
 
 // ─── Update Profile Picture ───
-router.put('/profile-picture', authenticate, (req, res, next) => {
+router.put('/profile-picture', authenticate, requirePersistentUploads, (req, res, next) => {
   profilePictureUpload.single('picture')(req, res, (error) => {
     if (!error) return next();
     const status = error.code === 'LIMIT_FILE_SIZE' ? 413 : 400;
@@ -254,22 +243,30 @@ router.put('/profile-picture', authenticate, (req, res, next) => {
     return res.status(400).json({ ok: false, message: 'Choose a JPG, PNG, or WEBP profile picture.' });
   }
 
-  const newPicturePath = req.file.path;
+  let uploadedPicture;
   try {
     const profile = await UserProfile.findByPk(req.userId);
     if (!profile) {
-      await removeProfilePicture(newPicturePath);
       return res.status(404).json({ ok: false, message: 'User profile not found.' });
     }
 
     const previousPicture = profile.display_picture;
-    const pictureUrl = `/uploads/${req.file.filename}`;
+    uploadedPicture = await fileStorage.uploadBuffer(req.file.buffer, {
+      extension: path.extname(req.file.originalname).toLowerCase(),
+      folder: 'trackv2/profile-pictures',
+      resourceType: 'image',
+      accessType: 'upload',
+    });
+    const pictureUrl = uploadedPicture.publicUrl || uploadedPicture.fileUrl;
     profile.display_picture = pictureUrl;
     await profile.save();
 
-    if (typeof previousPicture === 'string' && previousPicture.startsWith('/uploads/')) {
-      const previousFilename = path.basename(previousPicture);
-      await removeProfilePicture(path.join(uploadsPath, previousFilename));
+    if (previousPicture && previousPicture !== pictureUrl) {
+      try {
+        await fileStorage.deleteStoredFile(previousPicture);
+      } catch (cleanupError) {
+        console.error('Failed to remove previous profile picture:', cleanupError);
+      }
     }
 
     return res.json({
@@ -278,7 +275,13 @@ router.put('/profile-picture', authenticate, (req, res, next) => {
       picture_url: pictureUrl,
     });
   } catch (error) {
-    await removeProfilePicture(newPicturePath);
+    if (uploadedPicture) {
+      try {
+        await fileStorage.deleteStoredFile(uploadedPicture.fileUrl);
+      } catch (cleanupError) {
+        console.error('Failed to remove incomplete profile picture upload:', cleanupError);
+      }
+    }
     console.error('Update profile picture error:', error);
     return res.status(500).json({ ok: false, message: 'We could not save your profile picture. Please try again.' });
   }
