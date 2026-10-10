@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Outlet, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import apiClient from "../../api/client";
+import apiClient, { getMediaUrl } from "../../api/client";
 import { getUnreadCount } from "../../api/notifications";
 import {
   FiMenu,
@@ -255,7 +255,7 @@ export default function AppLayout() {
                       >
                         {profilePicture ? (
                           <img
-                            src={profilePicture}
+                            src={getMediaUrl(profilePicture)}
                             alt="Profile"
                             className={styles.profileImg}
                           />
