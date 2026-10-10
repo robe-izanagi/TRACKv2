@@ -1,5 +1,5 @@
 const { v4: uuidv4 } = require('uuid');
-const { ProfileChangeRequest, UserProfile } = require('../models');
+const { ProfileChangeRequest, UserProfile, Department, Office } = require('../models');
 
 const VALID_CHANGE_KEYS = [
   'department_change',
@@ -30,17 +30,26 @@ exports.submitChangeRequest = async (req, res) => {
       return res.status(400).json({ ok: false, message: 'Please provide details for your request.' });
     }
 
-    if (validChanges.includes('department_change') && !department_id) {
-      return res.status(400).json({ ok: false, message: 'department_id is required for a department change request.' });
-    }
-    if (validChanges.includes('office_change') && !office_id) {
-      return res.status(400).json({ ok: false, message: 'office_id is required for an office change request.' });
-    }
     if (validChanges.includes('role_update') && !role_id) {
       return res.status(400).json({ ok: false, message: 'role_id is required for a role update request.' });
     }
     if (validChanges.includes('position_update') && !position_id) {
       return res.status(400).json({ ok: false, message: 'position_id is required for a position update request.' });
+    }
+
+    const [department, office, profile] = await Promise.all([
+      department_id ? Department.findByPk(department_id) : null,
+      office_id ? Office.findByPk(office_id) : null,
+      UserProfile.findOne({ where: { user_id: req.userId } }),
+    ]);
+    if (department_id && (!department || !department.is_active)) {
+      return res.status(400).json({ ok: false, message: 'The selected department is no longer available. Refresh the page and choose an active department.' });
+    }
+    if (office_id && (!office || !office.is_active)) {
+      return res.status(400).json({ ok: false, message: 'The selected office is no longer available. Refresh the page and choose an active office.' });
+    }
+    if (!profile) {
+      return res.status(404).json({ ok: false, message: 'User profile not found.' });
     }
 
     // Prevent spamming duplicate pending requests
@@ -55,6 +64,11 @@ exports.submitChangeRequest = async (req, res) => {
       id: uuidv4(),
       user_id: req.userId,
       changes: validChanges,
+      previous_values_recorded: true,
+      previous_department_id: profile.department_id,
+      previous_office_id: profile.office_id,
+      previous_role_id: profile.role_id,
+      previous_position_id: profile.position_id,
       requested_department_id: validChanges.includes('department_change') ? department_id : null,
       requested_office_id: validChanges.includes('office_change') ? office_id : null,
       requested_role_id: validChanges.includes('role_update') ? role_id : null,
