@@ -33,6 +33,7 @@ import {
   EVENT_STATUS_SORT_ORDER,
   isMissedInvitation,
 } from "../../../utils/eventStatus";
+import { getReadableTextColor } from "../../../utils/colorUtils";
 
 import EventCardView from "../../../components/events/EventCardView";
 import ArchivedEventView from "../../../components/events/ArchivedEventView";
@@ -415,6 +416,8 @@ export default function Events() {
     const statusCfg = EVENT_STATUS_CONFIG[status];
     const conflict = todayEvent.conflict || {};
     const accepted = isTodayEventAccepted(todayEvent);
+    const eventColor = todayEvent.color || "#800000";
+    const eventTextColor = getReadableTextColor(eventColor);
 
     return (
       <div className={styles.featuredEventSection}>
@@ -440,8 +443,16 @@ export default function Events() {
                   {statusCfg.label}
                 </div>
               </div>
-              <div className={styles.heading2}>
-                <div className={styles.featuredTitle}>{todayEvent.title}</div>
+              <div
+                className={styles.heading2}
+                style={{ backgroundColor: eventColor, color: eventTextColor }}
+              >
+                <div
+                  className={styles.featuredTitle}
+                  style={{ color: eventTextColor }}
+                >
+                  {todayEvent.title}
+                </div>
               </div>
             </div>
 
