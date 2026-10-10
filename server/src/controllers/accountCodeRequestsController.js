@@ -42,9 +42,6 @@ exports.createRequest = async (req, res) => {
     if (typeof full_name !== 'string' || !full_name.trim()) {
       return res.status(400).json({ ok: false, message: 'Enter your full name so the administrator can identify your request.' });
     }
-    if (!department_id && !office_id) {
-      return res.status(400).json({ ok: false, message: 'Select at least one department or office so your request can be assigned correctly.' });
-    }
     if (!role_id) {
       return res.status(400).json({ ok: false, message: 'Select your role before submitting the account-code request.' });
     }
