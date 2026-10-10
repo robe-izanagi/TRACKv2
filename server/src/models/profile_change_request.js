@@ -15,6 +15,27 @@ const ProfileChangeRequest = sequelize.define('profile_change_requests', {
     type: DataTypes.JSON,
     allowNull: false
   },
+  previous_values_recorded: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false
+  },
+  previous_department_id: {
+    type: DataTypes.UUID,
+    allowNull: true
+  },
+  previous_office_id: {
+    type: DataTypes.UUID,
+    allowNull: true
+  },
+  previous_role_id: {
+    type: DataTypes.UUID,
+    allowNull: true
+  },
+  previous_position_id: {
+    type: DataTypes.UUID,
+    allowNull: true
+  },
   requested_department_id: {
     type: DataTypes.UUID,
     allowNull: true
