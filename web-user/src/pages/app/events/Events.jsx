@@ -423,7 +423,10 @@ export default function Events() {
       <div className={styles.featuredEventSection}>
         <div className={styles.featuredContainer}>
           <div className={styles.featuredCard}>
-            <div className={styles.badgesStatus}>
+            <div
+              className={styles.badgesStatus}
+              style={{ background: eventColor, color: eventTextColor }}
+            >
               <div className={styles.badgeRow}>
                 <div className={styles.badgePill}>
                   {todayEvent.hierarchy || "Unknown Hierarchy"}
@@ -443,10 +446,7 @@ export default function Events() {
                   {statusCfg.label}
                 </div>
               </div>
-              <div
-                className={styles.heading2}
-                style={{ backgroundColor: eventColor, color: eventTextColor }}
-              >
+              <div className={styles.heading2}>
                 <div
                   className={styles.featuredTitle}
                   style={{ color: eventTextColor }}
