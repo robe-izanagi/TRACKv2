@@ -541,6 +541,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 0.75rem;
 }
 
@@ -1640,20 +1641,13 @@
     border-radius: 16px;
   }
 
-  .quickTopLeft {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 0.6rem;
-  }
-
   .quickTopRight {
-    width: 100%;
-    margin-left: 0;
+    width: auto;
+    margin-left: auto;
   }
 
   .quickTopRight .viewLink {
-    width: 100%;
-    justify-content: flex-start;
+    width: auto;
     padding-left: 0;
   }
 
@@ -1706,29 +1700,8 @@
     padding: 0.9rem;
   }
 
-  .titleContent,
-  .upcomingHeader {
-    align-items: flex-start;
-  }
-
-  .titleContent,
-  .upcomingHeader {
-    flex-direction: column;
-  }
-
-  .titleContent .viewLink,
-  .upcomingHeader .viewLink {
-    align-self: flex-start;
-    margin-left: 0;
-    padding-left: 0;
-  }
-
   .statsGrid {
-    grid-template-columns: 1fr;
-  }
-
-  .twoColGrid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
   }
 
   .filterRow {
@@ -1788,7 +1761,7 @@
   }
 }
 
-@container (max-width: 360px) {
+@container (max-width: 320px) {
   .twoColGrid {
     grid-template-columns: 1fr;
   }
