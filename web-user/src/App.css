@@ -3,7 +3,6 @@
   padding: 0;
   box-sizing: border-box;
   font-family: 'Segoe UI';
-  color: #000000;
 }
 
 :root {
@@ -30,6 +29,7 @@ body,
 
 body {
   background: #edf0f2;
+  color: #000000;
 }
 
 .appCanvas {
