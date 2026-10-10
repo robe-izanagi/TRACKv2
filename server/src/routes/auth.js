@@ -13,6 +13,21 @@ const {
 const { authenticate } = require('../middleware/auth');
 const { User, UserProfile, Department, Office, Role, Admin, Position } = require('../models');
 const { Op } = require('sequelize');
+const fs = require('fs');
+const path = require('path');
+const profilePictureUpload = require('../config/profilePictureUpload');
+const uploadsPath = require('../config/uploads');
+
+const removeProfilePicture = async (filePath) => {
+  if (!filePath) return;
+  try {
+    await fs.promises.unlink(filePath);
+  } catch (error) {
+    if (error.code !== 'ENOENT') {
+      console.error('Failed to remove profile picture:', error);
+    }
+  }
+};
 
 // ─── Local auth ───
 router.post('/login', adminLoginLimiter, loginAdmin);
@@ -225,26 +240,47 @@ router.put('/password', authenticate, async (req, res) => {
 });
 
 // ─── Update Profile Picture ───
-router.put('/profile-picture', authenticate, async (req, res) => {
+router.put('/profile-picture', authenticate, (req, res, next) => {
+  profilePictureUpload.single('picture')(req, res, (error) => {
+    if (!error) return next();
+    const status = error.code === 'LIMIT_FILE_SIZE' ? 413 : 400;
+    const message = error.code === 'LIMIT_FILE_SIZE'
+      ? 'The profile picture must be 5 MB or smaller.'
+      : error.message;
+    return res.status(status).json({ ok: false, message });
+  });
+}, async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ ok: false, message: 'Choose a JPG, PNG, or WEBP profile picture.' });
+  }
+
+  const newPicturePath = req.file.path;
   try {
-    const { picture_url } = req.body;
-    if (!picture_url) {
-      return res.status(400).json({ ok: false, message: 'Picture URL is required.' });
-    }
-
-    const [updated] = await UserProfile.update(
-      { display_picture: picture_url },
-      { where: { user_id: req.userId } }
-    );
-
-    if (updated === 0) {
+    const profile = await UserProfile.findByPk(req.userId);
+    if (!profile) {
+      await removeProfilePicture(newPicturePath);
       return res.status(404).json({ ok: false, message: 'User profile not found.' });
     }
 
-    res.json({ ok: true, message: 'Profile picture updated successfully.' });
+    const previousPicture = profile.display_picture;
+    const pictureUrl = `/uploads/${req.file.filename}`;
+    profile.display_picture = pictureUrl;
+    await profile.save();
+
+    if (typeof previousPicture === 'string' && previousPicture.startsWith('/uploads/')) {
+      const previousFilename = path.basename(previousPicture);
+      await removeProfilePicture(path.join(uploadsPath, previousFilename));
+    }
+
+    return res.json({
+      ok: true,
+      message: 'Profile picture updated successfully.',
+      picture_url: pictureUrl,
+    });
   } catch (error) {
+    await removeProfilePicture(newPicturePath);
     console.error('Update profile picture error:', error);
-    res.status(500).json({ ok: false, message: 'Server error.' });
+    return res.status(500).json({ ok: false, message: 'We could not save your profile picture. Please try again.' });
   }
 });
 
