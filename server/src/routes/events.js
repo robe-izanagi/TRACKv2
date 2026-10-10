@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { authenticate } = require('../middleware/auth');
-const requireHeadsRole = require('../middleware/requireOfficials');
+const requireHeadsRole = require('../middleware/requireHeads');
 const {
   createEvent,
   listEvents,
