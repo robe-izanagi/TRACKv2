@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
-import apiClient from "../../../api/client";
+import apiClient, { getMediaUrl } from "../../../api/client";
 import {
   BarChart,
   Bar,
@@ -286,39 +286,38 @@ export default function Profile() {
 
   // ── Upload Profile Picture ───
   const handlePhotoChange = async (e) => {
-    const file = e.target.files[0];
+    const input = e.currentTarget;
+    const file = input.files[0];
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) {
       showFeedback("Image must be less than 5MB.", "error");
+      input.value = "";
       return;
     }
     if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
       showFeedback("Only JPG, PNG, and WEBP images are allowed.", "error");
+      input.value = "";
       return;
     }
     setUploadingPhoto(true);
     try {
-      const reader = new FileReader();
-      reader.onload = async (event) => {
-        const base64 = event.target.result;
-        const { data } = await apiClient.put("/auth/profile-picture", {
-          picture_url: base64,
-        });
-        if (data.ok) {
-          setProfile((prev) => ({ ...prev, display_picture: base64 }));
-          showFeedback("Profile picture updated!", "success");
-        } else {
-          showFeedback("Failed to update profile picture.", "error");
-        }
-        setUploadingPhoto(false);
-      };
-      reader.readAsDataURL(file);
+      const formData = new FormData();
+      formData.append("picture", file);
+      const { data } = await apiClient.put("/auth/profile-picture", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      setProfile((prev) => ({ ...prev, display_picture: data.picture_url }));
+      showFeedback("Profile picture updated!", "success");
     } catch (err) {
       console.error("Upload error:", err);
-      showFeedback("Error uploading image.", "error");
+      showFeedback(
+        err.response?.data?.message || "We could not upload your profile picture. Please try again.",
+        "error",
+      );
+    } finally {
       setUploadingPhoto(false);
+      input.value = "";
     }
-    e.target.value = "";
   };
 
   // ── Change Profile Request ───
@@ -716,7 +715,7 @@ export default function Profile() {
           <div className={styles.avatar}>
             {displayUser.display_picture ? (
               <img
-                src={displayUser.display_picture}
+                src={getMediaUrl(displayUser.display_picture)}
                 alt="Profile"
                 className={styles.avatarImg}
               />
