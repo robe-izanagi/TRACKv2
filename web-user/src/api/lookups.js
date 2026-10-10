@@ -12,7 +12,12 @@ export const getOffices = async () => {
 
 export const getRoles = async () => {
   const { data } = await apiClient.get('/lookups/roles');
-  return data;
+  return {
+    ...data,
+    items: Array.isArray(data.items)
+      ? data.items.filter((role) => ['heads', 'staff', 'faculty'].includes(role.name))
+      : data.items,
+  };
 };
 
 export const getPositions = async () => {
