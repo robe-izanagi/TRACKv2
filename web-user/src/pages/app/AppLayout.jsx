@@ -50,6 +50,14 @@ export default function AppLayout() {
   const fabContainerRef = useRef(null);
 
   useEffect(() => {
+    const handleProfilePictureUpdate = (event) => {
+      setProfilePicture(event.detail);
+    };
+    window.addEventListener(
+      "track-profile-picture-updated",
+      handleProfilePictureUpdate,
+    );
+
     const fetchProfile = async () => {
       try {
         const { data } = await apiClient.get("/auth/me");
@@ -61,6 +69,11 @@ export default function AppLayout() {
       }
     };
     fetchProfile();
+    return () =>
+      window.removeEventListener(
+        "track-profile-picture-updated",
+        handleProfilePictureUpdate,
+      );
   }, []);
 
   useEffect(() => {
