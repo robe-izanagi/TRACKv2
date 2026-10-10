@@ -108,14 +108,6 @@ export default function RequestAccountCode() {
       setLoading(false);
       return;
     }
-    if (!department && !office) {
-      showFeedback(
-        "Select at least one department or office so the administrator can assign your request correctly.",
-        "error",
-      );
-      setLoading(false);
-      return;
-    }
     if (!role) {
       showFeedback("Select your role before submitting the account-code request.", "error");
       setLoading(false);
@@ -196,7 +188,7 @@ export default function RequestAccountCode() {
             </label>
 
             <div className={styles.fieldGroup}>
-              <span className={styles.labelGroup}>DEPARTMENT OR OFFICE *</span>
+              <span className={styles.labelGroup}>DEPARTMENT OR OFFICE (OPTIONAL)</span>
               <div className={styles.row}>
                 <label className={styles.fieldHalf}>
                   <span className={styles.subLabel}>Department</span>
@@ -231,7 +223,7 @@ export default function RequestAccountCode() {
                 </label>
               </div>
               <span className={styles.hintText}>
-                At least one of Department or Office must be selected.
+                You may leave both blank if neither applies to your account.
               </span>
             </div>
 
