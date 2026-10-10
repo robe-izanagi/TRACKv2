@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 import apiClient, { getMediaUrl } from "../../../api/client";
+import { getRoles } from "../../../api/lookups";
 import {
   BarChart,
   Bar,
@@ -253,8 +254,8 @@ export default function Profile() {
         const offRes = await apiClient.get("/lookups/offices");
         if (offRes.data.ok && offRes.data.items) setOffices(offRes.data.items);
 
-        const roleRes = await apiClient.get("/lookups/roles");
-        if (roleRes.data.ok && roleRes.data.items) setRoles(roleRes.data.items);
+        const roleRes = await getRoles();
+        if (roleRes.ok && roleRes.items) setRoles(roleRes.items);
 
         const posRes = await apiClient.get("/lookups/available-positions");
         if (posRes.data.ok && posRes.data.positions)
