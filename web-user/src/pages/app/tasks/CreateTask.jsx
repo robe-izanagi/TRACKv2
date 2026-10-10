@@ -380,7 +380,7 @@ export default function CreateTask() {
           </div>
 
           {/* Assignees & Collaborators */}
-          <div className={styles.row}>
+          <div className={`${styles.row} ${styles.assigneeCollaboratorRow}`}>
             <div className={styles.card}>
               <div className={styles.cardHeader}>
                 <FiUserPlus size={16} className={styles.cardHeaderIcon} />
