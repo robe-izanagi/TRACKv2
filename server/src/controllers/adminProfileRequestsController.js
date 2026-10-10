@@ -27,10 +27,10 @@ async function enrichRequest(request) {
     currentDepartment, currentOffice, currentRole, currentPosition,
     requestedDepartment, requestedOffice, requestedRole, requestedPosition,
   ] = await Promise.all([
-    resolveName(Department, profile?.department_id),
-    resolveName(Office, profile?.office_id),
-    resolveName(Role, profile?.role_id),
-    resolveName(Position, profile?.position_id),
+    resolveName(Department, request.previous_values_recorded ? request.previous_department_id : profile?.department_id),
+    resolveName(Office, request.previous_values_recorded ? request.previous_office_id : profile?.office_id),
+    resolveName(Role, request.previous_values_recorded ? request.previous_role_id : profile?.role_id),
+    resolveName(Position, request.previous_values_recorded ? request.previous_position_id : profile?.position_id),
     resolveName(Department, request.requested_department_id),
     resolveName(Office, request.requested_office_id),
     resolveName(Role, request.requested_role_id),
@@ -121,6 +121,14 @@ exports.approveChangeRequest = async (req, res) => {
     if (!profile) {
       await t.rollback();
       return res.status(404).json({ ok: false, message: 'User profile not found.' });
+    }
+
+    if (!request.previous_values_recorded) {
+      request.previous_department_id = profile.department_id;
+      request.previous_office_id = profile.office_id;
+      request.previous_role_id = profile.role_id;
+      request.previous_position_id = profile.position_id;
+      request.previous_values_recorded = true;
     }
 
     const changes = request.changes || [];
