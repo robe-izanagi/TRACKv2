@@ -12,7 +12,7 @@ import RequestAccountCode from "./pages/request-account-code/RequestAccountCode"
 import AppLayout from "./pages/app/AppLayout";
 
 // Role dashboards
-import HeadsHome from "./pages/app/officials/Home";
+import HeadsHome from "./pages/app/heads/Home";
 import StaffHome from "./pages/app/staff/Home";
 import FacultyHome from "./pages/app/faculty/Home";
 
