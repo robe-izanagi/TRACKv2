@@ -39,6 +39,7 @@ router.get('/me', authenticate, async (req, res) => {
 
     const profile = await UserProfile.findByPk(req.userId);
     let role = null,
+      position = null,
       department = null,
       office = null,
       fullName = null,
@@ -58,6 +59,10 @@ router.get('/me', authenticate, async (req, res) => {
         const roleObj = await Role.findByPk(profile.role_id);
         if (roleObj) role = roleObj.name;
       }
+      if (profile.position_id) {
+        const positionObj = await Position.findByPk(profile.position_id);
+        if (positionObj) position = positionObj.name;
+      }
       if (profile.department_id) {
         const deptObj = await Department.findByPk(profile.department_id);
         if (deptObj) department = deptObj.name;
@@ -75,6 +80,7 @@ router.get('/me', authenticate, async (req, res) => {
         email: user.email,
         status: user.status,
         role,
+        position,
         department,
         office,
         full_name: fullName,
