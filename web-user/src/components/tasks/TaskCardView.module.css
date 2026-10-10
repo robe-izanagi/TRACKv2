@@ -497,7 +497,8 @@
   display: flex;
   justify-content: center;
   gap: 10px;
-  padding: 12px 20px 16px;
+  margin: 0 20px 16px;
+  padding: 12px 0 0;
   border-top: 1px solid #f0e9e9;
 }
 
